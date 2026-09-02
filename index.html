@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>章节评论 · 作家助手</title>
+<!-- LXGW WenKai 网络字体（正文/标题手写楷体，贴合 Figma） -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<style>
+  @font-face{
+    font-family:"LXGW WenKai GB";
+    src:url("https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-regular.woff2") format("woff2");
+    font-weight:400;font-display:swap;
+  }
+  @font-face{
+    font-family:"LXGW WenKai GB";
+    src:url("https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-bold.woff2") format("woff2");
+    font-weight:700;font-display:swap;
+  }
+  :root{
+    --brand:#1E71EF;           /* Figma 主蓝 */
+    --brand-strong:#0562F0;    /* 作家助手品牌主色 */
+    --brand-weak:rgba(30,113,239,.12);
+    --ink:#141E29;             /* 主文本 */
+    --ink-92:rgba(20,30,41,.92);
+    --ink-76:rgba(20,30,41,.76);
+    --ink-64:rgba(20,30,41,.64);
+    --ink-49:rgba(20,30,41,.49);
+    --ink-34:rgba(20,30,41,.34);
+    --ink-12:rgba(20,30,41,.12);
+    --ink-04:rgba(20,30,41,.04);
+    --bg:#F9F9FA;
+    --panel:#FFFFFF;
+    --line:#ECECEE;
+    --tabbar:#E4E9EF;
+    --shadow:0 1px 3px rgba(20,30,60,.06),0 8px 24px rgba(20,30,60,.05);
+    --font:"PingFang SC","Microsoft YaHei","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --wenkai:"LXGW WenKai GB","Kaiti SC","STKaiti","楷体",serif;
+    --num:"Yuewen Font","DIN Alternate","PingFang SC",monospace;
+  }
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+  html,body{height:100%;}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);
+    display:flex;flex-direction:column;overflow:hidden;font-size:14px;
+  }
+  button{font-family:inherit;}
+
+  /* ============ 顶部标题栏（标签 + 窗口控制） ============ */
+  .titlebar{
+    height:40px;flex:0 0 40px;background:var(--tabbar);
+    display:flex;align-items:stretch;padding-left:12px;user-select:none;
+  }
+  .win-dots{display:flex;align-items:center;gap:8px;padding-right:8px;}
+  .win-dots i{width:12px;height:12px;border-radius:50%;display:inline-block;}
+  .win-dots .r{background:#FF5F57;} .win-dots .y{background:#FEBC2E;} .win-dots .g{background:#28C840;}
+  .tabs{display:flex;align-items:flex-end;gap:1px;flex:1;min-width:0;overflow:hidden;}
+  .tab{
+    display:flex;align-items:center;gap:7px;height:32px;margin-top:8px;padding:0 12px;
+    font-size:12px;color:var(--ink-92);border-radius:8px 8px 0 0;max-width:200px;
+    cursor:default;position:relative;
+  }
+  .tab.active{background:var(--bg);color:var(--ink);font-weight:500;}
+  .tab .ti{width:16px;height:16px;border-radius:4px;background:var(--brand);flex:0 0 16px;
+    display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;}
+  .tab.doc .ti{background:#8B97A8;border-radius:3px;}
+  .tab .tx{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tab .close{width:14px;height:14px;border-radius:4px;display:flex;align-items:center;justify-content:center;
+    color:var(--ink-49);font-size:12px;opacity:0;transition:.1s;}
+  .tab:hover .close{opacity:1;}
+  .tab .close:hover{background:var(--ink-12);}
+  .titlebar-right{display:flex;align-items:center;gap:10px;padding:0 10px;font-size:12px;color:var(--ink-49);}
+  .win-ctrl{display:flex;align-items:center;height:100%;}
+  .win-ctrl span{width:46px;display:flex;align-items:center;justify-content:center;color:var(--ink-64);
+    cursor:default;height:100%;font-size:15px;}
+  .win-ctrl span:hover{background:var(--ink-04);}
+  .win-ctrl span.close-w:hover{background:#E81123;color:#fff;}
+
+  /* ============ 工具栏 ============ */
+  .toolbar{
+    height:44px;flex:0 0 44px;background:var(--panel);border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:4px;padding:0 12px;
+  }
+  .tb-btn{display:flex;align-items:center;gap:5px;height:30px;padding:0 9px;border-radius:7px;
+    font-size:13px;color:var(--ink-76);cursor:pointer;border:none;background:transparent;white-space:nowrap;}
+  .tb-btn:hover{background:var(--ink-04);}
+  .tb-btn svg{width:16px;height:16px;}
+  .tb-sep{width:1px;height:18px;background:var(--line);margin:0 4px;}
+  .tb-spacer{flex:1;}
+  .tb-publish{background:var(--panel);border:1px solid var(--ink-12);color:var(--ink-92);
+    font-weight:500;padding:0 16px;height:30px;border-radius:7px;cursor:pointer;font-size:13px;}
+  .tb-publish:hover{border-color:var(--brand);color:var(--brand);}
+
+  /* ============ 主区域 ============ */
+  .body-row{flex:1;display:flex;min-height:0;}
+
+  /* ---- 左侧章节面板 ---- */
+  .leftpanel{width:255px;flex:0 0 255px;background:var(--panel);border-right:1px solid var(--line);order:-2;}
+    display:flex;flex-direction:column;min-height:0;}
+  .lp-search{padding:12px 12px 8px;}
+  .lp-search .box{display:flex;align-items:center;gap:6px;height:32px;background:var(--ink-04);
+    border-radius:8px;padding:0 10px;color:var(--ink-34);font-size:14px;}
+  .lp-search .box svg{width:16px;height:16px;}
+  .lp-new{display:flex;gap:8px;padding:0 12px 10px;}
+  .lp-new button{flex:1;min-width:0;height:32px;border-radius:8px;font-size:13px;cursor:pointer;padding:0 12px;}
+  .lp-new .primary{background:var(--brand);color:#fff;border:none;font-weight:500;}
+  .lp-new .ghost{background:var(--panel);border:1px solid var(--ink-12);color:var(--ink-76);}
+  .lp-tabs{display:flex;align-items:center;gap:14px;padding:4px 14px 8px;font-size:13px;color:var(--ink-34);
+    border-bottom:1px solid var(--line);}
+  .lp-tabs .t{cursor:pointer;padding-bottom:6px;}
+  .lp-tabs .t.on{color:var(--ink-92);font-weight:500;box-shadow:inset 0 -2px 0 var(--brand);}
+  .lp-tabs .more{margin-left:auto;color:var(--ink-34);}
+  .lp-list{flex:1;overflow-y:auto;padding:6px 4px 12px;}
+  .lp-group{display:flex;align-items:center;gap:8px;height:30px;padding:0 10px;font-size:13px;color:var(--ink-92);cursor:default;}
+  .lp-group .cnt{margin-left:auto;font-size:11px;color:var(--ink-34);}
+  .lp-group svg{width:15px;height:15px;color:var(--ink-64);}
+  .lp-item{display:flex;align-items:center;gap:8px;height:30px;padding:0 10px 0 30px;font-size:13px;
+    color:var(--ink-92);cursor:pointer;border-radius:7px;margin:1px 4px;position:relative;}
+  .lp-item:hover{background:var(--ink-04);}
+  .lp-item.active{background:var(--brand-weak);color:var(--ink);font-weight:500;}
+  .lp-item .dot{width:6px;height:6px;border-radius:50%;border:1px solid var(--ink-34);flex:0 0 6px;}
+  .lp-item.done .dot{background:var(--ink-34);border-color:var(--ink-34);}
+  .lp-item .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;}
+  .lp-item .wc{font-size:11px;color:var(--ink-34);font-family:var(--num);}
+
+  /* ---- 中间容器 ---- */
+  .center{flex:1;min-width:0;display:flex;flex-direction:column;min-height:0;background:var(--bg);}
+  .editor-scroll{flex:1;overflow-y:auto;display:flex;justify-content:center;padding:36px 24px 60px;}
+  .paper{width:100%;max-width:820px;}
+  .title-input{
+    width:100%;border:none;outline:none;background:transparent;
+    font-family:var(--wenkai);font-size:28px;font-weight:700;color:var(--ink-92);
+    line-height:1.35;padding:0;letter-spacing:.5px;margin-bottom:26px;
+  }
+  .title-input::placeholder{color:var(--ink-34);}
+  .body-input{
+    width:100%;min-height:60vh;border:none;outline:none;resize:none;background:transparent;
+    font-family:var(--wenkai);font-size:20px;font-weight:400;color:var(--ink-92);
+    line-height:2.0;letter-spacing:.5px;
+  }
+  .body-input::placeholder{color:var(--ink-34);}
+
+  /* ---- 底部状态栏 ---- */
+  .statusbar{height:26px;flex:0 0 26px;background:var(--bg);border-top:1px solid var(--line);
+    display:flex;align-items:center;gap:0;padding:0 14px;font-size:12px;color:var(--ink-64);}
+  .sb-item{display:flex;align-items:center;gap:5px;}
+  .sb-item svg{width:13px;height:13px;}
+  .sb-plan{margin:0 auto;display:flex;align-items:center;gap:6px;color:var(--ink-92);}
+  .sb-plan .ring{width:14px;height:14px;border-radius:50%;border:2px solid var(--ink-12);
+    border-top-color:var(--brand);}
+  .sb-right{display:flex;align-items:center;gap:14px;margin-left:auto;}
+  .sb-right .k{color:var(--ink-34);}
+  .sb-right .v{font-family:var(--num);color:var(--ink-76);}
+
+  /* ---- 右侧竖排图标栏（始终在最右侧） ---- */
+  .rightrail{width:48px;flex:0 0 48px;background:var(--panel);border-left:1px solid var(--line);
+    display:flex;flex-direction:column;align-items:center;padding-top:10px;gap:2px;order:2;}
+  .rr-btn{width:40px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0;
+    font-size:11px;color:var(--ink-64);cursor:pointer;border-radius:8px;}
+  .rr-btn:hover{background:var(--ink-04);color:var(--brand);}
+  .rr-btn svg{width:18px;height:18px;}
+
+
+  /* ============ 章节阅读视图（含段评气泡 / 评论抽屉） ============ */
+  /* 章节头部（讨论热词 + 标题章评数 + 元信息） */
+  .chap-meta{display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:12px;color:var(--ink-64);flex-wrap:wrap;}
+  .chap-meta .hot{display:flex;align-items:center;gap:5px;color:var(--ink-76);font-weight:500;}
+  .chap-meta .hot svg{width:13px;height:13px;color:#FF7A45;}
+  .chap-meta .hot-tag{background:#FFE7DC;color:#E84D2F;border-radius:10px;padding:2px 8px;font-size:11.5px;font-weight:500;}
+  .chap-meta .chap-sep{color:var(--ink-12);}
+  .chap-meta .chap-stat{display:flex;align-items:center;gap:4px;color:var(--ink-64);}
+  .chap-meta .chap-stat .dot{width:3px;height:3px;border-radius:50%;background:currentColor;opacity:.4;}
+
+  .chap-title-row{display:flex;align-items:center;gap:14px;margin-bottom:8px;}
+  .chap-title{font-family:var(--wenkai);font-size:30px;font-weight:700;color:var(--ink);line-height:1.3;letter-spacing:.5px;}
+  .chap-bubble{
+    display:inline-flex;align-items:center;justify-content:center;height:22px;min-width:32px;
+    padding:0 8px;border-radius:11px;font-size:11.5px;color:#fff;font-weight:600;cursor:pointer;
+    background:#E84D2F;transition:transform .15s, box-shadow .15s;user-select:none;font-family:var(--num);
+  }
+  .chap-bubble:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(232,77,47,.35);}
+
+  .chap-info{display:flex;align-items:center;gap:14px;font-size:12.5px;color:var(--ink-64);margin-bottom:28px;}
+  .chap-info .lab{color:var(--ink-34);margin-right:4px;}
+  .chap-info .item{display:flex;align-items:center;gap:4px;}
+  .chap-info .item svg{width:13px;height:13px;color:var(--ink-49);}
+  .chap-info .sep{color:var(--ink-12);}
+
+  /* 段落渲染（reader）：每段独立段落 + 行尾段评气泡 */
+  .reader{display:none;flex-direction:column;}
+  .para-list{display:flex;flex-direction:column;gap:2px;}
+  .para{
+    position:relative;padding:8px 14px 8px 18px;border-radius:8px;cursor:default;
+    line-height:2.0;letter-spacing:.5px;font-family:var(--wenkai);font-size:20px;color:var(--ink-92);
+    text-indent:2em;margin:0;
+    transition:background-color .22s ease, box-shadow .22s ease;
+  }
+  /* 段落被点击时：背景高亮 */
+  .para.active{
+    background:linear-gradient(90deg, rgba(255,121,80,.14) 0%, rgba(255,121,80,.05) 100%);
+    box-shadow:inset 3px 0 0 #FF7A45;
+  }
+  /* 对话段落（以引号开头）不额外缩进，保持原文观感 */
+  .para.dialog{text-indent:0;}
+  /* 评论里的 emoji */
+  .emo{font-style:normal;}
+  .para-bubble{
+    display:inline-flex;align-items:center;justify-content:center;height:18px;min-width:22px;padding:0 6px;
+    margin-left:4px;border-radius:9px;font-size:11px;font-weight:600;color:#fff;cursor:pointer;
+    vertical-align:baseline;transform:translateY(-1px);transition:transform .15s, box-shadow .15s;
+    user-select:none;font-family:var(--num);line-height:1;
+  }
+  .para-bubble:hover{transform:translateY(-2px);box-shadow:0 4px 10px rgba(0,0,0,.18);}
+  /* 热度分级：>=80 红、30-79 橙红、10-29 橙、3-9 黄、<3 灰 */
+  .para-bubble.lv-red{background:#E84D2F;}
+  .para-bubble.lv-orange-red{background:#FF7A45;}
+  .para-bubble.lv-orange{background:#FFA12C;}
+  .para-bubble.lv-amber{background:#FFC12C;color:#7A4A00;}
+  .para-bubble.lv-mute{background:#C9CDD4;color:#fff;}
+
+  /* 评论抽屉（默认折叠）；展开为评论主区域。
+     order:让 leftpanel(-2) < center(0 默认) < cm-drawer(1) < rightrail(2)，
+     抽屉展开时插入到 center 与 rightrail 之间，rightrail 始终贴 viewport 右。 */
+  .cm-drawer{
+    flex:0 0 0;width:0;background:var(--panel);border-left:1px solid var(--line);
+    display:none;flex-direction:column;min-height:0;overflow:hidden;order:1;
+    transition:flex-basis .28s ease, width .28s ease;
+  }
+  body.comment-mode .cm-drawer{display:flex;}
+  body.comment-mode .cm-drawer.open{flex:0 0 360px;width:360px;}
+  .cm-hd{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 18px 10px;border-bottom:1px solid var(--line);flex:0 0 auto;
+  }
+  .cm-hd .cm-title{font-size:16px;font-weight:600;color:var(--ink);}
+  .cm-hd .cm-title .cnt{font-size:13px;color:var(--ink-64);font-weight:400;margin-left:6px;font-family:var(--num);}
+  .cm-hd .cm-close{
+    width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+    border-radius:8px;cursor:pointer;color:var(--ink-49);font-size:18px;line-height:1;
+  }
+  .cm-hd .cm-close:hover{background:var(--ink-04);color:var(--ink);}
+
+  .cm-toolbar{
+    display:flex;align-items:center;gap:14px;padding:6px 18px 10px;
+    border-bottom:1px solid var(--line);font-size:13px;color:var(--ink-64);flex:0 0 auto;
+  }
+  .cm-toolbar .cm-tab{cursor:pointer;padding-bottom:6px;}
+  .cm-toolbar .cm-tab.on{color:var(--ink-92);font-weight:600;box-shadow:inset 0 -2px 0 var(--brand);}
+  .cm-toolbar .cm-back{
+    display:none;align-items:center;gap:4px;cursor:pointer;color:var(--brand);font-size:12.5px;font-weight:500;
+  }
+  .cm-toolbar .cm-back svg{width:12px;height:12px;}
+  .cm-drawer.parasec .cm-toolbar .cm-back{display:inline-flex;}
+
+  .cm-list{flex:1;overflow-y:auto;padding:10px 14px 14px;}
+  .cm-list::-webkit-scrollbar{width:8px;}
+  .cm-list::-webkit-scrollbar-thumb{background:var(--ink-12);border-radius:4px;}
+  .cm-list::-webkit-scrollbar-thumb:hover{background:var(--ink-34);}
+
+  .cm-empty{padding:30px 20px;text-align:center;color:var(--ink-34);font-size:13px;line-height:1.7;}
+  .cm-empty svg{width:36px;height:36px;color:var(--ink-12);margin-bottom:8px;}
+
+  .cm-item{display:flex;gap:10px;padding:12px 4px;border-bottom:1px solid var(--ink-04);}
+  .cm-item:last-child{border-bottom:none;}
+  .cm-item .av{
+    flex:0 0 32px;width:32px;height:32px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:13px;
+  }
+  .cm-item .body{flex:1;min-width:0;}
+  .cm-item .nm-row{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+  .cm-item .nm{font-size:13px;color:var(--ink-92);font-weight:500;}
+  .cm-item .lv{font-size:10.5px;color:#fff;background:#FF7A45;padding:1px 6px;border-radius:4px;font-weight:500;}
+  .cm-item .lv.lv-1{background:#5C8AFF;}
+  .cm-item .lv.lv-2{background:#1E71EF;}
+  .cm-item .lv.lv-3{background:#FF7A45;}
+  .cm-item .lv.lv-4{background:#9A6CFF;}
+  .cm-item .lv.lv-5{background:#1EBD8E;}
+  .cm-item .content{font-size:13.5px;color:var(--ink-92);line-height:1.7;word-break:break-word;}
+  .cm-item .meta{
+    display:flex;align-items:center;gap:14px;margin-top:6px;
+    font-size:11.5px;color:var(--ink-49);
+  }
+  .cm-item .meta .like{display:flex;align-items:center;gap:3px;cursor:pointer;}
+  .cm-item .meta .like svg{width:13px;height:13px;}
+  .cm-item .meta .like:hover{color:var(--brand);}
+  .cm-item .meta .like.liked{color:var(--brand);}
+  .cm-item .meta .reply{cursor:pointer;}
+  .cm-item .meta .reply:hover{color:var(--brand);}
+  .cm-item .sub-toggle{
+    font-size:11.5px;color:var(--brand);cursor:pointer;margin-top:6px;display:inline-flex;align-items:center;gap:3px;
+  }
+  .cm-item .sub-toggle svg{width:11px;height:11px;transition:transform .2s;}
+  .cm-item .sub-toggle.on svg{transform:rotate(180deg);}
+
+  .cm-sub{padding:10px 0 4px 42px;}
+  .cm-sub .cm-item{padding:8px 4px;}
+  .cm-sub .cm-item .av{flex:0 0 24px;width:24px;height:24px;font-size:11px;}
+  .cm-sub .cm-item .nm-row{margin-bottom:2px;}
+  .cm-sub .cm-item .content{font-size:13px;}
+  .cm-sub .cm-item .content .to{color:var(--brand);margin-right:4px;}
+
+  .cm-input{
+    display:flex;align-items:center;gap:10px;padding:12px 14px;border-top:1px solid var(--line);
+    background:var(--panel);flex:0 0 auto;
+  }
+  .cm-input .av{
+    flex:0 0 28px;width:28px;height:28px;border-radius:50%;background:var(--brand);
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:12px;
+  }
+  .cm-input .ipt{
+    flex:1;height:34px;border-radius:18px;background:var(--ink-04);border:none;outline:none;
+    padding:0 14px;font-size:13px;color:var(--ink);font-family:var(--font);
+  }
+  .cm-input .ipt::placeholder{color:var(--ink-34);}
+
+  /* rightrail 评论按钮的小红点徽章 */
+  .rr-btn{position:relative;}
+  .rr-btn .badge{
+    position:absolute;top:4px;right:6px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;
+    background:#E84D2F;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;
+    font-weight:600;font-family:var(--num);
+  }
+  .rr-btn.active{background:var(--brand-weak);color:var(--brand);}
+
+  /* 阅读模式：textarea 隐藏，reader 显示 */
+  body.comment-mode .reader{display:flex;}
+  body.comment-mode .body-input{display:none;}
+  body.comment-mode .title-input{display:none;}
+  /* 评论模式下隐藏写作工具浮层（专注监测 / 字数统计 / 设置弹层），让读者视角聚焦评论 */
+  body.comment-mode .tongji, body.comment-mode .cam-preview, body.comment-mode .cam-pill, body.comment-mode .loading-tip{display:none!important;}
+  /* 评论抽屉展开时，让 center 区收窄，避免读者视角被抽屉覆盖 */
+  body.comment-mode .editor-scroll{padding-right:0;}
+
+  /* 评论过渡动效 */
+  @keyframes cmFadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .cm-item{animation:cmFadeIn .25s ease both;}
+
+
+
+  /* 专注监测开关 + 状态 */
+  .cam-pill{display:flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:20px;
+    font-size:12px;color:var(--ink-64);background:var(--ink-04);cursor:pointer;user-select:none;}
+  .cam-pill:hover{background:var(--brand-weak);color:var(--brand);}
+  .cam-pill .led{width:7px;height:7px;border-radius:50%;background:var(--ink-34);flex:0 0 7px;}
+  .cam-pill.on{background:#E6F6EF;color:#0F9E75;}
+  .cam-pill.on .led{background:#0F9E75;box-shadow:0 0 0 3px rgba(15,158,117,.18);}
+
+  /* 摄像头本地预览（小） */
+  .cam-preview{position:fixed;right:64px;bottom:262px;width:130px;aspect-ratio:4/3;border-radius:10px;overflow:hidden;
+    border:1px solid var(--line);background:#000;z-index:49;display:none;box-shadow:var(--shadow);
+    cursor:move;user-select:none;-webkit-user-select:none;touch-action:none;}
+  .cam-preview.show{display:block;}
+  .cam-preview.dragging{cursor:grabbing;box-shadow:0 10px 28px rgba(20,30,60,.22);}
+  .cam-preview video{width:100%;height:100%;object-fit:cover;display:block;transform:scaleX(-1);pointer-events:none;}
+  .cam-preview .lb{position:absolute;left:6px;bottom:6px;font-size:10px;color:#fff;
+    background:rgba(0,0,0,.5);padding:1px 6px;border-radius:20px;}
+
+  .loading-tip{position:fixed;top:52px;left:50%;transform:translateX(-50%);
+    background:rgba(30,113,239,.96);color:#fff;font-size:12px;padding:6px 14px;border-radius:20px;
+    z-index:80;display:none;}
+  .loading-tip.show{display:block;}
+
+  /* 隐私弹窗 */
+  .modal-mask{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;
+    align-items:center;justify-content:center;z-index:100;padding:20px;}
+  .modal-mask.show{display:flex;}
+  .modal{background:#fff;border-radius:16px;max-width:420px;width:100%;padding:26px 26px 22px;
+    box-shadow:0 20px 60px rgba(0,0,0,.2);}
+  .modal h3{margin:0 0 12px;font-size:17px;}
+  .modal p{margin:0 0 10px;font-size:13.5px;line-height:1.75;color:var(--ink-76);}
+  .modal .privacy{background:#F2F6FF;border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--ink-76);margin:12px 0 18px;}
+  .modal .privacy b{color:var(--brand);}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;}
+  .btn{border:none;border-radius:10px;padding:9px 18px;font-size:14px;cursor:pointer;font-family:var(--font);}
+  .btn-ghost{background:#F1F3F7;color:var(--ink-76);}
+  .btn-primary{background:var(--brand);color:#fff;font-weight:600;}
+</style>
+</head>
+<body>
+  <!-- ===== 顶部标题栏 ===== -->
+  <div class="titlebar">
+    <div class="win-dots"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+    <div class="tabs">
+      <div class="tab"><span class="ti">台</span><span class="tx">工作台</span></div>
+      <div class="tab active doc"><span class="ti">书</span><span class="tx">诡秘之主</span><span class="close">×</span></div>
+      <div class="tab doc"><span class="ti">书</span><span class="tx">诡秘之主小说</span><span class="close">×</span></div>
+    </div>
+    <div class="titlebar-right"><span id="cloudSave">已保存到云端</span></div>
+    <div class="win-ctrl"><span>—</span><span>▢</span><span class="close-w">×</span></div>
+  </div>
+
+  <!-- ===== 工具栏 ===== -->
+  <div class="toolbar">
+    <button class="tb-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7V5h16v2M9 5v14M7 19h4"/></svg>字体</button>
+    <button class="tb-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 14l4-4 4 4 4-5 4 5"/></svg>背景</button>
+    <div class="tb-sep"></div>
+    <button class="tb-btn" title="撤销"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10H9"/></svg></button>
+    <button class="tb-btn" title="重做"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h6"/></svg></button>
+    <div class="tb-sep"></div>
+    <button class="tb-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16M4 12h10M4 18h16"/></svg>一键排版</button>
+    <button class="tb-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 5v14M5 12h14"/></svg>插入</button>
+    <div class="tb-spacer"></div>
+    <button class="tb-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>全屏</button>
+    <button class="tb-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16"/></svg>闭关</button>
+    <button class="tb-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>查找替换</button>
+    <button class="tb-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>取名</button>
+    <button class="tb-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18z"/></svg>画师</button>
+    <button class="tb-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>历史</button>
+    <!-- 专注监测开关 -->
+    <div class="cam-pill" id="camPill" title="开启后用摄像头在本地检测是否分心">
+      <span class="led"></span><span id="camLabel">专注监测</span>
+    </div>
+    <button class="tb-publish">发布</button>
+  </div>
+
+  <!-- ===== 主区域 ===== -->
+  <div class="body-row">
+    <!-- 左侧章节面板 -->
+    <aside class="leftpanel">
+      <div class="lp-search">
+        <div class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>全书</div>
+      </div>
+      <div class="lp-new">
+        <button class="primary">新建章</button>
+        <button class="ghost">新建卷</button>
+      </div>
+      <div class="lp-tabs">
+        <span class="t on">草稿</span><span class="t">已发布</span><span class="t">筛选 ▾</span>
+        <span class="more">···</span>
+      </div>
+      <div class="lp-list" id="chapterList">
+        <div class="lp-group"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16v12H4z"/><path d="M4 7l2-3h5l2 3"/></svg>作品相关<span class="cnt">1章</span></div>
+        <div class="lp-group"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16v13H4z"/><path d="M4 6l1-2h6l1 2"/></svg>第一卷 小丑<span class="cnt">16章</span></div>
+      </div>
+      <!-- 章节列表由 JS 渲染，含高亮当前章 -->
+    </aside>
+
+    <!-- 中间：正文 + 底部状态栏 -->
+    <div class="center">
+      <div class="editor-scroll">
+                <div class="paper" id="paper">
+          <!-- 阅读态：章节头部信息 + 段落渲染 -->
+          <div class="reader" id="reader" aria-label="章节阅读视图">
+            <div class="chap-meta">
+              <span class="hot">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 1.5c2 3.4-.6 6.3-1.7 8.2-.5.9.2 1.8 1.2 1.6 2-.4 4 1.4 3.4 3.7-.5 2-2 3.4-4 3.7-2.5.4-5-.7-6-3.2-1-2.6 0-5.5 1.4-7.6C9.5 5.6 11.6 3.4 13.5 1.5z"/></svg>
+                讨论热词：
+              </span>
+              <span class="hot-tag">揭秘</span>
+              <span class="hot-tag">校花</span>
+              <span class="hot-tag">熊猫狗</span>
+              <span class="hot-tag">奋斗</span>
+              <span class="chap-sep">·</span>
+              <span class="chap-stat">本章含 <span id="chapSecTotal" style="color:#E84D2F;font-weight:600;margin:0 3px;font-family:var(--num);">6719</span> 条段评</span>
+            </div>
+
+            <div class="chap-title-row">
+              <h1 class="chap-title" id="chapTitle">第1章 面试</h1>
+              <span class="chap-bubble" id="chapBubble" title="查看本章全部评论">621</span>
+            </div>
+
+            <div class="chap-info">
+              <span class="item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 3v18"/></svg>
+                <span class="lab" id="chapWork">没钱修什么仙？</span>
+              </span>
+              <span class="sep">·</span>
+              <span class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg><span id="chapAuthor">熊狼狗</span></span>
+              <span class="sep">·</span>
+              <span class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16M7 12h13M7 18h13M4 12h.01M4 18h.01"/></svg><span class="lab">字数</span><span id="chapWords">6016</span></span>
+              <span class="sep">·</span>
+              <span class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>2024年11月04日 11:41</span>
+            </div>
+
+            <div class="para-list" id="paraList"></div>
+          </div>
+        </div>
+      </div>
+      <div class="statusbar">
+        <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>新建章节</div>
+        <div class="sb-plan"><span class="ring"></span>计划: 剩 700</div>
+        <div class="sb-right">
+          <span class="sb-item"><span class="k">纠错：</span><span class="v">5</span></span>
+          <span class="sb-item"><span class="k">本章：</span><span class="v" id="sbChapChars">0</span> 字</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧竖排图标栏 -->
+    <aside class="rightrail">
+      <div class="rr-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>校对</div>
+      <div class="rr-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h10"/></svg>拼字</div>
+      <div class="rr-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16M7 12h13M7 18h13M4 12h.01M4 18h.01"/></svg>大纲</div>
+      <div class="rr-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>角色</div>
+      <div class="rr-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h5"/></svg>设定</div>
+      <div class="rr-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12c1 1 1 2 1 3h6c0-1 0-2 1-3a7 7 0 0 0-4-12z"/></svg>灵感</div>
+            <div class="rr-btn" id="rrComments" title="评论">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        评论
+        <span class="badge" id="cmBadge">621</span>
+      </div>
+<div class="rr-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="8" height="14"/><rect x="13" y="5" width="8" height="14"/></svg>双栏</div>
+    </aside>
+
+    <!-- 评论抽屉（在阅读视图打开后展开） -->
+    <aside class="cm-drawer" id="cmDrawer" aria-label="评论">
+      <div class="cm-hd">
+        <div class="cm-title">评论 <span class="cnt" id="cmCount">621</span></div>
+        <span class="cm-close" id="cmClose" title="收起评论">×</span>
+      </div>
+      <div class="cm-toolbar">
+        <span class="cm-back" id="cmBack" title="返回全部评论">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
+          返回全部评论
+        </span>
+        <span class="cm-tab on" id="cmTabAll">全部</span>
+        <span class="cm-tab" id="cmTabPara">段评</span>
+      </div>
+      <div class="cm-list" id="cmList"></div>
+      <div class="cm-input">
+        <span class="av">我</span>
+        <input class="ipt" id="cmInput" placeholder="写下你的想法…" />
+      </div>
+    </aside>
+  </div>
+
+
+<!-- ===== 章节列表渲染（左侧面板） ===== -->
+<script>
+(function(){
+var CHAPTERS=[
+  {n:"第一章 缘红",wc:2471,done:true},{n:"第二章 情况",wc:3213,done:true},
+  {n:"第三章 梅丽莎",wc:3110,done:true},{n:"第四章 占卜",wc:3816},
+  {n:"第五章 仪式",wc:3281},{n:"第六章 非凡者",wc:3359,active:true},
+  {n:"第七章 代号",wc:3258},{n:"第八章 新的时代",wc:4392},
+  {n:"第九章 笔记",wc:3818},{n:"第十章 常态",wc:3105},
+  {n:"第十一章 真正的厨艺",wc:3060},{n:"第十二章 再次上门",wc:2784},
+  {n:"第十三章 值夜者",wc:3069},{n:"第十四章 通灵者",wc:3838},
+  {n:"第十五章 邀请",wc:2745},{n:"第十六章 狗拿耗子",wc:4436},
+];
+var chapterList=document.getElementById("chapterList");
+CHAPTERS.forEach(function(c){
+  var el=document.createElement("div");
+  el.className="lp-item"+(c.done?" done":"")+(c.active?" active":"");
+  el.innerHTML='<span class="dot"></span><span class="nm">'+c.n+'</span><span class="wc">'+c.wc+'</span>';
+  chapterList.appendChild(el);
+});
+})();
+</script>
+
+<!-- ===== 章节评论模块（段评气泡 + 评论抽屉） ===== -->
+<script>
+(function(){
+  'use strict';
+
+  // 0) 示例章节：《没钱修什么仙？》第1章 面试（正文与段评数取自起点章节页截图）
+  var CHAPTER = {
+    title: '第1章 面试',
+    meta: { work: '没钱修什么仙？', author: '熊狼狗', words: 6016, time: '2024年11月04日 11:41' },
+    chapterCommentCount: 621,
+    sectionCommentTotal: 5744,
+    paragraphs: [
+      '"到了吗？"',
+      '"不要紧张，你成绩这么好，一定能过的。"',
+      '"手术费的事情不用担心，妈找了个新兼职，一定会帮你凑齐的，你踏踏实实参加面试。"',
+      '看着屏幕上母亲发来的消息，张羽默默收起手机，深吸一口气，闭上了眼睛，静静地等待着。',
+      '良久之后，前方传来一阵叫号声。',
+      '"989号考生，张羽。"',
+      '张羽站了起来，走进了面试的教室内。',
+      '他看向三位面试官，露出了练习许久的礼貌笑容："三位好，我是东阳初级中学的张羽。"',
+      '中间的面试官望着他，淡淡道："你为什么要报考我们的学校？"',
+      '张羽："贵校悠久的历史，深厚的底蕴，丰富的教学资源，一直以来为社会培养出了许多杰出人才……"',
+      '面试官皱了皱眉，打断道："别说这些场面话。"',
+      '张羽老实道："我想考上名牌大学，嵩阳高中是我能报考的学校中，大学录取率最高的一个。"',
+      '面试官微微一笑，看着手上的资料说道："嗯，全科满分，全校第一？怪不得被推荐过来。"',
+      '"你成绩没有问题，但想要进嵩阳高中，光靠校内考试成绩是远远不够的。"',
+      '他想了想，随意问道："你现在每天睡多久？"',
+      '张羽："五个小时。"',
+      '面试官意外道："五小时？"',
+      '"我们学校的学生从小学开始，每天平均睡眠时长都不超过两个小时。而像历届的优秀毕业生基本上都是不睡觉的。"',
+      '"你每天竟然要睡五个小时，那就是每天要比别人少学三个小时，九年就差了近一万个小时……"',
+      '张羽微微一愣，没想到本以为已经非常努力的自己，在努力上竟然还和他人有这么大的差距。他知道嵩阳市的学生是从9岁开始读小学，9年后18岁入高中，却没想到同样的9年，人和人的差距这么大。',
+      '张羽连忙说道："我会努力追赶上他们的。"',
+      '左边的面试官问道："高中课程你学了多少？"',
+      '张羽稍稍镇定下来，自信道："我已经自学完了高一课程。"',
+      '对方眉头微皱："才高一？你不知道我们这上课的时候都默认学生已经学完了高中课程的吗？"',
+      '张羽闻言一呆，这又是他所不知道的情报，本以为的优势转眼成了劣势。',
+      '就在他不知所措时，中间的面试官又问出了下一个问题。',
+      '"本校为了提升学习效率，防止早恋，要求所有学生在入学前要完成把相关器官摘除的绝育手术，从此专心修行。"',
+      '"这个你知道吗？"',
+      '终于听到一个自己知道的事，他连忙回道："家里已经在准备了，开学之前我一定会完成绝育手术，将激素水平保持在最适宜上学的水平。"',
+      '面试官不置可否地点了点头："行了，今天的面试结束了，你先出去吧。"',
+      '张羽惴惴不安地走出了教室，他感觉自己的面试时间似乎要短于其他学生。',
+      '而在他走后，中间的面试官摇了摇头："初中了都还没绝育，此子向道之心不够坚定啊。"',
+      '一旁的女面试官笑了笑："我看他什么都不知道就来了，该有的测试报告和课外考试成绩一个也没有，只能说下面这些普通初中的推荐生质量是一年不如一年，要不是有扶持政策，哪有资格见我们。"',
+      '中间的面试官点了点头："唉，我本以为穷人会更努力一点，也许是我对他们期望过高了。"',
+      '"这个就暂时备选吧。"',
+      '说罢，他便将张羽的简历扔进了一旁的纸篓里，和另外几百份备选简历挤在了一起。',
+      '虽然张羽感觉自己的这趟面试似乎不太成功，但没有多余的时间给他思考这些，他已经开始准备起了一趟又一趟的面试，来到了一个个不同的高中。',
+      '"张羽同学，我们了解到你的家庭情况恐怕不足以负担这边的学费。不过我们为贫困生提供了优惠的贷款服务，只要你愿意抵押一些不重要的器官就行……"',
+      '"放心，你没来错地方，我们知道你是男的，而我校虽是女校，但从来不歧视男性，只要你完成了性别转换手术，不但能够入学，更是会被认为道心坚毅的种子学生，有机会进入重点班学习元阴炼气之术……"',
+      '"可惜了，你距离我们的入学标准还是差上了一点点。不过今年为了照顾贫困学生，我们推出了一个特长生政策。你如果愿意放弃肉身的话，可以凭借魂修特长生的身份，在校长的万魂幡里学习……"',
+      '"同学，你算是来对地方了，我们这就是最适合你这种平民天才的高中。',
+      '我来给你介绍介绍这里的福利吧，我们在饮用水中添加了促智剂，保证学生时刻维持在五级专注状态。',
+      '每天班主任会发给你们900克以上牛妖专用的补剂，保证你们的修炼效果是原先的十倍以上。',
+      '就连空气循环系统中也充斥着神经兴奋填充剂，让你再也无需睡眠，而这些全都是免费的。',
+      '当然，想要承受这些功能增强补充药剂，你必须在我们指定的医院完成改造。',
+      '放心，只要植入一些小小的法器来提升你的代谢能力，这是具体价目表……"',
+      '一次次的面试，一个又一个的问题。',
+      '要么是高不可攀，让他完全看不到希望的门槛。',
+      '要么就是陷阱重重，让他感觉自己会被一口吞下的合同。',
+      '这一切的一切都让张羽感觉自己被压得喘不过气来。',
+      '此刻的他骤然发现，在郊区普通初中有着全校第一成绩的他，和市中心的那些学生们比起来便早已经有了天壤之别。',
+      '甚至直到此刻，他连双方的具体差距有多大……也只知道了冰山一角。',
+      '过去这些年的努力学习似乎都成了笑话。',
+      '到头来他和那些不学无术的同学们并没有差别，同样也上不了高中。',
+      '回到家中，张羽如一尊石像般默默坐着。',
+      '桌上的手机连连震动了起来。',
+      '母亲：这次面试怎么样？',
+      '母亲：今天要加班，冰箱里的饭菜你记得自己热了吃。',
+      '片刻后，手机又震动了一下。',
+      '母亲：儿子，你不要担心，不论你选绝育还是变性，手术的钱妈妈一定会帮你凑齐的。',
+      '但张羽并没有去看震动的手机，他只是呆呆地望着天花板，想要思考关于未来的事情，却又感觉到脑袋里像是空空如也，什么都挤不出来。',
+      '就在这时，手机再次剧烈震动了起来。',
+      '张羽原本不想理会，但在手机足足震动了一分多钟后，他终于忍不住地将之拿了起来，却发现对方已经挂了电话。',
+      '接着他收到了一条对方发来的消息：您的五千后备金已准备完毕，只需十秒即可到账……',
+      '"小贷广告吗？"',
+      '"哼。"',
+      '张羽心想自己的面试资料恐怕是被哪个学校给卖了。',
+      '但放下手机片刻之后，他又拿了起来，重新点开了那条消息。',
+      '……',
+      '当天夜里，母亲加班回来之后，便发现原本面如死灰的张羽看上去似乎已恢复了过来，正端坐于桌前看书。',
+      '"妈，你放心，我不会这么容易被打倒的。"',
+      '"今年不行，我就明年再考，我一定会修仙的。"',
+      '"明天我就去找补习班，我要把我缺的东西一个个补上。"',
+      '第二天一大早，张羽就赶了出去，当天晚上回来时已是一脸喜色。',
+      '"妈，我找了一家仙道补习班，那里的老师都是从重点高中请来的，跟着他们学一定能考上高中。"',
+      '"学费的事情你不用担心，人家觉得我从小成绩就好，又知道我家庭不富裕，就暂时给我免了学费，只要我明年能进嵩阳高中，这学费就不用还了，就当是帮他们做广告了。"',
+      '"你放心吧，人家是大公司，不会骗人的。"',
+      '母亲看着张羽每天天不亮就出门上补习班，每天深夜回到家后还要学到两三点钟。',
+      '看着他不断带回来的高二高三的语文、数学、物理等等教材，看着他打算要把高中这些除了仙道之外的所有通识课程学完，她就为儿子的上进感到欣慰。',
+      '但当她看到那一盒盒拿回来的药品时，心中还是涌起了一丝疑惑。',
+      '张羽笑着解释道："妈，从小到大，我已经比那些学霸少学了一万个小时，再不努力的话只会被他们越甩越远。"',
+      '"这些神经兴奋填充剂能让我每天只需要睡半个小时，提高我的学习效率，至少不被市里的那些学生继续拉开距离。"',
+      '"你放心，这些药都不花钱。"',
+      '"我们补习班的校长特别看好我，这些药都是他送我的。"',
+      '听到是校长送的，母亲更为儿子受到赏识而高兴。',
+      '很快张羽就带了更多东西回来。',
+      '除了各种高中教材，神经兴奋填充剂之外，还有调节激素水平的胶囊，妖兽专用的补剂，还有一瓶瓶没有包装的药粉。',
+      '张羽的解释也很多，有时候说是打工买的便宜货，有时候说是同学送的，有时候说是补习班奖励的……',
+      '母亲为儿子的勤奋而开心，更为他在补习班的好人缘和优秀表现而感到高兴。',
+      '她转了1000块钱给张羽，让张羽记得要谢谢同学和老师。',
+      '但渐渐的，她发现张羽的情绪开始变得不对劲，有时候早上出门前还高高兴兴的，晚上回来就一言不发直接睡觉了。',
+      '有时候刚刚还在开开心心吃饭，接了个电话后就眉头紧锁，一口也吃不下了。',
+      '她知道一定是修仙的压力太大，让张羽精神紧绷。',
+      '她只能多买点他爱吃的东西，多为他存一些学费，只希望能帮他减缓一些压力。',
+      '渐渐的，她又发现张羽特别在乎自己的手机，不止是平时几乎手机不离身，更是不准任何人随便碰他的手机，有电话也总是走进厕所关门再接。',
+      '有一次她看到手机没电了拿去充电，竟然都被张羽生气地说了一顿。',
+      '明白对方的压力大，她便再也不敢碰张羽的手机，生怕影响了儿子修仙。',
+      '突然有一天，张羽问她要了补习费，说是补习班请了考上顶尖大学的前辈过来为他们讲课，这是要给前辈的钱。',
+      '然后是给高中招生老师的推荐费。',
+      '给医院的灵根检测费。',
+      '还有要和补习班的同学一起购买民用级的儿童飞剑。',
+      '从两三千到七八千……最后一次让她直接打了两万块钱，张羽说是租借天灵根的费用。',
+      '但好消息终于传来，张羽成功考进嵩阳高中了。',
+      '母亲感到欣喜无比，她对儿子的努力和天赋感到自豪，对接下来张羽说的学费、学杂费、药剂费等等也都一口答应下来。',
+      '但开学以后，张羽开口要的钱越来越多，家中逐渐入不敷出。',
+      '终于在某一天下午，听着电话另一头的声音，母亲心中一颤。',
+      '"喂？请问是张羽的母亲吗？"',
+      '"你知不知道你儿子的借款已经逾期30天了……"',
+      '当天夜里，张羽向母亲坦白了一切。',
+      '过去这些时间，在学习过程中的种种花费并没有他嘴上说的那些免费、赏识、馈赠……钱全都来自于他从各大平台的借贷。',
+      '"妈，对不起。"',
+      '"但我真的想修仙啊。"',
+      '"哪怕欠上一辈子还不上欠债，我也想修……"',
+      '听完这一切，母亲默默卖掉了家中所有值钱的东西，然后再借贷一部分钱为张羽还债。',
+      '本以为接下来儿子能够安心修仙。',
+      '但她却很快又发现了儿子新的贷款逾期。',
+      '还贷……借贷……还贷……借贷……',
+      '母亲终于忍不住劝说张羽少花点钱。',
+      '"妈，这个药不能停，停药后道心会倒退的，我就前功尽弃了……"',
+      '"天灵根一定要租的，没有天灵根我法力跟不上……"',
+      '"这张补习班的VIP卡要充钱了，不然我听不懂学校老师课上讲的功法……"',
+      '发达的仙道技术让没有灵根的凡人也能踏上仙路，但代价则是定期进行最昂贵的学习和维护才能持续走下去。',
+      '转眼开学三个月的时间过去，看着欠债越来越多，到现在连家里的房租、水电都已经无力负担……这一切一切都好像是一场永无止境的噩梦，母亲终于再也无法承受了。',
+      '于是当又一天放学回家时，张羽再也没有看到母亲的身影。',
+      '看了母亲离家的留言，他呆坐良久，最终默默拿起了手机向外走去。',
+      '•••••',
+      '出租房的天台上。',
+      '一阵剧痛从男人的脑海中传来，将他那混沌的意识从黑暗中渐渐唤醒。',
+      '他睁开眼向前望去，便看前方不远处那一条人来人往，污水横流的街道。',
+      '街道两侧闪烁着霓虹光芒的各色广告招牌，再往上看去则是一座座黑漆漆的楼房挤在一起，像是要将整片天空遮蔽。',
+      '而脚下的楼房则是一处破旧的公寓，那斑驳的红砖墙上还在投影着理财广告的视频，广告中是一位位飞天遁地的仙人正一同推荐着新用户三十天免息的修仙贷。',
+      '"我不是在玩黑吗喽吗？"',
+      '"这是哪？"',
+      '正想着怎么回事的时候，转过头的他就发现天台上摆满了蜡烛。',
+      '闪烁着猩红火光的一排排蜡烛，正环绕着他和一具破旧娃娃。',
+      '那是一个布料泛黄褪色，缝线歪歪扭扭，仿佛随时会裂开的布娃娃。',
+      '诡异的场景似乎刺激到了他的大脑，让一股股破碎的记忆不断在他的脑海中来回翻滚跳跃。',
+      '"这不是中国了……给我干到异世界来了？"',
+      '他有些难以接受穿越的事情。',
+      '但脑袋里那些关于仙道技术的真实记忆却不断冲击着他的意识，让他与原身逐渐融合的同时，更不断提醒着他眼前已是另一个世界。',
+      '这里便是昆墟，以类似金字塔形矗立在大地上的超级建筑，共有地上三十六层以及地下十八层。',
+      '从面积最大，宛如一片大陆的第一层开始，每一层便都是一方新天地。',
+      '至于昆墟之外的世界是什么样子，张羽的脑袋里并没有答案。',
+      '他只知道昆墟之内，是一个以仙道各大宗门为尊的世界。',
+      '大宗门高高在上，也几乎垄断了粮食、能源、交通、教育、科研、医疗、金融、互联网等等各行各业，政府军队在宗门执法队前更像是看门的保安。',
+      '但普通人无福享受仙道技术带来的大部分福利，反而每日忙于生计之中。',
+      '而他便是生活在昆墟第一层，一名考进嵩阳高中名叫张羽的高中生，最近正沉迷于某种古怪仪式……',
+      '"现在的我，已经成了另一个世界的张羽。"',
+      '就在这时，一阵刺痛从掌心传来，将沉浸在记忆冲击中的张羽唤醒。',
+      '他低头望去，便看到一个透明符号出现在掌中，并在以一种极为缓慢的速度渐渐变黑。',
+      '"这又是什么东西？"',
+      '伴随着夜风吹过，四周围的猩红烛光一阵摇曳。',
+      '而地上那具破旧娃娃瞪着一双黑色纽扣组成的空洞眼眸，正直挺挺地看向他。',
+      '他想要回忆到底是怎么回事，但越想脑袋就越疼越晕。',
+      '空气中的气氛越发阴森诡异，张羽捂着还在眩晕的脑袋，只觉得周围一片天旋地转。',
+      '当他回过神来时，便发现自己已经迷迷糊糊地离开了天台，一步步回到自己家门前。',
+      '扫了一眼催缴房租的单子，跨入房门，映入张羽眼帘的只有一张床和一张桌子。',
+      '"这就是我家吗？"',
+      '感受自己被汗水浸透的黏腻皮肤，还有周围那无比闷热的环境，张羽想要找空调遥控器，却想起来这房子里根本没空调。',
+      '他又想要冲一冲水，却发现水已经给停了。',
+      '张羽有些无奈地坐倒在床上。',
+      '"什么破地方。"',
+      '"真有仙人又怎么样？这日子过得还不如没有仙人的世界。"',
+      '张羽目光扫过墙面，发现桌子后面的墙壁上贴满了从小到大的奖状。',
+      '一年级、二年级、三年级……一直到初三，原来的张羽几乎每年都是年级第一。',
+      '看着这些奖状，各种领奖的记忆也从张羽脑海中涌出："原先的张羽是个勤学刻苦，从小就成绩优秀的学生。"',
+      '"现在就读的嵩阳高中也是市里的重点高中。"',
+      '"老子是学霸啊。"',
+      '回忆着脑海中的知识，张羽目光渐渐亮了起来："考上名牌大学就能筑基，加入大宗门就能结丹，还能在昆墟往上爬，离开这个贫民窟，享受更多仙道技术的福利，到时候多活个几百年也没问题。"',
+      '想到这里，张羽突然觉得来到这个世界似乎也是个不错的事情。',
+      '就在他这么想着的时候，手机铃声突然响了起来。',
+      '"喂？"',
+      '"张羽先生你好，您在我们平台的借款已经逾期3天了……"',
+      '挂了电话，张羽翻动着手机中的短信箱，便发现了密密麻麻的催款短信，都是原身在各大平台借贷逾期后的催缴。',
+      '"这家伙进高中之前就开始借贷补课了，进嵩阳高中后为了跟上大家的成绩，于是他又灵机一动，开始为了提升成绩以贷养贷，四处借钱吃药补课，强行激发潜力，最终不但钱越借越多，潜力也被渐渐榨干。"',
+      '"这逼养的是一个靠着平台借贷伪装的修仙天才。"',
+      '"甚至他妈都受不了他，最后一走了之了。"',
+      '算了算一共逾期的借货，张羽额头上立刻不断有冷汗冒了出来。',
+      '只因为他发现利滚利下来，张羽已经欠了各大平台总共七十多万的钱。',
+      '而再看了看自己的账户，总共只剩下五十多块钱了。',
+      '"竟然欠了七十万……靠！"',
+      '张羽猛地一拳捶在床上，怒道："这个世界里……就算对高中毕业的天之骄子来说，这也是一笔巨债啊。"',
+      '"怪不得这家伙沉迷什么乱七八糟的仪式……这就是个人生无望的借贷狗。"',
+      '"他自己爽够了，现在我来给他还债？"',
+      '与此同时，房间中的灯光骤然熄灭。',
+      '张羽在反复按了几次开关，又观察了一下其他邻居们的状况后，确定了一件事情……他被断电了。',
+      '"这破地方……"',
+      '"要是明天一早醒来就回去了，那就好了……"',
+      '脑中翻涌着各种乱七八糟的想法，张羽最终还是在床上昏昏沉沉地睡了过去。',
+      '而他的掌心上，原本透明的符号已被黑色填充了十分之一。'
+    ]
+  };
+
+  // 段评数（按段落顺序，截图逐段核对）：气泡颜色映射 >=80红 / 30-79橙红 / 10-29橙 / 3-9黄 / <3灰
+  var SECTION_COUNTS = [105, 21, 98, 39, 0, 67, 4, 74, 21, 18, 30, 33, 43, 10, 3, 75, 5, 257, 92, 21, 5, 1, 5, 163, 15, 0, 366, 7, 128, 3, 9, 139, 68, 133, 15, 27, 0, 125, 160, 268, 4, 54, 99, 65, 27, 36, 9, 25, 12, 4, 74, 17, 27, 55, 1, 1, 0, 1, 1, 278, 8, 0, 2, 22, 0, 0, 26, 27, 0, 4, 2, 16, 13, 0, 19, 33, 23, 8, 30, 36, 82, 20, 13, 29, 4, 0, 50, 5, 0, 1, 14, 9, 6, 16, 25, 0, 10, 19, 0, 3, 11, 17, 10, 0, 2, 0, 0, 0, 0, 18, 1, 17, 63, 13, 0, 7, 33, 0, 0, 47, 0, 35, 35, 56, 20, 0, 4, 59, 12, 4, 0, 253, 7, 1, 0, 16, 0, 64, 5, 0, 76, 28, 0, 0, 16, 25, 49, 18, 0, 0, 5, 0, 14, 0, 0, 0, 19, 3, 0, 0, 0, 1, 85, 9, 11, 0, 2, 7, 55, 1, 0, 0, 25, 3, 20, 28, 84, 0, 37, 0, 40, 21, 33, 93, 0, 0, 7, 5, 7, 89];
+
+  // 段评：每条字段 { id, paraIdx, user, level, content, time, likes, replies:[] }
+  function mkCommentList(){
+    var pool = [
+      {user:'叶良辰美奈奈何天', level:'lv-3', time:'2024-12-15 01:14:58',
+       content:'看了简介和角色卡，感觉非常抽象，那我必须尝尝咸淡 <span class="emo">😏</span>',
+       likes:2872,
+       replies:[
+         {user:'书友2021203141523', level:'lv-3', time:'2024-12-15 09:02:11', replyTo:'叶良辰美奈奈何天', content:'抽象派的代表作，建议收藏夹常驻。', likes:642},
+         {user:'星月夜的天空', level:'lv-2', time:'2024-12-16 12:31:02', content:'今天发现这张卡还能这么玩，属实是被你看懂了。', likes:128}
+       ]},
+      {user:'书友20200504145123995', level:'lv-3', time:'2024-12-26 18:26:23',
+       content:'我就知道道作君是有多颠才能写出这样的文采。',
+       likes:1694,
+       replies:[
+         {user:'书友20230719034202043', level:'lv-2', time:'2025-01-27 13:41:28', content:'我愿称之为今年最抽象的一部作品 <span class="emo">😂</span>', likes:245}
+       ]},
+      {user:'大天使薇曦雨', level:'lv-2', time:'2025-02-28 13:39:09',
+       content:'熊猫狗的该是起点最早一批写颠佬文的',
+       likes:217,
+       replies:[]},
+      {user:'书友2022113173654855', level:'lv-3', time:'2025-03-12 21:08:44',
+       content:'对我这种十五年老书虫来说，熊猫狗的颠佬之简直太友好了 <span class="emo">😭</span>',
+       likes:102,
+       replies:[]},
+      {user:'旧巷里的猫', level:'lv-1', time:'2025-04-03 10:15:00',
+       content:'这段笑死我了，妈妈打零工那段直戳泪点。',
+       likes:78,
+       replies:[]},
+      {user:'书友2024052619910221', level:'lv-4', time:'2025-05-09 22:41:12',
+       content:'面试官：你坐下吧。这一句封神，把整章的悲喜都兜住了。',
+       likes:445,
+       replies:[
+         {user:'金陵小土豆', level:'lv-2', time:'2025-05-10 08:11:42', content:'我读这一段也是头皮发麻，确实封神。', likes:96}
+       ]},
+      {user:'在南方的北方人', level:'lv-5', time:'2025-06-17 14:08:39',
+       content:'387.6这个数字写得太狠了，谁破防了我不说。',
+       likes:301,
+       replies:[]},
+      {user:'书友2025080618720451', level:'lv-2', time:'2025-08-21 19:33:50',
+       content:'这就是传说中的细节决定成败，387.6 比一万字都重。',
+       likes:88,
+       replies:[]}
+    ];
+    // 复制一些给更多段落做池子
+    return pool;
+  }
+  var SECTION_POOL = mkCommentList();
+
+  /* ---------- 正文来源判定 ----------
+     编辑器里若还是出厂说明文案（尚未创作），评论视角就展示内置示例章节，
+     这样默认打开即可看到与 Figma 一致的「带段评气泡的章节」；
+     作者一旦写了自己的正文，评论视角自动切换为作者的内容。 */
+  var USING_SAMPLE = true;
+  // 评论页是纯阅读视角：正文固定来自内置章节数据
+  function getParagraphs(){
+    USING_SAMPLE = true;
+    return CHAPTER.paragraphs.slice();
+  }
+
+  /* 段落数超过预设段评表时循环复用，保证每段都有气泡 */
+  function countOf(i){ return SECTION_COUNTS[i % SECTION_COUNTS.length] || 0; }
+
+  /* 每次渲染时按当前段落数重建段评库（列表最多展示 12 条，气泡显示真实总数） */
+  function buildSectionComments(total){
+    var out = [];
+    for(var i=0;i<total;i++){
+      var n = countOf(i);
+      var arr = [];
+      var show = Math.min(n, 12);
+      for(var k=0;k<show;k++){
+        var src = SECTION_POOL[(i*7 + k*3) % SECTION_POOL.length];
+        arr.push({
+          user: src.user,
+          level: src.level,
+          time: src.time,
+          content: src.content,
+          likes: Math.max(1, Math.floor(src.likes / (k+3)))
+        });
+      }
+      out.push({idx:i, count:n, items:arr});
+    }
+    return out;
+  }
+  var SECTION_DB = [];
+
+  // 1) 工具
+  function $(s, root){ return (root||document).querySelector(s); }
+  function $$(s, root){ return Array.prototype.slice.call((root||document).querySelectorAll(s)); }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+    });
+  }
+  function heatClass(n){
+    if(n>=80) return 'lv-red';
+    if(n>=30) return 'lv-orange-red';
+    if(n>=10) return 'lv-orange';
+    if(n>=3)  return 'lv-amber';
+    return 'lv-mute';
+  }
+  function avatarInitial(name){
+    // 中文取末字，英文取首字母
+    if(!name) return 'U';
+    var last = name.charAt(name.length-1);
+    if(/[一-龥]/.test(last)) return last;
+    return name.charAt(0).toUpperCase();
+  }
+  function avatarColor(seed){
+    var colors = ['#5C8AFF','#1E71EF','#9A6CFF','#1EBD8E','#FF7A45','#E84D2F','#14B8A6','#0EA5E9'];
+    var h=0; for(var i=0;i<seed.length;i++) h = (h*31 + seed.charCodeAt(i)) & 0xfffffff;
+    return colors[h % colors.length];
+  }
+  function fmtTime(t){
+    // 仅显示 MM-DD HH:mm，去掉年
+    var m = String(t).match(/(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/);
+    if(m){ return m[1]+'-'+m[2]+' '+m[3]+':'+m[4]; }
+    return t;
+  }
+
+  // 2) 渲染 reader（按段渲染，气泡挂在段落末尾）
+  function renderReader(){
+    var root = $('#paraList'); if(!root) return;
+    var paras = getParagraphs();
+    SECTION_DB = buildSectionComments(paras.length);
+
+    var html = paras.map(function(p, i){
+      var n = countOf(i);
+      var bubble = '';
+      if(n>0){
+        bubble = '<span class="para-bubble '+heatClass(n)+'" data-idx="'+i+'" title="查看本段 '+n+' 条评论">'+n+'</span>';
+      }
+      // 对话段（引号开头）不缩进，叙述段首行缩进 2 字符
+      var isDialog = /^["“'‘『「]/.test(p);
+      var cls = isDialog ? ' dialog' : '';
+      return '<p class="para'+cls+'" data-idx="'+i+'">'+escapeHtml(p)+bubble+'</p>';
+    }).join('');
+    root.innerHTML = html;
+
+    // 标题 / 作品名 / 作者：直接取内置章节数据
+    var tEl = $('#chapTitle'); if(tEl) tEl.textContent = CHAPTER.title;
+    var wkEl = $('#chapWork');   if(wkEl) wkEl.textContent = CHAPTER.meta.work;
+    var auEl = $('#chapAuthor'); if(auEl) auEl.textContent = CHAPTER.meta.author;
+
+    // 章节顶部章评数
+    var cb = $('#chapBubble'); if(cb) cb.textContent = CHAPTER.chapterCommentCount;
+
+    // 元信息里的字数：示例章节用 CHAPTER 演示值，作者自写则按当前正文实时计算
+    var wEl = $('#chapWords');
+    if(wEl) wEl.textContent = USING_SAMPLE
+      ? CHAPTER.meta.words
+      : paras.join('').replace(/\s/g,'').length;
+
+    // 本章段评总数：示例章节用 CHAPTER 演示值，自写则按 SECTION_DB 求和
+    var secTotal = SECTION_DB.reduce(function(a,b){ return a + b.count; }, 0);
+    var stEl = $('#chapSecTotal');
+    if(stEl) stEl.textContent = USING_SAMPLE ? CHAPTER.sectionCommentTotal : secTotal;
+
+    // 评论抽屉右上角计数（仅章评，段评数在头部独立展示）
+    var cc = $('#cmCount'); if(cc) cc.textContent = CHAPTER.chapterCommentCount;
+    // 右侧栏评论按钮徽章
+    var bg = $('#cmBadge'); if(bg) bg.textContent = CHAPTER.chapterCommentCount;
+
+    // 绑定气泡点击
+    $$('#paraList .para-bubble').forEach(function(b){
+      b.addEventListener('click', function(e){
+        e.stopPropagation();
+        var idx = +b.getAttribute('data-idx');
+        selectParagraph(idx);
+      });
+    });
+  }
+
+  // 3) 段选择联动：气泡→段落高亮 + 评论抽屉切换到段评
+  function selectParagraph(idx){
+    // （1）清空旧高亮，应用新高亮
+    $$('.para').forEach(function(el){ el.classList.remove('active'); });
+    var p = $('.para[data-idx="'+idx+'"]');
+    if(p){
+      p.classList.add('active');
+      p.scrollIntoView({behavior:'smooth', block:'center'});
+    }
+
+    // （2）评论抽屉进入「段评」视图
+    var drawer = $('#cmDrawer'); drawer.classList.add('open');
+    drawer.classList.add('parasec');
+    renderParagraphComments(idx);
+  }
+
+  // 4) 渲染段评列表（每个气泡点击）
+  function renderParagraphComments(idx){
+    var list = $('#cmList');
+    var sec = SECTION_DB[idx];
+    var title = '第'+(idx+1)+'段 · '+sec.count+' 条评论';
+    var pTag = '<div style="padding:8px 4px 12px;font-size:12.5px;color:var(--ink-64);border-bottom:1px dashed var(--ink-12);">'+title+'</div>';
+    var body = sec.items.map(function(c){
+      var avColor = avatarColor(c.user);
+      var lv = c.level ? '<span class="lv '+c.level+'">'+ ({
+        'lv-1':'学员','lv-2':'弟子','lv-3':'执事','lv-4':'堂主','lv-5':'舵主'
+      })[c.level] +'</span>' : '';
+      return '<div class="cm-item">'
+        + '<span class="av" style="background:'+avColor+'">'+escapeHtml(avatarInitial(c.user))+'</span>'
+        + '<div class="body">'
+        +   '<div class="nm-row"><span class="nm">'+escapeHtml(c.user)+'</span>'+lv+'</div>'
+        +   '<div class="content">'+c.content+'</div>'
+        +   '<div class="meta">'
+        +     '<span>'+fmtTime(c.time)+'</span>'
+        +     '<span class="like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 22V11M14 4l-2-2-2 2v7h6l2 5h-6"/></svg> '+c.likes+'</span>'
+        +     '<span class="reply">回复</span>'
+        +   '</div>'
+        + '</div></div>';
+    }).join('');
+    if(sec.items.length===0){
+      var pq = '<div class="cm-empty" style="padding:14px 4px;color:var(--ink-34);font-size:12.5px;">本段暂无段评，做第一个评论的人吧～</div>';
+      list.innerHTML = pTag + pq;
+    } else {
+      list.innerHTML = pTag + body;
+    }
+  }
+
+  // 5) 渲染全部评论（整章评论 = 主楼 3 条 + 总章评 621）
+  function renderAllComments(){
+    var list = $('#cmList');
+    // 总览：插入几段「章评」 + 显示段评入口提示
+    var intro = '<div style="padding:10px 4px 14px;font-size:12.5px;color:var(--ink-64);border-bottom:1px solid var(--ink-04);line-height:1.7;">'
+      + '<b style="color:var(--ink-92);">本章共有 '+CHAPTER.chapterCommentCount+' 条评论 / '+CHAPTER.sectionCommentTotal+' 条段评</b><br/>'
+      + '点击段落右侧的数字气泡，可查看该段的全部段评。'
+      + '</div>';
+    var top = SECTION_POOL.slice(0, 3).map(function(c){
+      var avColor = avatarColor(c.user);
+      var lv = c.level ? '<span class="lv '+c.level+'">'+({'lv-1':'学员','lv-2':'弟子','lv-3':'执事','lv-4':'堂主','lv-5':'舵主'})[c.level]+'</span>' : '';
+      var repBtn = (c.replies && c.replies.length)
+        ? '<span class="sub-toggle" data-n="'+c.replies.length+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg><b>展开 '+c.replies.length+' 条回复</b></span>'
+        : '';
+      var sub = '';
+      if(c.replies && c.replies.length){
+        sub = '<div class="cm-sub" style="display:none;">'
+          + c.replies.map(function(r){
+              var avC = avatarColor(r.user);
+              return '<div class="cm-item">'
+                + '<span class="av" style="background:'+avC+'">'+escapeHtml(avatarInitial(r.user))+'</span>'
+                + '<div class="body">'
+                +   '<div class="nm-row"><span class="nm">'+escapeHtml(r.user)+'</span>'
+                +     (r.level?'<span class="lv '+r.level+'">'+({'lv-1':'学员','lv-2':'弟子','lv-3':'执事','lv-4':'堂主','lv-5':'舵主'})[r.level]+'</span>':'')
+                +   '</div>'
+                +   '<div class="content"><span class="to">回复</span> <span class="to">@'+escapeHtml(r.replyTo)+'</span>：'+r.content+'</div>'
+                +   '<div class="meta">'
+                +     '<span>'+fmtTime(r.time)+'</span>'
+                +     '<span class="like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 22V11M14 4l-2-2-2 2v7h6l2 5h-6"/></svg> '+r.likes+'</span>'
+                +   '</div>'
+                + '</div></div>';
+            }).join('')
+          + '</div>';
+      }
+      return '<div class="cm-item">'
+        + '<span class="av" style="background:'+avColor+'">'+escapeHtml(avatarInitial(c.user))+'</span>'
+        + '<div class="body">'
+        +   '<div class="nm-row"><span class="nm">'+escapeHtml(c.user)+'</span>'+lv+'</div>'
+        +   '<div class="content">'+c.content+'</div>'
+        +   '<div class="meta">'
+        +     '<span>'+fmtTime(c.time)+'</span>'
+        +     '<span class="like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 22V11M14 4l-2-2-2 2v7h6l2 5h-6"/></svg> '+c.likes+'</span>'
+        +     '<span class="reply">回复</span>'
+        +   '</div>'
+        +   repBtn
+        +   sub
+        + '</div></div>';
+    }).join('');
+    var more = '<div class="cm-empty">— 已经到底啦 —</div>';
+    list.innerHTML = intro + top + more;
+
+    // 折叠/展开回复
+    $$('.sub-toggle').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var sub = btn.parentElement.querySelector('.cm-sub');
+        if(!sub) return;
+        var open = sub.style.display !== 'none';
+        var n = btn.getAttribute('data-n') || '0';
+        var ico = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
+        sub.style.display = open ? 'none' : 'block';
+        btn.classList.toggle('on', !open);
+        btn.innerHTML = ico + '<b>' + (open ? '展开 ' : '收起 ') + n + ' 条回复</b>';
+      });
+    });
+  }
+
+  // 6) 段评 tab
+  function renderParagraphsOverview(){
+    var list = $('#cmList');
+    var paras = getParagraphs();
+    var intro = '<div style="padding:10px 4px 14px;font-size:12.5px;color:var(--ink-64);border-bottom:1px solid var(--ink-04);line-height:1.7;">'
+      + '按热度列出本章各段的段评，点击任意一段可跳转并高亮：</div>';
+    var items = SECTION_DB.map(function(s){
+      var avColor = '#FF7A45';
+      var lvlClass = heatClass(s.count);
+      return '<div class="cm-item" data-goto="'+s.idx+'" style="cursor:pointer;">'
+        + '<span class="av" style="background:'+avColor+'">段</span>'
+        + '<div class="body">'
+        +   '<div class="nm-row"><span class="nm">第 '+(s.idx+1)+' 段</span>'
+        +     '<span class="para-bubble '+lvlClass+'" style="margin-left:auto;height:18px;padding:0 6px;font-size:11px;">'+s.count+'</span>'
+        +   '</div>'
+        +   '<div class="content" style="color:var(--ink-64);font-size:12.5px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;">'
+        +     escapeHtml(paras[s.idx] || '')+'</div>'
+        + '</div></div>';
+    }).join('');
+    list.innerHTML = intro + items;
+    $$('[data-goto]').forEach(function(el){
+      el.addEventListener('click', function(){
+        var idx = +el.getAttribute('data-goto');
+        selectParagraph(idx);
+      });
+    });
+  }
+
+  // 7) 模式控制：评论模式开关
+  var MODE_KEY = 'wb_comment_mode';
+  function setCommentMode(on){
+    document.body.classList.toggle('comment-mode', !!on);
+    var btn = $('#rrComments');
+    if(btn) btn.classList.toggle('active', !!on);
+    if(on){
+      // 每次进入都按编辑器最新内容重建阅读视图（段评气泡随之更新）
+      renderReader();
+      var drawer = $('#cmDrawer'); drawer.classList.add('open'); drawer.classList.remove('parasec');
+      // 默认全部 tab
+      switchCmTab('all');
+    } else {
+      // 关闭后清掉高亮
+      $$('.para').forEach(function(el){ el.classList.remove('active'); });
+    }
+    try{ localStorage.setItem(MODE_KEY, on?'1':'0'); }catch(e){}
+  }
+
+  function switchCmTab(name){
+    var tabAll = $('#cmTabAll'); var tabPara = $('#cmTabPara');
+    tabAll.classList.toggle('on', name==='all');
+    tabPara.classList.toggle('on', name==='para');
+    var drawer = $('#cmDrawer');
+    if(drawer.classList.contains('parasec')){
+      // 段落视图模式下 tab 切换保持段视图
+      return;
+    }
+    if(name==='all') renderAllComments();
+    else renderParagraphsOverview();
+  }
+
+  // 8) 初始化 + 事件绑定
+  function init(){
+    renderReader();
+
+    var btn = $('#rrComments');
+    btn.addEventListener('click', function(){
+      var on = !document.body.classList.contains('comment-mode');
+      setCommentMode(on);
+    });
+
+    $('#cmClose').addEventListener('click', function(){
+      setCommentMode(false);
+    });
+
+    $('#cmTabAll').addEventListener('click', function(){
+      var drawer = $('#cmDrawer'); drawer.classList.remove('parasec');
+      switchCmTab('all');
+    });
+    $('#cmTabPara').addEventListener('click', function(){
+      var drawer = $('#cmDrawer'); drawer.classList.remove('parasec');
+      switchCmTab('para');
+    });
+
+    $('#cmBack').addEventListener('click', function(){
+      var drawer = $('#cmDrawer'); drawer.classList.remove('parasec');
+      $$('.para').forEach(function(el){ el.classList.remove('active'); });
+      switchCmTab('all');
+    });
+
+    // 章评气泡 = 跳到全部评论
+    var cb = $('#chapBubble');
+    if(cb) cb.addEventListener('click', function(){
+      setCommentMode(true);
+      var drawer = $('#cmDrawer'); drawer.classList.remove('parasec');
+      switchCmTab('all');
+    });
+
+    // 评论页默认直接进入评论（阅读）模式；?cm=para-N 可直接定位到某段
+    setCommentMode(true);
+    var qsCm = null;
+    try{ qsCm = new URLSearchParams(location.search).get('cm'); }catch(e){}
+    if(qsCm && /^para-\d+$/.test(qsCm)){
+      var idx = +qsCm.split('-')[1];
+      setTimeout(function(){ selectParagraph(idx); }, 30);
+    }
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</script>
+</body>
+</html>

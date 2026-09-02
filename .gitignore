@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+.AppleDouble
+._*
+
+# 编辑器 / 日志
+*.log
+*.swp
+*~
+
+# 本地依赖（当前无，预留）
+node_modules/
