@@ -212,12 +212,14 @@
   /* 段评气泡默认隐藏；仅评论模式渲染（关掉评论=干净正文）*/
   /* 宽度按 3 位数字（最长"999"）固定对齐：width:36px 容纳 3 位 + 4px 边距余量，
      1 位/2 位数字也撑到 36px，让所有气泡视觉对齐 */
-  .para-bubble{display:none;align-items:center;justify-content:center;height:18px;width:36px;
+  /* 垂直居中：line-height=18px=容器高，align-items/justify-content 双 center，
+     去掉 vertical-align/transform 偏移（实测上 3px/下 4px 偏差 1px）*/
+  .para-bubble{display:none;align-items:center;justify-content:center;
+    height:18px;width:36px;line-height:18px;
     margin-left:4px;border-radius:9px;font-size:11px;font-weight:600;color:#fff;cursor:pointer;
-    vertical-align:baseline;transform:translateY(-1px);transition:transform .15s, box-shadow .15s;
-    user-select:none;font-family:var(--num);line-height:1;}
+    user-select:none;font-family:var(--num);}
   body.comment-mode .para-bubble{display:inline-flex;}
-  .para-bubble:hover{transform:translateY(-2px);box-shadow:0 4px 10px rgba(0,0,0,.18);}
+  .para-bubble:hover{box-shadow:0 4px 10px rgba(0,0,0,.18);}
   /* 热度分级：>=80 红、30-79 橙红、10-29 橙、3-9 黄、<3 灰 */
   .para-bubble.lv-red{background:#E84D2F;}
   .para-bubble.lv-orange-red{background:#FF7A45;}

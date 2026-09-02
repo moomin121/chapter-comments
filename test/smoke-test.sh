@@ -112,6 +112,14 @@ JS=$(cat <<'JSEOF'
   // --- 8. 评论模式下气泡宽度一致（CSS width:36px 固定，1/2/3 位数都同一宽度）---
   chk('气泡宽度1位数', Math.round($('.para[data-idx="6"] .para-bubble').getBoundingClientRect().width), 36);
   chk('气泡宽度3位数', Math.round($('.para[data-idx="0"] .para-bubble').getBoundingClientRect().width), 36);
+  // 气泡内数字垂直居中：上边距 == 下边距（差异 ≤ 1px）
+  var bubble0 = $('.para-bubble');
+  var rb = bubble0.getBoundingClientRect();
+  var rangeB = document.createRange(); rangeB.selectNodeContents(bubble0);
+  var rt = rangeB.getBoundingClientRect();
+  var topGap = Math.round(rt.top - rb.top);
+  var botGap = Math.round(rb.bottom - rt.bottom);
+  chk('气泡文字垂直居中(差≤1)', Math.abs(topGap - botGap) <= 1, true);
 
   // --- 9. 二级评论（楼中楼）布局对齐 Figma 稿 ---
   // 先展开第一个用户的回复
