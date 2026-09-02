@@ -164,7 +164,9 @@
 
   /* ============ 章节阅读视图（含段评气泡 / 评论抽屉） ============ */
   /* 章节头部（讨论热词 + 标题章评数 + 元信息） */
-  .chap-meta{display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:12px;color:var(--ink-64);flex-wrap:wrap;}
+  /* 章节头部元信息（讨论热词 + 章评总数）默认隐藏；仅评论模式显示 */
+  .chap-meta{display:none;align-items:center;gap:8px;margin-bottom:14px;font-size:12px;color:var(--ink-64);flex-wrap:wrap;}
+  body.comment-mode .chap-meta{display:flex;}
   .chap-meta .hot{display:flex;align-items:center;gap:5px;color:var(--ink-76);font-weight:500;}
   .chap-meta .hot svg{width:13px;height:13px;color:#FF7A45;}
   .chap-meta .hot-tag{background:#FFE7DC;color:#E84D2F;border-radius:10px;padding:2px 8px;font-size:11.5px;font-weight:500;}
@@ -175,10 +177,11 @@
   .chap-title-row{display:flex;align-items:center;gap:14px;margin-bottom:8px;}
   .chap-title{font-family:var(--wenkai);font-size:30px;font-weight:700;color:var(--ink);line-height:1.3;letter-spacing:.5px;}
   .chap-bubble{
-    display:inline-flex;align-items:center;justify-content:center;height:22px;min-width:32px;
+    display:none;align-items:center;justify-content:center;height:22px;min-width:32px;
     padding:0 8px;border-radius:11px;font-size:11.5px;color:#fff;font-weight:600;cursor:pointer;
     background:#E84D2F;transition:transform .15s, box-shadow .15s;user-select:none;font-family:var(--num);
   }
+  body.comment-mode .chap-bubble{display:inline-flex;}
   .chap-bubble:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(232,77,47,.35);}
 
   .chap-info{display:flex;align-items:center;gap:14px;font-size:12.5px;color:var(--ink-64);margin-bottom:28px;}
@@ -188,7 +191,8 @@
   .chap-info .sep{color:var(--ink-12);}
 
   /* 段落渲染（reader）：每段独立段落 + 行尾段评气泡 */
-  .reader{display:none;flex-direction:column;}
+  /* reader 始终显示（关评论模式时正文也要在，只是不显示气泡/抽屉）*/
+  .reader{display:flex;flex-direction:column;}
   .para-list{display:flex;flex-direction:column;gap:2px;}
   .para{
     position:relative;padding:8px 14px 8px 18px;border-radius:8px;cursor:default;
@@ -196,8 +200,9 @@
     text-indent:2em;margin:0;
     transition:background-color .22s ease, box-shadow .22s ease;
   }
-  /* 段落被点击时：背景高亮 */
-  .para.active{
+  /* 段落高亮默认无视觉；仅评论模式才出现选中态 */
+  .para.active{background:transparent;box-shadow:none;}
+  body.comment-mode .para.active{
     background:linear-gradient(90deg, rgba(255,121,80,.14) 0%, rgba(255,121,80,.05) 100%);
     box-shadow:inset 3px 0 0 #FF7A45;
   }
@@ -205,12 +210,12 @@
   .para.dialog{text-indent:0;}
   /* 评论里的 emoji */
   .emo{font-style:normal;}
-  .para-bubble{
-    display:inline-flex;align-items:center;justify-content:center;height:18px;min-width:22px;padding:0 6px;
+  /* 段评气泡默认隐藏；仅评论模式渲染（关掉评论=干净正文）*/
+  .para-bubble{display:none;align-items:center;justify-content:center;height:18px;min-width:22px;padding:0 6px;
     margin-left:4px;border-radius:9px;font-size:11px;font-weight:600;color:#fff;cursor:pointer;
     vertical-align:baseline;transform:translateY(-1px);transition:transform .15s, box-shadow .15s;
-    user-select:none;font-family:var(--num);line-height:1;
-  }
+    user-select:none;font-family:var(--num);line-height:1;}
+  body.comment-mode .para-bubble{display:inline-flex;}
   .para-bubble:hover{transform:translateY(-2px);box-shadow:0 4px 10px rgba(0,0,0,.18);}
   /* 热度分级：>=80 红、30-79 橙红、10-29 橙、3-9 黄、<3 灰 */
   .para-bubble.lv-red{background:#E84D2F;}
@@ -323,8 +328,7 @@
   }
   .rr-btn.active{background:var(--brand-weak);color:var(--brand);}
 
-  /* 阅读模式：textarea 隐藏，reader 显示 */
-  body.comment-mode .reader{display:flex;}
+  /* 阅读模式：reader 始终显示，评论相关元素按 comment-mode 单独控制 */
   body.comment-mode .body-input{display:none;}
   body.comment-mode .title-input{display:none;}
   /* 评论模式下隐藏写作工具浮层（专注监测 / 字数统计 / 设置弹层），让读者视角聚焦评论 */

@@ -88,6 +88,23 @@ JS=$(cat <<'JSEOF'
   var rail2 = $('.rightrail').getBoundingClientRect();
   chk('图标栏贴右(抽屉关)', Math.round(innerWidth - rail2.right), 0);
 
+  // --- 7. 评论模式开关（toggle）：关闭后正文仍可见、气泡/抽屉/讨论热词/章评都隐藏 ---
+  // 此时 comment-mode 应为 false（cmClose 已关闭）
+  chk('评论按钮不再激活', $('#rrComments').classList.contains('active'), false);
+  chk('正文仍可见(关闭)', getComputedStyle($('.para')).display, 'block');
+  chk('段评气泡隐藏(关闭)', getComputedStyle($('.para-bubble')).display, 'none');
+  chk('讨论热词隐藏(关闭)', getComputedStyle($('.chap-meta')).display, 'none');
+  chk('章评胶囊隐藏(关闭)', getComputedStyle($('#chapBubble')).display, 'none');
+  chk('抽屉宽度为0(关闭)', Math.round($('#cmDrawer').getBoundingClientRect().width), 0);
+
+  // 再次点 #rrComments → 重新开启，全部恢复
+  $('#rrComments').click();
+  chk('评论模式重开', document.body.classList.contains('comment-mode'), true);
+  chk('评论按钮重新激活', $('#rrComments').classList.contains('active'), true);
+  chk('段评气泡重新显示', getComputedStyle($('.para-bubble')).display, 'inline-flex');
+  chk('讨论热词重新显示', getComputedStyle($('.chap-meta')).display, 'flex');
+  chk('抽屉展开', $('#cmDrawer').classList.contains('open'), true);
+
   return out.join('\n');
 })()
 JSEOF
