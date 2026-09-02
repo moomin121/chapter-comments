@@ -170,33 +170,47 @@ CHAPTER 数据来自起点章节页截图，OCR **三轮交叉验证**后仍有 
 
 ## 验证方法
 
-**改完一定要跑像素探针，不要只截图看**：
+### 首选：跑冒烟测试（改完必做）
 
 ```bash
-# 起服务
+cd chapter-comments
+./test/smoke-test.sh
+```
+
+`test/smoke-test.sh` 会自动起静态服务器、开浏览器、跑 16 项断言，全绿才退出码 0。覆盖：
+
+| 类别 | 断言 |
+|---|---|
+| 数据完整性 | 190 段 / 145 气泡 / 章评 621 / 段评总数 5744 / 标题 / 作品名 / 作者 |
+| 布局铁律 | 图标栏贴右 gap==0（**抽屉开、关两种状态各验一次**） |
+| 零值段 | idx=4（零值段）无气泡；idx=17（257 条）有气泡 |
+| 交互 | 点击气泡 → 高亮段 idx==17、抽屉切段评视图、标题含"第18段" |
+| 段评 tab | 列出全部 190 项 |
+
+**加新功能时同步往这个脚本里加断言**，别只手动点两下就说完成。
+
+### 手工探针（调试用）
+
+需要临时验证时：
+
+```bash
 cd /Users/moomin/WorkBuddy/编辑器 && python3 server.py 8210
-
-# 打开页面
 agent-browser open "http://127.0.0.1:8210/chapter-comments/index.html"
+agent-browser eval "document.querySelectorAll('.para').length"
 ```
 
-然后用 `agent-browser eval` 做断言式检查：
+要点：
+- **布局问题必须用 `getBoundingClientRect()` 量像素**，不要只看截图——抽屉 360px 加图标栏 48px 连成一片，肉眼会误判成"已经贴右了"
+- `.para-bubble[data-idx="17"]` 这类选择器在 shell 里引号容易冲突，用 `eval` + 转义双引号，或直接用 `?cm=para-N` URL 参数更可靠
 
-```js
-// 1) 数据完整性
-document.querySelectorAll('.para').length        // 应为 190
-document.querySelectorAll('.para-bubble').length // 应为 145
+## 开发流程规范（用户 agent.md 明确要求）
 
-// 2) 布局铁律（抽屉开关两种状态都要 0）
-var r = document.querySelector('.rightrail').getBoundingClientRect();
-innerWidth - r.right                             // 应为 0
+1. **每次改动后必须创建对应的 Git commit** —— 一个逻辑改动一个 commit，方便追踪和回滚
+2. **每次改动后必须编写或更新测试，交付前跑通全部验证** —— 即上面的 `./test/smoke-test.sh`
 
-// 3) 交互
-document.querySelector('.para-bubble[data-idx="17"]').click();
-document.querySelector('.para.active').dataset.idx  // 应为 "17"
-```
-
-`.para-bubble[data-idx="17"]` 这类选择器在 shell 里引号容易冲突，建议用 `eval` + 转义双引号，或直接用 `?cm=para-N` URL 参数，更可靠。
+本机 git 注意事项：
+- 全局未配 `user.name`/`user.email`，本仓库已用局部配置（`moomin` / `moomin@local`）
+- 提交时加 `-c commit.gpgsign=false`，本机未配 GPG 签名，否则提交会失败
 
 ## 交接状态（截至 2026-09-02）
 
