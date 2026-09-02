@@ -52,6 +52,17 @@ JS=$(cat <<'JSEOF'
   chk('作品名', $('#chapWork').textContent, '没钱修什么仙？');
   chk('作者', $('#chapAuthor').textContent, '熊狼狗');
 
+  // --- 1b. 左侧目录（Figma 稿）---
+  chk('左栏分组数', $$('.lp-group').length, 2);
+  chk('左栏章节项数', $$('.lp-item').length, 16);
+  chk('左栏第一分组', $('.lp-group:nth-of-type(1) .nm').textContent, '作品相关');
+  chk('左栏第二分组', $('.lp-group:nth-of-type(2) .nm').textContent, '正文卷');
+  chk('左栏激活章节', $('.lp-item.active .nm').textContent, '第1章 面试');
+  chk('左栏激活字数', $('.lp-item.active .wc').textContent, '3359');
+  chk('左栏已完成章(1-6)', $$('.lp-item.done').length, 6);
+  chk('左栏带图章节(第8章)', $$('.lp-item .pic').length, 1);
+  chk('左栏无残留作品选择器', !!document.querySelector('.lp-book'), false);
+
   // --- 2. 布局铁律：抽屉展开时图标栏贴右 ---
   var rail = $('.rightrail').getBoundingClientRect();
   chk('图标栏贴右(抽屉开)', Math.round(innerWidth - rail.right), 0);
