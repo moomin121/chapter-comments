@@ -88,6 +88,10 @@ JS=$(cat <<'JSEOF'
   var rail2 = $('.rightrail').getBoundingClientRect();
   chk('图标栏贴右(抽屉关)', Math.round(innerWidth - rail2.right), 0);
 
+  // --- 6b. 段落首行缩进（无论 comment-mode 都生效；font-size 20px × 2em = 40px）---
+  chk('首段缩进(2em)', getComputedStyle($('.para')).textIndent, '40px');
+  chk('对话段也缩进', getComputedStyle($('.para.dialog')).textIndent, '40px');
+
   // --- 7. 评论模式开关（toggle）：关闭后正文仍可见、气泡/抽屉/讨论热词/章评都隐藏 ---
   // 此时 comment-mode 应为 false（cmClose 已关闭）
   chk('评论按钮不再激活', $('#rrComments').classList.contains('active'), false);
@@ -104,6 +108,10 @@ JS=$(cat <<'JSEOF'
   chk('段评气泡重新显示', getComputedStyle($('.para-bubble')).display, 'inline-flex');
   chk('讨论热词重新显示', getComputedStyle($('.chap-meta')).display, 'flex');
   chk('抽屉展开', $('#cmDrawer').classList.contains('open'), true);
+
+  // --- 8. 评论模式下气泡宽度一致（CSS width:36px 固定，1/2/3 位数都同一宽度）---
+  chk('气泡宽度1位数', Math.round($('.para[data-idx="6"] .para-bubble').getBoundingClientRect().width), 36);
+  chk('气泡宽度3位数', Math.round($('.para[data-idx="0"] .para-bubble').getBoundingClientRect().width), 36);
 
   return out.join('\n');
 })()

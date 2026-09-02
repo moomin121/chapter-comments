@@ -206,12 +206,13 @@
     background:linear-gradient(90deg, rgba(255,121,80,.14) 0%, rgba(255,121,80,.05) 100%);
     box-shadow:inset 3px 0 0 #FF7A45;
   }
-  /* 对话段落（以引号开头）不额外缩进，保持原文观感 */
-  .para.dialog{text-indent:0;}
+  /* 对话段落（以引号开头）不加额外 class 缩进处理，与叙述段一致首行缩进 2em */
   /* 评论里的 emoji */
   .emo{font-style:normal;}
   /* 段评气泡默认隐藏；仅评论模式渲染（关掉评论=干净正文）*/
-  .para-bubble{display:none;align-items:center;justify-content:center;height:18px;min-width:22px;padding:0 6px;
+  /* 宽度按 3 位数字（最长"999"）固定对齐：width:36px 容纳 3 位 + 4px 边距余量，
+     1 位/2 位数字也撑到 36px，让所有气泡视觉对齐 */
+  .para-bubble{display:none;align-items:center;justify-content:center;height:18px;width:36px;
     margin-left:4px;border-radius:9px;font-size:11px;font-weight:600;color:#fff;cursor:pointer;
     vertical-align:baseline;transform:translateY(-1px);transition:transform .15s, box-shadow .15s;
     user-select:none;font-family:var(--num);line-height:1;}
