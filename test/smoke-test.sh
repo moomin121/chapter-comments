@@ -113,6 +113,23 @@ JS=$(cat <<'JSEOF'
   chk('气泡宽度1位数', Math.round($('.para[data-idx="6"] .para-bubble').getBoundingClientRect().width), 36);
   chk('气泡宽度3位数', Math.round($('.para[data-idx="0"] .para-bubble').getBoundingClientRect().width), 36);
 
+  // --- 9. 二级评论（楼中楼）布局对齐 Figma 稿 ---
+  // 先展开第一个用户的回复
+  var subToggle = $('.sub-toggle');
+  if(subToggle) subToggle.click();
+  var firstMain = $$('.cm-list > .cm-item');
+  if(firstMain[0]){
+    var subItems = firstMain[0].querySelectorAll('.cm-sub .cm-item');
+    chk('主评论头像32px', Math.round(firstMain[0].querySelector('.av').getBoundingClientRect().width), 32);
+    chk('二级评论头像24px', Math.round(subItems[0]?.querySelector('.av').getBoundingClientRect().width), 24);
+    // 头像顶对齐名字顶（不是垂直居中）
+    chk('头像顶对齐名字顶', Math.round(subItems[0]?.querySelector('.av').getBoundingClientRect().top), Math.round(subItems[0]?.querySelector('.nm').getBoundingClientRect().top));
+    // 二级评论无横线分隔
+    chk('二级评论无border-bottom', getComputedStyle(subItems[0]).borderBottomWidth, '0px');
+  } else {
+    chk('主评论存在', false, true);
+  }
+
   return out.join('\n');
 })()
 JSEOF
