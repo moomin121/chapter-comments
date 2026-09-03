@@ -7,6 +7,7 @@
 # 覆盖：
 #   1. 数据完整性 — 190 段 / 145 气泡 / 章评 621 / 段评 5744
 #   2. 布局铁律   — 右侧图标栏贴 viewport 最右（抽屉开、关两种状态 gap 都必须为 0）
+#   3. Figma 对齐 — 左栏、标题区、工具栏、右侧栏入口与设计稿一致
 #   3. 交互       — 点击气泡高亮对应段、抽屉切段评视图、段评 tab 列出 190 项
 #   4. 零值段     — count 为 0 的段不渲染气泡
 set -uo pipefail
@@ -24,7 +25,7 @@ trap 'kill $SERVER_PID 2>/dev/null; wait $SERVER_PID 2>/dev/null; $BROWSER close
 sleep 1.5
 
 if ! curl -s -o /dev/null -w '%{http_code}' "$URL" | grep -q 200; then
-  echo "✗ 服务器未起来（$URL）"; exit 1
+  echo "FAIL: server did not start ($URL)"; exit 1
 fi
 
 # ---------- 打开页面 ----------
@@ -45,12 +46,12 @@ JS=$(cat <<'JSEOF'
   // --- 1. 数据完整性 ---
   chk('段落数', $$('.para').length, 190);
   chk('段评气泡数', $$('.para-bubble').length, 145);
-  chk('章评数(标题气泡)', $('#chapBubble').textContent, 621);
   chk('章评数(抽屉标题)', $('#cmCount').textContent, 621);
   chk('段评总数', $('#chapSecTotal').textContent, 5744);
   chk('章节标题', $('#chapTitle').textContent, '第1章 面试');
-  chk('作品名', $('#chapWork').textContent, '没钱修什么仙？');
-  chk('作者', $('#chapAuthor').textContent, '熊狼狗');
+  chk('发布时间', $('#chapPublishedAt').textContent, '2023-07-31 19:26');
+  chk('章节类型', $('#chapVisibility').textContent, '公众章节');
+  chk('标题章评胶囊隐藏', getComputedStyle($('#chapBubble')).display, 'none');
 
   // --- 1b. 左侧目录（Figma 稿）---
   chk('左栏分组数', $$('.lp-group').length, 2);
@@ -60,8 +61,18 @@ JS=$(cat <<'JSEOF'
   chk('左栏激活章节', $('.lp-item.active .nm').textContent, '第1章 面试');
   chk('左栏激活字数', $('.lp-item.active .wc').textContent, '3359');
   chk('左栏已完成章(1-6)', $$('.lp-item.done').length, 6);
+  chk('左栏子章节无圆点(7-16)', $$('.lp-item.no-glyph').length, 10);
   chk('左栏带图章节(第8章)', $$('.lp-item .pic').length, 1);
   chk('左栏无残留作品选择器', !!document.querySelector('.lp-book'), false);
+
+  // --- 1c. 顶部工具栏与右侧栏（Figma 稿）---
+  chk('工具栏高度48', Math.round($('.toolbar').getBoundingClientRect().height), 48);
+  chk('修改按钮文案', $('.tb-publish').textContent.trim(), '修改');
+  chk('修改按钮宽度102', Math.round($('.tb-publish').getBoundingClientRect().width), 102);
+  chk('专注监测隐藏', getComputedStyle($('#camPill')).display, 'none');
+  chk('右侧栏评论无徽章', !!$('#rrComments .badge'), false);
+  chk('右侧栏双栏在评论前', $$('.rightrail .rr-btn').map(function(el){return el.textContent.trim();}).join('>').indexOf('双栏>评论') >= 0, true);
+  chk('右侧栏包含妙笔', $$('.rightrail .rr-btn').some(function(el){return el.textContent.trim()==='妙笔';}), true);
 
   // --- 2. 布局铁律：抽屉展开时图标栏贴右 ---
   var rail = $('.rightrail').getBoundingClientRect();
@@ -106,7 +117,7 @@ JS=$(cat <<'JSEOF'
   chk('评论模式重开', document.body.classList.contains('comment-mode'), true);
   chk('评论按钮重新激活', $('#rrComments').classList.contains('active'), true);
   chk('段评气泡重新显示', getComputedStyle($('.para-bubble')).display, 'inline-flex');
-  chk('讨论热词重新显示', getComputedStyle($('.chap-meta')).display, 'flex');
+  chk('讨论热词保持隐藏', getComputedStyle($('.chap-meta')).display, 'none');
   chk('抽屉展开', $('#cmDrawer').classList.contains('open'), true);
 
   // --- 8. 评论模式下气泡宽度一致（CSS width:36px 固定，1/2/3 位数都同一宽度）---
