@@ -209,22 +209,20 @@
   /* 评论里的 emoji */
   .emo{font-style:normal;}
   /* 段评气泡默认隐藏；仅评论模式渲染（关掉评论=干净正文）*/
-  /* 宽度按 3 位数字（最长"999"）固定对齐：width:36px 容纳 3 位 + 4px 边距余量，
-     1 位/2 位数字也撑到 36px，让所有气泡视觉对齐 */
-  /* 垂直居中：line-height=18px=容器高，align-items/justify-content 双 center，
-     去掉 vertical-align/transform 偏移（实测上 3px/下 4px 偏差 1px）*/
+  /* 参考章节正文里的描边角标：数字按内容自适应，flex 居中避免偏上。*/
   .para-bubble{display:none;align-items:center;justify-content:center;
-    height:18px;width:36px;line-height:18px;
-    margin-left:4px;border-radius:9px;font-size:11px;font-weight:600;color:#fff;cursor:pointer;
-    user-select:none;font-family:var(--num);}
+    box-sizing:border-box;height:18px;min-width:18px;width:auto;line-height:16px;padding:0 3px;
+    margin-left:4px;border-radius:3px;border:1px solid currentColor;background:rgba(255,255,255,.7);
+    font-size:11px;font-weight:600;color:#ff3b4f;cursor:pointer;text-indent:0;
+    user-select:none;font-family:var(--num);font-variant-numeric:tabular-nums;vertical-align:baseline;}
   body.comment-mode .para-bubble{display:inline-flex;}
-  .para-bubble:hover{box-shadow:0 4px 10px rgba(0,0,0,.18);}
-  /* 热度分级：>=80 红、30-79 橙红、10-29 橙、3-9 黄、<3 灰 */
-  .para-bubble.lv-red{background:#E84D2F;}
-  .para-bubble.lv-orange-red{background:#FF7A45;}
-  .para-bubble.lv-orange{background:#FFA12C;}
-  .para-bubble.lv-amber{background:#FFC12C;color:#7A4A00;}
-  .para-bubble.lv-mute{background:#C9CDD4;color:#fff;}
+  .para-bubble:hover{background:#fff;box-shadow:0 2px 5px rgba(255,59,79,.18);}
+  /* 热度分级：10 条及以上红色强调，个位数采用参考图里的灰色描边。 */
+  .para-bubble.lv-red,
+  .para-bubble.lv-orange-red,
+  .para-bubble.lv-orange{color:#ff3b4f;background:rgba(255,255,255,.7);}
+  .para-bubble.lv-amber,
+  .para-bubble.lv-mute{color:#6f737a;background:rgba(255,255,255,.58);}
 
   /* 评论抽屉（默认折叠）；展开为评论主区域。
      order:让 leftpanel(-2) < center(0 默认) < cm-drawer(1) < rightrail(2)，
