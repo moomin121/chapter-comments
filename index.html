@@ -247,16 +247,38 @@
   .cm-hd .cm-close:hover{background:var(--ink-04);color:var(--ink);}
 
   .cm-toolbar{
-    display:flex;align-items:center;gap:14px;padding:6px 18px 10px;
+    display:flex;align-items:center;gap:14px;padding:8px 18px 10px;
     border-bottom:1px solid var(--line);font-size:13px;color:var(--ink-64);flex:0 0 auto;
   }
+  .cm-toolbar .cm-sort{display:flex;align-items:center;gap:14px;min-width:0;}
   .cm-toolbar .cm-tab{cursor:pointer;padding-bottom:6px;}
   .cm-toolbar .cm-tab.on{color:var(--ink-92);font-weight:600;box-shadow:inset 0 -2px 0 var(--brand);}
+  .cm-toolbar .cm-filter{
+    margin-left:auto;width:28px;height:28px;border:0;background:transparent;color:var(--ink-64);
+    display:flex;align-items:center;justify-content:center;border-radius:6px;cursor:pointer;padding:0;
+  }
+  .cm-toolbar .cm-filter:hover{background:var(--ink-04);color:var(--brand);}
+  .cm-toolbar .cm-filter.on{background:var(--brand-weak);color:var(--brand);}
+  .cm-toolbar .cm-filter svg{width:16px;height:16px;}
   .cm-toolbar .cm-back{
     display:none;align-items:center;gap:4px;cursor:pointer;color:var(--brand);font-size:12.5px;font-weight:500;
   }
   .cm-toolbar .cm-back svg{width:12px;height:12px;}
   .cm-drawer.parasec .cm-toolbar .cm-back{display:inline-flex;}
+  .cm-drawer.parasec .cm-toolbar .cm-sort,
+  .cm-drawer.parasec .cm-toolbar .cm-filter,
+  .cm-drawer.parasec .cm-tags{display:none;}
+
+  .cm-tags{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 18px;
+    border-bottom:1px solid var(--line);background:var(--panel);flex:0 0 auto;
+  }
+  .cm-tag{
+    height:24px;padding:0 9px;border-radius:12px;border:1px solid rgba(20,30,41,.08);
+    background:var(--ink-04);color:var(--ink-64);font-size:12px;line-height:22px;cursor:pointer;
+  }
+  .cm-tag:hover{color:var(--brand);border-color:rgba(30,113,239,.22);}
+  .cm-tag.on{background:var(--brand-weak);border-color:rgba(30,113,239,.34);color:var(--brand);font-weight:600;}
 
   .cm-list{flex:1;overflow-y:auto;padding:10px 14px 14px;}
   .cm-list::-webkit-scrollbar{width:8px;}
@@ -268,9 +290,18 @@
 
   .cm-item{display:flex;gap:10px;padding:12px 4px;border-bottom:1px solid var(--ink-04);align-items:flex-start;}
   .cm-item:last-child{border-bottom:none;}
+  .cm-item.main-comment{
+    display:grid;grid-template-columns:32px minmax(0,1fr);column-gap:10px;row-gap:8px;
+  }
+  .cm-item.main-comment .cm-quote{grid-column:1 / -1;}
   .cm-item .av{
     flex:0 0 32px;width:32px;height:32px;border-radius:50%;
     display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:13px;
+  }
+  .cm-quote{
+    padding:9px 10px;border-radius:6px;background:var(--ink-04);color:var(--ink-49);
+    font-size:12.5px;line-height:1.65;display:-webkit-box;-webkit-line-clamp:2;
+    -webkit-box-orient:vertical;overflow:hidden;
   }
   .cm-item .body{flex:1;min-width:0;}
   .cm-item .nm-row{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
@@ -508,9 +539,16 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
           返回全部评论
         </span>
-        <span class="cm-tab on" id="cmTabAll">全部</span>
-        <span class="cm-tab" id="cmTabPara">段评</span>
+        <span class="cm-sort" id="cmSort">
+          <span class="cm-tab on" data-sort="default" id="cmSortDefault">默认</span>
+          <span class="cm-tab" data-sort="hot" id="cmSortHot">最热</span>
+          <span class="cm-tab" data-sort="latest" id="cmSortLatest">最新</span>
+        </span>
+        <button class="cm-filter" id="cmFilterBtn" title="筛选评论" aria-label="筛选评论">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16l-6 7v5l-4 2v-7z"/></svg>
+        </button>
       </div>
+      <div class="cm-tags" id="cmTags" aria-label="评论标签"></div>
       <div class="cm-list" id="cmList"></div>
       <div class="cm-input">
         <span class="av">我</span>
@@ -831,6 +869,23 @@ CHAPTER_TREE.forEach(renderFolder);
     return pool;
   }
   var SECTION_POOL = mkCommentList();
+  var COMMENT_TAGS = [
+    {name:'全部', count:621, active:true},
+    {name:'抽象', count:126},
+    {name:'角色卡', count:88},
+    {name:'作者', count:64},
+    {name:'文采', count:42},
+    {name:'面试', count:39}
+  ];
+  var COMMENT_QUOTES = [
+    '看了简介和角色卡，感觉非常抽象，那我必须尝尝咸淡。',
+    '我就知道道作君是有多颠才能写出这样的文采。',
+    '熊猫狗的该是起点最早一批写颠佬文的。',
+    '对我这种十五年老书虫来说，熊猫狗的颠佬之简直太友好了。',
+    '这段笑死我了，妈妈打零工那段直戳泪点。',
+    '面试官：你坐下吧。这一句封神，把整章的悲喜都兜住了。'
+  ];
+  var currentCommentSort = 'default';
 
   /* ---------- 正文来源判定 ----------
      编辑器里若还是出厂说明文案（尚未创作），评论视角就展示内置示例章节，
@@ -901,6 +956,36 @@ CHAPTER_TREE.forEach(renderFolder);
     var m = String(t).match(/(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/);
     if(m){ return m[1]+'-'+m[2]+' '+m[3]+':'+m[4]; }
     return t;
+  }
+  function renderCommentTags(){
+    var tags = $('#cmTags');
+    if(!tags) return;
+    tags.innerHTML = COMMENT_TAGS.map(function(t){
+      return '<span class="cm-tag'+(t.active?' on':'')+'" data-tag="'+escapeHtml(t.name)+'">'
+        + escapeHtml(t.name)+' '+t.count+'</span>';
+    }).join('');
+    $$('.cm-tag', tags).forEach(function(tag){
+      tag.addEventListener('click', function(){
+        $$('.cm-tag', tags).forEach(function(t){ t.classList.remove('on'); });
+        tag.classList.add('on');
+      });
+    });
+  }
+  function setCommentSort(sort){
+    currentCommentSort = sort || 'default';
+    $$('#cmSort .cm-tab').forEach(function(tab){
+      tab.classList.toggle('on', tab.getAttribute('data-sort') === currentCommentSort);
+    });
+    renderAllComments();
+  }
+  function sortComments(list){
+    var sorted = list.slice();
+    if(currentCommentSort === 'hot'){
+      sorted.sort(function(a,b){ return b.likes - a.likes; });
+    } else if(currentCommentSort === 'latest'){
+      sorted.sort(function(a,b){ return String(b.time).localeCompare(String(a.time)); });
+    }
+    return sorted;
   }
 
   // 2) 渲染 reader（按段渲染，气泡挂在段落末尾）
@@ -1003,12 +1088,14 @@ CHAPTER_TREE.forEach(renderFolder);
   // 5) 渲染全部评论（整章评论 = 主楼 3 条 + 总章评 621）
   function renderAllComments(){
     var list = $('#cmList');
+    renderCommentTags();
     // 总览：插入几段「章评」 + 显示段评入口提示
     var intro = '<div style="padding:10px 4px 14px;font-size:12.5px;color:var(--ink-64);border-bottom:1px solid var(--ink-04);line-height:1.7;">'
       + '<b style="color:var(--ink-92);">本章共有 '+CHAPTER.chapterCommentCount+' 条评论 / '+CHAPTER.sectionCommentTotal+' 条段评</b><br/>'
       + '点击段落右侧的数字气泡，可查看该段的全部段评。'
       + '</div>';
-    var top = SECTION_POOL.slice(0, 3).map(function(c){
+    var top = sortComments(SECTION_POOL.slice(0, 6)).map(function(c){
+      var quoteIndex = SECTION_POOL.indexOf(c);
       var avColor = avatarColor(c.user);
       var lv = c.level ? '<span class="lv '+c.level+'">'+({'lv-1':'学员','lv-2':'弟子','lv-3':'执事','lv-4':'堂主','lv-5':'舵主'})[c.level]+'</span>' : '';
       var repBtn = (c.replies && c.replies.length)
@@ -1034,7 +1121,8 @@ CHAPTER_TREE.forEach(renderFolder);
             }).join('')
           + '</div>';
       }
-      return '<div class="cm-item">'
+      return '<div class="cm-item main-comment">'
+        + '<div class="cm-quote">'+escapeHtml(COMMENT_QUOTES[quoteIndex % COMMENT_QUOTES.length])+'</div>'
         + '<span class="av" style="background:'+avColor+'">'+escapeHtml(avatarInitial(c.user))+'</span>'
         + '<div class="body">'
         +   '<div class="nm-row"><span class="nm">'+escapeHtml(c.user)+'</span>'+lv+'</div>'
@@ -1114,16 +1202,12 @@ CHAPTER_TREE.forEach(renderFolder);
   }
 
   function switchCmTab(name){
-    var tabAll = $('#cmTabAll'); var tabPara = $('#cmTabPara');
-    tabAll.classList.toggle('on', name==='all');
-    tabPara.classList.toggle('on', name==='para');
     var drawer = $('#cmDrawer');
     if(drawer.classList.contains('parasec')){
       // 段落视图模式下 tab 切换保持段视图
       return;
     }
-    if(name==='all') renderAllComments();
-    else renderParagraphsOverview();
+    renderAllComments();
   }
 
   // 8) 初始化 + 事件绑定
@@ -1140,13 +1224,14 @@ CHAPTER_TREE.forEach(renderFolder);
       setCommentMode(false);
     });
 
-    $('#cmTabAll').addEventListener('click', function(){
-      var drawer = $('#cmDrawer'); drawer.classList.remove('parasec');
-      switchCmTab('all');
+    $$('#cmSort .cm-tab').forEach(function(tab){
+      tab.addEventListener('click', function(){
+        var drawer = $('#cmDrawer'); drawer.classList.remove('parasec');
+        setCommentSort(tab.getAttribute('data-sort'));
+      });
     });
-    $('#cmTabPara').addEventListener('click', function(){
-      var drawer = $('#cmDrawer'); drawer.classList.remove('parasec');
-      switchCmTab('para');
+    $('#cmFilterBtn').addEventListener('click', function(){
+      this.classList.toggle('on');
     });
 
     $('#cmBack').addEventListener('click', function(){

@@ -8,7 +8,7 @@
 #   1. 数据完整性 — 190 段 / 145 气泡 / 章评 621 / 段评 5744
 #   2. 布局铁律   — 右侧图标栏贴 viewport 最右（抽屉开、关两种状态 gap 都必须为 0）
 #   3. Figma 对齐 — 左栏、标题区、工具栏、右侧栏入口与设计稿一致
-#   3. 交互       — 点击气泡高亮对应段、抽屉切段评视图、段评 tab 列出 190 项
+#   4. 评论面板   — 排序、标签云、筛选入口、一级评论原文引用
 #   4. 零值段     — count 为 0 的段不渲染气泡
 set -uo pipefail
 
@@ -89,10 +89,27 @@ JS=$(cat <<'JSEOF'
   chk('抽屉切段评视图', $('#cmDrawer').classList.contains('parasec'), true);
   chk('段评视图标题', ($('.cm-list').textContent||'').indexOf('第18段') >= 0, true);
 
-  // --- 5. 段评 tab ---
+  // --- 5. 评论面板：排序、标签云、筛选入口、一级评论引用 ---
   $('#cmBack').click();
-  $('#cmTabPara').click();
-  chk('段评tab列出全部段', $$('#cmList [data-goto]').length, 190);
+  chk('排序项', $$('#cmSort .cm-tab').map(function(el){return el.textContent.trim();}).join('/'), '默认/最热/最新');
+  chk('默认排序选中', $('#cmSortDefault').classList.contains('on'), true);
+  chk('筛选按钮存在', !!$('#cmFilterBtn'), true);
+  chk('筛选按钮在右侧', $('#cmFilterBtn').getBoundingClientRect().left > $('#cmSort').getBoundingClientRect().right, true);
+  chk('标签云数量', $$('.cm-tag').length, 6);
+  chk('标签云默认全部', $('.cm-tag.on').textContent.trim(), '全部 621');
+  chk('一级评论数量', $$('.cm-list > .main-comment').length, 6);
+  chk('一级评论都有引用', $$('.cm-list > .main-comment .cm-quote').length, 6);
+  var quoteStyle = getComputedStyle($('.cm-quote'));
+  var quoteMaxHeight = parseFloat(quoteStyle.lineHeight) * 2 + parseFloat(quoteStyle.paddingTop) + parseFloat(quoteStyle.paddingBottom);
+  chk('引用最多两行', quoteMaxHeight >= $('.cm-quote').getBoundingClientRect().height - 1, true);
+  $('#cmSortHot').click();
+  chk('最热排序选中', $('#cmSortHot').classList.contains('on'), true);
+  chk('最热首条点赞最高', $('.cm-list > .main-comment .like').textContent.indexOf('2872') >= 0, true);
+  $('#cmSortLatest').click();
+  chk('最新排序选中', $('#cmSortLatest').classList.contains('on'), true);
+  chk('最新首条为最新日期', $('.cm-list > .main-comment .meta').textContent.indexOf('05-09 22:41') >= 0, true);
+  $('#cmFilterBtn').click();
+  chk('筛选按钮可激活', $('#cmFilterBtn').classList.contains('on'), true);
 
   // --- 6. 布局铁律：抽屉折叠后图标栏依然贴右 ---
   $('#cmClose').click();
@@ -145,10 +162,10 @@ JS=$(cat <<'JSEOF'
   // 先展开第一个用户的回复
   var subToggle = $('.sub-toggle');
   if(subToggle) subToggle.click();
-  var firstMain = $$('.cm-list > .cm-item');
-  if(firstMain[0]){
-    var subItems = firstMain[0].querySelectorAll('.cm-sub .cm-item');
-    chk('主评论头像32px', Math.round(firstMain[0].querySelector('.av').getBoundingClientRect().width), 32);
+  var mainWithSub = $$('.cm-list > .main-comment').find(function(item){ return !!item.querySelector('.cm-sub .cm-item'); });
+  if(mainWithSub){
+    var subItems = mainWithSub.querySelectorAll('.cm-sub .cm-item');
+    chk('主评论头像32px', Math.round(mainWithSub.querySelector('.av').getBoundingClientRect().width), 32);
     chk('二级评论头像24px', Math.round(subItems[0]?.querySelector('.av').getBoundingClientRect().width), 24);
     // 头像顶对齐名字顶（不是垂直居中）
     chk('头像顶对齐名字顶', Math.round(subItems[0]?.querySelector('.av').getBoundingClientRect().top), Math.round(subItems[0]?.querySelector('.nm').getBoundingClientRect().top));
