@@ -95,8 +95,9 @@ JS=$(cat <<'JSEOF'
   chk('默认排序选中', $('#cmSortDefault').classList.contains('on'), true);
   chk('筛选按钮存在', !!$('#cmFilterBtn'), true);
   chk('筛选按钮在右侧', $('#cmFilterBtn').getBoundingClientRect().left > $('#cmSort').getBoundingClientRect().right, true);
-  chk('标签云数量', $$('.cm-tag').length, 6);
-  chk('标签云默认全部', $('.cm-tag.on').textContent.trim(), '全部 621');
+  chk('标签云数量', $$('.cm-tag').length, 16);
+  chk('标签云内容', $$('.cm-tag').map(function(el){return el.textContent.trim();}).join('|'), '全部 7293|好评 113|差评 12|建议 10|疑问 3|提及作者 133|建议加精 69|建议屏蔽 10|现实/太真实 401|太颠/太抽象/太离谱 343|笑死/绷不住 140|好惨/心痛/压抑 116|资本修仙/赛博朋克 320|面试像找工作/太卷 205|不睡觉太狠 231|绝育/变性/器官改造太狠 200');
+  chk('标签云默认全部', $('.cm-tag.on').textContent.trim(), '全部 7293');
   chk('一级评论数量', $$('.cm-list > .main-comment').length, 6);
   chk('一级评论都有引用', $$('.cm-list > .main-comment .cm-quote').length, 6);
   var quoteStyle = getComputedStyle($('.cm-quote'));
