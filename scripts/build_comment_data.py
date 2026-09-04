@@ -79,8 +79,20 @@ def normalize_target_text(value: str | None) -> str:
     return re.sub(r"\s+", " ", (value or "").strip())
 
 
+def normalize_target_id(raw: str | None) -> int:
+    """CSV 段落ID 是 1-based（与正文 0-based 下标错 1 位）：
+    -1 保留为章评；0 在 CSV 里也是章评（如"阅～～～"），归入章评；
+    其他值 -1 转换为 0-based 下标。异常值返回 -999。"""
+    tid = int_or(raw, -999)
+    if tid == -1:
+        return -1
+    if tid == -999:
+        return -999
+    return tid - 1
+
+
 def comment_from_row(row: dict[str, str], row_index: int, level: str) -> dict:
-    target_id = int_or(row.get(COL_TARGET_ID), -999)
+    target_id = normalize_target_id(row.get(COL_TARGET_ID))
     user_guid = str(row.get(COL_USER_GUID) or "").strip()
     return {
         "id": str(row.get(COL_ID) or "").strip(),
@@ -143,25 +155,25 @@ def build_payload(csv_path: Path) -> dict:
         content_counts.update(comment["contentTags"])
 
     fixed_order = [
-        "好评",
-        "差评",
-        "建议",
-        "疑问",
-        "提及作者",
-        "明确提及其他书籍/作者/其他领域的作品如游戏影视",
-        "剧透",
-        "捉虫",
-        "精彩二创",
-        "建议加精的精彩评论",
-        "建议屏蔽或禁言的评论",
-        "金句/名场面/高光",
+        ("好评", "👍"),
+        ("差评", "🍅"),
+        ("建议", "💡"),
+        ("疑问", "❓"),
+        ("提及作者", "👈"),
+        ("明确提及其他书籍/作者/其他领域的作品如游戏影视", "📚"),
+        ("剧透", "🎬"),
+        ("捉虫", "🐛"),
+        ("精彩二创", "🍚"),
+        ("建议加精的精彩评论", "⭐"),
+        ("建议屏蔽或禁言的评论", "🚫"),
+        ("金句/名场面/高光", "✨"),
     ]
-    tags = [{"name": "全部", "count": len(main_comments), "kind": "all"}]
-    for tag in fixed_order:
-        if fixed_counts[tag]:
-            tags.append({"name": tag, "count": fixed_counts[tag], "kind": "fixed"})
+    tags = [{"name": "全部", "count": len(main_comments), "kind": "all", "emoji": ""}]
+    for name, emoji in fixed_order:
+        if fixed_counts[name]:
+            tags.append({"name": name, "count": fixed_counts[name], "kind": "fixed", "emoji": emoji})
     for tag, count in content_counts.most_common():
-        tags.append({"name": tag, "count": count, "kind": "content"})
+        tags.append({"name": tag, "count": count, "kind": "content", "emoji": ""})
 
     target_total_counts: Counter[str] = Counter()
     for comment in main_comments:
