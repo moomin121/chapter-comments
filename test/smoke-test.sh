@@ -86,6 +86,14 @@ JS=$(cat <<'JSEOF'
   // --- §16-4 全部评论：AI 卡置顶 + 章节标题评论在首段之前 + 未匹配兜底 ---
   chk('AI总结卡存在', $$('.cm-ai-card').length, 1);
   chk('AI总结卡是首项', $('#cmList > :first-child').classList.contains('cm-ai-card'), true);
+  // AI 卡默认收起 3 行（Figma 88-9492）；点击【展开全部】展开且按钮消失（Figma 97-14607）
+  chk('AI卡默认收起', !!$('.cm-ai-body.clamped'), true);
+  chk('AI卡收起高度60', getComputedStyle($('.cm-ai-body')).maxHeight, '60px');
+  chk('AI卡有展开按钮', !!$('.cm-ai-expand'), true);
+  $('.cm-ai-expand').click();
+  chk('AI卡展开后无裁切', !!$('.cm-ai-body.clamped'), false);
+  chk('AI卡展开后无按钮', !!$('.cm-ai-expand'), false);
+  chk('AI卡展开高度超3行', $('.cm-ai-body').getBoundingClientRect().height > 60, true);
   chk('聚合块总数(170段+1章评+1未匹配)', $$('.cm-full-module').length, 172);
   var modules = $$('.cm-full-module');
   chk('章节标题评论存在', !!$('.cm-full-module[data-target-id="-1"]'), true);

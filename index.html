@@ -349,6 +349,16 @@
   .cm-ai-body{font-size:14px;line-height:20px;color:var(--ink-92);}
   .cm-ai-body p{margin:0 0 12px;}
   .cm-ai-body p:last-child{margin-bottom:0;}
+  /* 收起态：正文固定 3 行（3 × 20px 行高），超出裁切（Figma 88-9492） */
+  .cm-ai-body.clamped{max-height:60px;overflow:hidden;}
+  /* 展开全部按钮：全宽居中 + chevron-down（Figma 92-13358） */
+  .cm-ai-expand{
+    display:flex;align-items:center;justify-content:center;gap:2px;width:100%;
+    margin:0;padding:8px 16px 4px;border:0;background:transparent;cursor:pointer;
+    color:var(--ink-64);font-size:12px;line-height:18px;font-weight:500;font-family:var(--font);
+  }
+  .cm-ai-expand svg{display:block;}
+  .cm-ai-expand:hover{color:var(--ink-92);}
 
   .cm-section-module{
     padding:12px 4px 10px;border-bottom:1px solid var(--ink-04);
@@ -1018,6 +1028,8 @@ CHAPTER_TREE.forEach(renderFolder);
   var currentCommentSort = 'default';
   var currentCommentTag = '全部';
   var currentParagraphIdx = null;
+  // AI 总结卡展开态（Figma 88-9492 收起 / 97-14607 展开；展开后不收起）
+  var aiSummaryExpanded = false;
   var COMMENT_TAGS = [{name:'全部', count:0, kind:'all'}];
   // 标签展示遵循截图中的 Codex 版本；筛选仍使用 COMMENT_DATA 中的原始标签名。
   var COMMENT_TAG_DISPLAY = {
@@ -1384,17 +1396,24 @@ CHAPTER_TREE.forEach(renderFolder);
     return renderPanelCommentItem(c, index, 'full-comment');
   }
   function renderAiSummaryCard(){
+    var body = '<p>第一章的核心反馈不是单纯“好笑”，而是“癫得像现实”。读者高频把修仙设定和升学、补课、网贷、消费贷、药物提效、阶层筛选、公司/资本垄断放在一起对照，这说明第一章的讽刺方向被读者准确接住了。</p>'
+      + '<p>高互动段落集中在开篇面试压力、绝育/变性入学条件、魂修特长生进万魂幡、贫困生器官抵押贷款、睡眠压榨、张羽和母亲的债务线。对作者来说，这些都是读者已经记住的卖点和传播点。</p>'
+      + '<p>情绪结构偏正面：大量评论是笑、绷不住、对味、震撼、抽象；明确差评/弃读占比很低。少量争议主要围绕“现实影射是否过度”“宗门垄断/政府军队设定是否合理”“七十万债务是否够压迫”等设定逻辑。</p>'
+      + '<p>读者在评论区主动二创能力很强，尤其会把原文句式改写成作者、学校、网贷、万魂幡口号。这类评论适合加精，因为它们能反过来强化作品梗点。</p>';
+    // 默认收起：正文固定 3 行（Figma 88-9492）；展开全部后自然高度且按钮消失（Figma 97-14607）
+    var toggle = aiSummaryExpanded ? '' : '<button class="cm-ai-expand" type="button" title="展开全部内容">展开全部'
+      + '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">'
+      + '<path d="M1.06595 2.74264C0.755577 3.06616 0.755577 3.59069 1.06595 3.91421L4.15686 7.13604C4.62242 7.62132 5.37725 7.62132 5.84281 7.13604L8.93372 3.91421C9.2441 3.59069 9.2441 3.06616 8.93372 2.74264C8.62335 2.41912 8.12013 2.41912 7.80976 2.74264L4.99984 5.67157L2.18992 2.74264C1.87954 2.41912 1.37633 2.41912 1.06595 2.74264Z" fill="#141E29" fill-opacity="0.34"/>'
+      + '</svg></button>';
     return '<section class="cm-ai-card">'
       + '<div class="cm-ai-head">'
       +   '<span class="cm-ai-tab">ai总结</span>'
       +   '<button class="cm-ai-ask" type="button">去提问 &gt;</button>'
       + '</div>'
-      + '<div class="cm-ai-body">'
-      +   '<p>第一章的核心反馈不是单纯“好笑”，而是“癫得像现实”。读者高频把修仙设定和升学、补课、网贷、消费贷、药物提效、阶层筛选、公司/资本垄断放在一起对照，这说明第一章的讽刺方向被读者准确接住了。</p>'
-      +   '<p>高互动段落集中在开篇面试压力、绝育/变性入学条件、魂修特长生进万魂幡、贫困生器官抵押贷款、睡眠压榨、张羽和母亲的债务线。对作者来说，这些都是读者已经记住的卖点和传播点。</p>'
-      +   '<p>情绪结构偏正面：大量评论是笑、绷不住、对味、震撼、抽象；明确差评/弃读占比很低。少量争议主要围绕“现实影射是否过度”“宗门垄断/政府军队设定是否合理”“七十万债务是否够压迫”等设定逻辑。</p>'
-      +   '<p>读者在评论区主动二创能力很强，尤其会把原文句式改写成作者、学校、网贷、万魂幡口号。这类评论适合加精，因为它们能反过来强化作品梗点。</p>'
+      + '<div class="cm-ai-body'+(aiSummaryExpanded?'':' clamped')+'">'
+      +   body
       + '</div>'
+      + toggle
       + '</section>';
   }
   /* 聚合块顶部：评论对象引用行（原文摘要 + 计数气泡），带 target 锚点供 hover/click */
@@ -1630,6 +1649,16 @@ CHAPTER_TREE.forEach(renderFolder);
     list.innerHTML = html;
     bindReplyToggles();
     bindTargetAnchors();
+    bindAiSummaryExpand();
+  }
+  /* AI 总结卡【展开全部】：点击后展开完整内容，按钮消失（Figma 97-14607 展开态无收起按钮） */
+  function bindAiSummaryExpand(){
+    var btn = $('.cm-ai-expand');
+    if(!btn) return;
+    btn.addEventListener('click', function(){
+      aiSummaryExpanded = true;
+      renderAllComments();
+    });
   }
   /* 未匹配评论对象块：CSV targetId 超出正文段落范围 */
   function renderUnmatchedModule(target, comments){
