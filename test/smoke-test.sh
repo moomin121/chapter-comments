@@ -148,7 +148,9 @@ JS=$(cat <<'JSEOF'
   chk('标签没有长标签特例', $$('.cm-tag-long').length, 0);
   chk('截图标签采用短名称', $$('.cm-tag-label').map(function(el){ return el.textContent; }).indexOf('📚 提及其他作品') >= 0, true);
   chk('表格长标签不直接展示', $$('.cm-tag-label').map(function(el){ return el.textContent; }).indexOf('明确提及其他书籍/作者/其他领域的作品如游戏影视') < 0, true);
-  chk('标签胶囊紧凑高度', getComputedStyle($('.cm-tag')).height, '22px');
+  chk('标签胶囊紧凑高度', getComputedStyle($('.cm-tag')).height, '20px');
+  chk('标签字号与截图一致', getComputedStyle($('.cm-tag')).fontSize, '11px');
+  chk('标签间距紧凑', getComputedStyle($('#cmTags')).gap, '6px');
   // 列表滚动后标签会收起；悬停应按内容完整展开，不能固定 194px 裁切末行。
   $('#cmList').scrollTop = 80;
   $('#cmList').dispatchEvent(new Event('scroll'));
@@ -157,7 +159,7 @@ JS=$(cat <<'JSEOF'
   var tagLabels = $$('#cmTags .cm-tag-label');
   var lastTag = tagLabels[tagLabels.length - 1];
   chk('悬停标签区完整展开', $('#cmTags').classList.contains('hover-open'), true);
-  chk('悬停标签区高度充足', $('#cmTags').getBoundingClientRect().height > 38, true);
+  chk('悬停标签区高度充足', $('#cmTags').getBoundingClientRect().height > 34, true);
   chk('悬停末行标签未裁切', lastTag.getBoundingClientRect().bottom <= tagBox.bottom + 1, true);
   $('#cmTags').dispatchEvent(new Event('mouseleave'));
   if(tagReal){
