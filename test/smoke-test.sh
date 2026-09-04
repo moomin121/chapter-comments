@@ -89,23 +89,33 @@ JS=$(cat <<'JSEOF'
   var act = $('.para.active');
   chk('点击气泡后高亮段', act ? act.dataset.idx : 'none', 2);
   chk('抽屉切段评视图', $('#cmDrawer').classList.contains('parasec'), true);
-  chk('段评抽屉标题', $('#cmTitleText').textContent, '段评');
-  chk('段评抽屉计数', $('#cmCount').textContent, '98条');
+  chk('段评抽屉标题', $('#cmTitleText').textContent, '评论');
+  chk('段评抽屉计数', $('#cmCount').textContent, '2条');
   chk('段评视图隐藏标签', getComputedStyle($('#cmTags')).display, 'none');
+  chk('段评引用区可见', getComputedStyle($('#cmContext')).display, 'block');
   chk('段评视图保留排序', getComputedStyle($('#cmSort')).display, 'flex');
+  chk('工具栏返回按钮隐藏', getComputedStyle($('#cmBack')).display, 'none');
+  chk('工具栏更多按钮存在', !!$('#cmMoreBtn'), true);
   chk('段评视图隐藏输入框', getComputedStyle($('.cm-input')).display, 'none');
   chk('段评标题栏高度42', Math.round($('.cm-hd').getBoundingClientRect().height), 42);
   chk('段评排序栏高度32', Math.round($('.cm-toolbar').getBoundingClientRect().height), 32);
-  chk('段评视图标题', ($('.cm-list').textContent||'').indexOf('第3段') >= 0, true);
+  chk('段评不显示段落标题', ($('.cm-list').textContent||'').indexOf('第3段') >= 0, false);
   chk('段评引用原文', ($('.cm-section-module.single .cm-quote').textContent||'').indexOf('手术费') >= 0, true);
+  chk('引用条返回入口', !!$('.cm-quote-back'), true);
   chk('段评首条内容', ($('.cm-list > .cm-item .content').textContent||'').indexOf('387.6') >= 0, true);
+  chk('段评列表首项为评论', $('.cm-list > :first-child').classList.contains('paragraph-comment'), true);
   chk('段评视图无章评', $$('.cm-list > .chapter-comment').length, 0);
+  chk('段评只显示2条', $$('.cm-list > .paragraph-comment').length, 2);
+  chk('段评含UGC图占位', !!$('.paragraph-comment .cm-ugc'), true);
+  chk('段评元信息左右布局', getComputedStyle($('.paragraph-comment .meta')).justifyContent, 'space-between');
+  chk('段评元信息右侧操作', !!$('.paragraph-comment .cm-meta-actions'), true);
   chk('选中段浅红背景', getComputedStyle(act).backgroundImage.indexOf('255, 121, 80') >= 0, true);
+  chk('右侧评论Tab蓝线', getComputedStyle($('#rrComments'), '::before').width, '2px');
   $('#cmSortHot').click();
   chk('段评内排序不退出', $('#cmDrawer').classList.contains('parasec'), true);
 
   // --- 5. 评论面板：排序、标签云、筛选入口、一级评论引用 ---
-  $('#cmBack').click();
+  $('.cm-quote-back').click();
   chk('返回后抽屉标题', $('#cmTitleText').textContent, '评论');
   chk('返回后抽屉计数', $('#cmCount').textContent, '621');
   chk('全章段评模块数', $$('.cm-section-module:not(.single)').length, 3);

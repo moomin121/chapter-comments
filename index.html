@@ -253,10 +253,12 @@
   .cm-toolbar .cm-sort{display:flex;align-items:center;gap:14px;min-width:0;}
   .cm-toolbar .cm-tab{height:28px;display:inline-flex;align-items:center;cursor:pointer;padding:0;white-space:nowrap;}
   .cm-toolbar .cm-tab.on{color:var(--ink-92);font-weight:600;box-shadow:inset 0 -2px 0 var(--brand);}
-  .cm-toolbar .cm-filter{
+  .cm-toolbar .cm-filter,
+  .cm-toolbar .cm-more{
     margin-left:auto;width:28px;height:28px;border:0;background:transparent;color:var(--ink-64);
     display:flex;align-items:center;justify-content:center;border-radius:6px;cursor:pointer;padding:0;
   }
+  .cm-toolbar .cm-more{margin-left:0;font-size:17px;letter-spacing:1px;line-height:20px;}
   .cm-toolbar .cm-filter:hover{background:var(--ink-04);color:var(--brand);}
   .cm-toolbar .cm-filter.on{background:var(--brand-weak);color:var(--brand);}
   .cm-toolbar .cm-filter svg{width:16px;height:16px;}
@@ -265,7 +267,7 @@
   }
   .cm-toolbar .cm-back svg{width:16px;height:16px;}
   .cm-drawer.parasec .cm-toolbar{gap:10px;}
-  .cm-drawer.parasec .cm-toolbar .cm-back{display:inline-flex;}
+  .cm-drawer.parasec .cm-toolbar .cm-back{display:none;}
   .cm-drawer.parasec .cm-toolbar .cm-sort{gap:10px;}
   .cm-drawer.parasec .cm-tags{display:none;}
   .cm-drawer.parasec .cm-input{display:none;}
@@ -294,6 +296,8 @@
   .cm-tags.collapsed:hover,
   .cm-tags.collapsed.hover-open{height:auto;max-height:220px;padding-top:12px;padding-bottom:12px;}
 
+  .cm-context{display:none;flex:0 0 auto;}
+  .cm-drawer.parasec .cm-context{display:block;padding:8px 16px 0;}
   .cm-list{flex:1;overflow-y:auto;padding:10px 14px 14px;}
   .cm-list::-webkit-scrollbar{width:8px;}
   .cm-list::-webkit-scrollbar-thumb{background:var(--ink-12);border-radius:4px;}
@@ -323,11 +327,17 @@
     padding:12px 4px 4px;font-size:12px;color:var(--ink-49);font-weight:600;
   }
   .cm-drawer.parasec .cm-list{padding:8px 16px;}
-  .cm-drawer.parasec .cm-section-module.single{padding:0 0 10px;border-bottom:1px solid var(--ink-04);}
+  .cm-drawer.parasec .cm-section-module.single{padding:0;border-bottom:none;}
   .cm-drawer.parasec .cm-section-module.single .cm-quote{
-    display:block;-webkit-line-clamp:initial;padding:8px 16px;border-radius:4px;background:var(--ink-04);
-    font-size:12px;line-height:20px;white-space:nowrap;text-overflow:ellipsis;color:var(--ink-64);
+    display:flex;-webkit-line-clamp:initial;align-items:center;gap:10px;padding:8px 16px;border-radius:4px;background:var(--ink-04);
+    font-size:12px;line-height:20px;white-space:nowrap;color:var(--ink-64);
   }
+  .cm-quote-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+  .cm-quote-back{
+    flex:0 0 auto;border:0;background:transparent;color:var(--brand);height:22px;padding:0;
+    display:inline-flex;align-items:center;gap:2px;font-size:12px;line-height:18px;font-weight:600;cursor:pointer;
+  }
+  .cm-quote-back svg{width:14px;height:14px;}
   .cm-drawer.parasec .cm-section-head{margin:16px 0 0;font-size:16px;line-height:24px;}
   .cm-drawer.parasec .cm-section-count{font-size:14px;line-height:20px;}
   .cm-drawer.parasec .cm-item{gap:10px;padding:16px 0 18px;border-bottom:1px solid var(--ink-04);}
@@ -338,6 +348,24 @@
   .cm-drawer.parasec .cm-item .lv{height:18px;padding:0 6px;border-radius:4px;font-size:12px;line-height:18px;}
   .cm-drawer.parasec .cm-item .content{font-size:16px;line-height:24px;color:#191919;}
   .cm-drawer.parasec .cm-item .meta{gap:12px;margin-top:8px;font-size:12px;line-height:20px;color:#ADADAD;}
+  .paragraph-comment .content .cm-pin{
+    display:inline-flex;align-items:center;height:16px;padding:0 4px;margin-right:4px;border:1px solid #FF6F75;
+    border-radius:4px;color:#E5353E;font-size:10px;line-height:14px;font-weight:500;vertical-align:2px;
+  }
+  .cm-ugc{
+    width:120px;height:120px;margin-top:8px;background:#FFD1D6;color:#FF6F75;
+    display:flex;align-items:center;justify-content:center;text-align:center;font-size:22px;line-height:26px;
+    font-weight:700;font-style:italic;letter-spacing:0;
+  }
+  .paragraph-comment .meta{justify-content:space-between;}
+  .cm-meta-left{white-space:nowrap;}
+  .cm-meta-actions{margin-left:auto;display:inline-flex;align-items:center;gap:10px;color:#808080;}
+  .cm-meta-actions svg{width:18px;height:18px;display:block;}
+  .cm-meta-more{font-size:16px;line-height:18px;letter-spacing:2px;color:#808080;}
+  .cm-more-replies{
+    margin-top:8px;border:0;background:transparent;color:#808080;font-size:14px;line-height:22px;
+    padding:0;cursor:pointer;font-weight:500;
+  }
 
   .cm-item{display:flex;gap:10px;padding:12px 4px;border-bottom:1px solid var(--ink-04);align-items:flex-start;}
   .cm-item:last-child{border-bottom:none;}
@@ -403,6 +431,9 @@
 
   .rr-btn{position:relative;}
   .rr-btn.active{color:var(--brand);}
+  .rr-btn.active::before{
+    content:"";position:absolute;left:0;top:5px;width:2px;height:48px;background:var(--brand);border-radius:0 2px 2px 0;
+  }
 
   /* 阅读模式：reader 始终显示，评论相关元素按 comment-mode 单独控制 */
   body.comment-mode .body-input{display:none;}
@@ -598,8 +629,10 @@
         <button class="cm-filter" id="cmFilterBtn" title="筛选评论" aria-label="筛选评论">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16l-6 7v5l-4 2v-7z"/></svg>
         </button>
+        <button class="cm-more" id="cmMoreBtn" title="更多" aria-label="更多">···</button>
       </div>
       <div class="cm-tags" id="cmTags" aria-label="评论标签"></div>
+      <div class="cm-context" id="cmContext"></div>
       <div class="cm-list" id="cmList"></div>
       <div class="cm-input">
         <span class="av">我</span>
@@ -1123,6 +1156,32 @@ CHAPTER_TREE.forEach(renderFolder);
       +   sub
       + '</div></div>';
   }
+  function renderParagraphCommentItem(c, index){
+    var avColor = avatarColor(c.user);
+    var lv = c.level ? '<span class="lv '+c.level+'">'+ ({
+      'lv-1':'学员','lv-2':'弟子','lv-3':'执事','lv-4':'堂主','lv-5':'舵主'
+    })[c.level] +'</span>' : '';
+    var pin = index === 0 ? '<span class="cm-pin">置顶</span>' : '';
+    var image = index === 0 ? '<div class="cm-ugc">UGC<br/>IMAGE</div>' : '';
+    var moreReplies = index === 0 ? '<button class="cm-more-replies" type="button">展开23条回复⌄</button>' : '';
+    return '<div class="cm-item paragraph-comment">'
+      + '<span class="av" style="background:'+avColor+'">'+escapeHtml(avatarInitial(c.user))+'</span>'
+      + '<div class="body">'
+      +   '<div class="nm-row"><span class="nm">'+escapeHtml(c.user)+'</span>'+lv+'</div>'
+      +   '<div class="content">'+pin+c.content+'</div>'
+      +   image
+      +   '<div class="meta">'
+      +     '<span class="cm-meta-left">'+fmtTime(c.time)+' IP地址</span>'
+      +     '<span class="cm-meta-actions">'
+      +       '<span class="cm-meta-comment"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>'
+      +       '<span class="cm-meta-like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 22V11M14 4l-2-2-2 2v7h6l2 5h-6"/></svg></span>'
+      +       '<span>'+c.likes+'</span>'
+      +       '<span class="cm-meta-more">···</span>'
+      +     '</span>'
+      +   '</div>'
+      +   moreReplies
+      + '</div></div>';
+  }
   function bindReplyToggles(){
     $$('.sub-toggle').forEach(function(btn){
       btn.addEventListener('click', function(){
@@ -1136,6 +1195,13 @@ CHAPTER_TREE.forEach(renderFolder);
         btn.innerHTML = ico + '<b>' + (open ? '展开 ' : '收起 ') + n + ' 条回复</b>';
       });
     });
+  }
+  function returnToAllComments(){
+    var drawer = $('#cmDrawer');
+    if(drawer) drawer.classList.remove('parasec');
+    currentParagraphIdx = null;
+    $$('.para').forEach(function(el){ el.classList.remove('active'); });
+    switchCmTab('all');
   }
 
   // 2) 渲染 reader（按段渲染，气泡挂在段落末尾）
@@ -1208,24 +1274,33 @@ CHAPTER_TREE.forEach(renderFolder);
   // 4) 渲染段评列表（每个气泡点击）
   function renderParagraphComments(idx){
     var list = $('#cmList');
+    var context = $('#cmContext');
     var sec = SECTION_DB[idx];
     var paras = getParagraphs();
     currentParagraphIdx = idx;
-    setCommentHeader('段评', sec.count+'条');
-    var title = '第'+(idx+1)+'段';
+    var visibleItems = sortComments(sec.items).slice(0, 2);
+    setCommentHeader('评论', visibleItems.length+'条');
     var pTag = '<div class="cm-section-module single">'
-      + '<div class="cm-quote">'+escapeHtml(paras[idx] || '')+'</div>'
-      + '<div class="cm-section-head"><span>'+title+'</span><span class="cm-section-count">'+sec.count+'条</span></div>'
+      + '<div class="cm-quote">'
+      +   '<span class="cm-quote-text">原文：'+escapeHtml(paras[idx] || '')+'</span>'
+      +   '<button class="cm-quote-back" type="button">'
+      +     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 10l-4 4 4 4"/><path d="M5 14h9a5 5 0 0 0 0-10h-2"/></svg>'
+      +     '返回全部评论'
+      +   '</button>'
+      + '</div>'
       + '</div>';
-    var body = sortComments(sec.items).map(function(c){
-      return renderCommentItem(c, '', '');
+    var body = visibleItems.map(function(c, index){
+      return renderParagraphCommentItem(c, index);
     }).join('');
+    if(context) context.innerHTML = pTag;
     if(sec.items.length===0){
       var pq = '<div class="cm-empty">本段暂无段评，做第一个评论的人吧～</div>';
-      list.innerHTML = pTag + pq;
+      list.innerHTML = pq;
     } else {
-      list.innerHTML = pTag + body;
+      list.innerHTML = body;
     }
+    var back = $('.cm-quote-back', context || list);
+    if(back) back.addEventListener('click', returnToAllComments);
     bindReplyToggles();
   }
 
@@ -1246,8 +1321,10 @@ CHAPTER_TREE.forEach(renderFolder);
   // 5) 渲染全部评论（未选中段落时：全章段评 + 章评）
   function renderAllComments(){
     var list = $('#cmList');
+    var context = $('#cmContext');
     var drawer = $('#cmDrawer');
     if(drawer) drawer.classList.remove('parasec');
+    if(context) context.innerHTML = '';
     currentParagraphIdx = null;
     setCommentHeader('评论', CHAPTER.chapterCommentCount);
     renderCommentTags();
@@ -1352,9 +1429,7 @@ CHAPTER_TREE.forEach(renderFolder);
     });
 
     $('#cmBack').addEventListener('click', function(){
-      var drawer = $('#cmDrawer'); drawer.classList.remove('parasec');
-      $$('.para').forEach(function(el){ el.classList.remove('active'); });
-      switchCmTab('all');
+      returnToAllComments();
     });
 
     // 章评气泡 = 跳到全部评论
