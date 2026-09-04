@@ -116,7 +116,10 @@ JS=$(cat <<'JSEOF'
   chk('评论底部含日期', /月.*日/.test(metaLeft), true);
   chk('评论底部含IP地址', metaLeft.indexOf('IP地址') >= 0, true);
   chk('评论底部含点赞赞字', (fc.querySelector('.cm-meta-like b')||{}).textContent, '赞');
-  chk('评论底部含更多', fc.querySelector('.cm-meta-more').textContent, '···');
+  chk('评论底部含更多', !!fc.querySelector('.cm-meta-more svg'), true);
+  chk('更多为Figma三点', fc.querySelector('.cm-meta-more svg').getAttribute('viewBox'), '0 0 20 20');
+  chk('评论按钮为Figma评论', !!fc.querySelector('.cm-meta-comment svg path'), true);
+  chk('点赞按钮为Figma拇指', !!fc.querySelector('.cm-meta-like svg path'), true);
 
   // --- §16-3 点击段气泡 → 单对象视图全部一级评论 ---
   $('.para-bubble[data-idx="17"]').click();
