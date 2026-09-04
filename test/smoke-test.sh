@@ -84,20 +84,20 @@ JS=$(cat <<'JSEOF'
   chk('零值段无气泡(idx4)', !!$('.para[data-idx="4"] .para-bubble'), false);
   chk('非零值段有气泡(idx17)', !!$('.para[data-idx="17"] .para-bubble'), true);
 
-  // --- 4. 交互：点击截图里的第 2 段气泡 ---
-  $('.para-bubble[data-idx="1"]').click();
+  // --- 4. 交互：点击截图里的第 3 段气泡 ---
+  $('.para-bubble[data-idx="2"]').click();
   var act = $('.para.active');
-  chk('点击气泡后高亮段', act ? act.dataset.idx : 'none', 1);
+  chk('点击气泡后高亮段', act ? act.dataset.idx : 'none', 2);
   chk('抽屉切段评视图', $('#cmDrawer').classList.contains('parasec'), true);
   chk('段评抽屉标题', $('#cmTitleText').textContent, '段评');
-  chk('段评抽屉计数', $('#cmCount').textContent, '21条');
+  chk('段评抽屉计数', $('#cmCount').textContent, '98条');
   chk('段评视图隐藏标签', getComputedStyle($('#cmTags')).display, 'none');
   chk('段评视图保留排序', getComputedStyle($('#cmSort')).display, 'flex');
   chk('段评视图隐藏输入框', getComputedStyle($('.cm-input')).display, 'none');
   chk('段评标题栏高度42', Math.round($('.cm-hd').getBoundingClientRect().height), 42);
   chk('段评排序栏高度32', Math.round($('.cm-toolbar').getBoundingClientRect().height), 32);
-  chk('段评视图标题', ($('.cm-list').textContent||'').indexOf('第2段') >= 0, true);
-  chk('段评引用原文', ($('.cm-section-module.single .cm-quote').textContent||'').indexOf('不要紧张') >= 0, true);
+  chk('段评视图标题', ($('.cm-list').textContent||'').indexOf('第3段') >= 0, true);
+  chk('段评引用原文', ($('.cm-section-module.single .cm-quote').textContent||'').indexOf('手术费') >= 0, true);
   chk('段评首条内容', ($('.cm-list > .cm-item .content').textContent||'').indexOf('387.6') >= 0, true);
   chk('段评视图无章评', $$('.cm-list > .chapter-comment').length, 0);
   chk('选中段浅红背景', getComputedStyle(act).backgroundImage.indexOf('255, 121, 80') >= 0, true);
