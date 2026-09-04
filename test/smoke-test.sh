@@ -115,7 +115,8 @@ JS=$(cat <<'JSEOF'
   var metaLeft = fc.querySelector('.cm-meta-left').textContent;
   chk('评论底部含日期', /月.*日/.test(metaLeft), true);
   chk('评论底部含IP地址', metaLeft.indexOf('IP地址') >= 0, true);
-  chk('评论底部含点赞赞字', (fc.querySelector('.cm-meta-like b')||{}).textContent, '赞');
+  chk('点赞无赞字', fc.querySelector('.cm-meta-like b'), null);
+  chk('点赞数字在按钮内', (fc.querySelector('.cm-meta-like .cm-meta-like-count')||{parentElement:{className:''}}).parentElement.className.indexOf('cm-meta-like') >= 0, true);
   chk('评论底部含更多', !!fc.querySelector('.cm-meta-more svg'), true);
   chk('更多为Figma三点', fc.querySelector('.cm-meta-more svg').getAttribute('viewBox'), '0 0 20 20');
   chk('评论按钮为Figma评论', !!fc.querySelector('.cm-meta-comment svg path'), true);
@@ -126,6 +127,9 @@ JS=$(cat <<'JSEOF'
   chk('单对象视图态', $('#cmDrawer').classList.contains('parasec'), true);
   chk('段17计数(一级+回复)', $('#cmCount').textContent, '257条');
   chk('段17全部一级评论', $$('.cm-list > .paragraph-comment').length, 193);
+  // 零赞评论只显示图标、不显示数字（Figma：数字=0 仅图标）
+  var zeroLike = $$('.cm-list .cm-meta-like').filter(function(el){ return !el.querySelector('.cm-meta-like-count'); });
+  chk('零赞仅图标无数字', zeroLike.length > 0, true);
   chk('段17高亮', ($('.para.active')||{dataset:{}}).dataset.idx, '17');
   chk('返回全部评论按钮', !!$('.cm-quote-back'), true);
   // 楼中楼展开/收起
