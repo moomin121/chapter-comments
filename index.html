@@ -236,7 +236,7 @@
   body.comment-mode .cm-drawer.open{flex:0 0 320px;width:320px;}
   .cm-hd{
     height:42px;display:flex;align-items:center;justify-content:space-between;
-    padding:12px 16px 6px;border-bottom:1px solid var(--line);flex:0 0 42px;
+    padding:12px 16px 6px;border-bottom:0;flex:0 0 42px;
   }
   .cm-hd .cm-title{display:flex;align-items:center;gap:8px;font-size:16px;line-height:24px;font-weight:500;color:var(--ink);}
   .cm-hd .cm-title .cnt{font-size:12px;line-height:18px;color:var(--ink-64);font-weight:400;margin-left:0;font-family:var(--num);}
@@ -248,11 +248,11 @@
 
   .cm-toolbar{
     height:32px;display:flex;align-items:center;gap:14px;padding:2px 16px;
-    border-bottom:1px solid var(--line);font-size:12px;line-height:18px;color:var(--ink-64);flex:0 0 32px;
+    border-bottom:0;font-size:12px;line-height:18px;color:var(--ink-64);flex:0 0 32px;
   }
   .cm-toolbar .cm-sort{display:flex;align-items:center;gap:14px;min-width:0;}
   .cm-toolbar .cm-tab{height:28px;display:inline-flex;align-items:center;cursor:pointer;padding:0;white-space:nowrap;}
-  .cm-toolbar .cm-tab.on{color:var(--ink-92);font-weight:600;box-shadow:inset 0 -2px 0 var(--brand);}
+  .cm-toolbar .cm-tab.on{color:var(--ink-92);font-weight:400;box-shadow:inset 0 -2px 0 var(--brand);}
   .cm-toolbar .cm-filter,
   .cm-toolbar .cm-more{
     margin-left:auto;width:28px;height:28px;border:0;background:transparent;color:var(--ink-64);
@@ -275,7 +275,7 @@
   .cm-tags{
     position:relative;display:flex;align-items:center;align-content:flex-start;gap:4px;flex-wrap:wrap;padding:8px 16px 0;
     border-bottom:0;background:var(--panel);flex:0 0 auto;
-    max-height:168px;overflow:hidden;transition:max-height .18s ease, padding .18s ease;
+    max-height:194px;overflow:hidden;transition:max-height .18s ease, padding .18s ease;
   }
   .cm-tag{
     height:22px;padding:0 6px;border-radius:999px;border:1px solid rgba(20,30,41,.12);
@@ -294,7 +294,7 @@
   }
   .cm-tags.collapsed:hover::before,
   .cm-tags.collapsed.hover-open::before{
-    content:"";position:absolute;left:0;right:0;top:0;height:168px;background:var(--panel);
+    content:"";position:absolute;left:0;right:0;top:0;height:194px;background:var(--panel);
     border-bottom:1px solid var(--line);box-shadow:0 6px 12px rgba(20,30,41,.04);z-index:0;
   }
   .cm-tags.collapsed:hover .cm-tag,
@@ -311,15 +311,16 @@
   .cm-empty svg{width:36px;height:36px;color:var(--ink-12);margin-bottom:8px;}
 
   .cm-ai-card{
-    margin:8px 0 12px;padding:12px 16px;border-radius:8px;
+    margin:0;padding:12px 16px;border-radius:8px;
     background:linear-gradient(260deg, rgba(85,187,255,.08) 3.23%, rgba(160,65,255,.08) 100%);
     color:#191919;
   }
-  .cm-ai-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .cm-ai-head{display:flex;align-items:flex-start;justify-content:space-between;height:30px;margin-bottom:0;}
   .cm-ai-tab{font-size:12px;line-height:18px;font-weight:600;color:var(--ink-92);}
   .cm-ai-ask{
-    border:0;background:transparent;color:var(--brand);font-size:12px;line-height:18px;
-    font-weight:500;padding:0;cursor:pointer;font-family:var(--font);
+    border:1px solid rgba(30,113,239,.2);background:rgba(255,255,255,.35);color:var(--brand);
+    font-size:12px;line-height:18px;height:22px;border-radius:4px;font-weight:500;padding:1px 5px;
+    cursor:pointer;font-family:var(--font);
   }
   .cm-ai-body{font-size:14px;line-height:20px;color:var(--ink-92);}
   .cm-ai-body p{margin:0 0 12px;}
@@ -341,10 +342,12 @@
     padding:12px 4px 4px;font-size:12px;color:var(--ink-49);font-weight:600;
   }
   .cm-reference{
-    display:flex;align-items:center;gap:8px;margin:0 0 8px;padding:8px 16px;border-radius:4px;
+    display:flex;align-items:center;gap:8px;margin:0;padding:8px 16px;border-radius:4px;
     background:var(--ink-04);color:var(--ink-64);font-size:12px;line-height:20px;
   }
-  .cm-reference .cm-quote-text{white-space:nowrap;}
+  .cm-reference .cm-quote-text{
+    white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+  }
   .cm-ref-bubble{
     flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;
     height:18px;min-width:18px;padding:0 3px;border-radius:3px;border:1px solid #9AA1AA;
@@ -365,12 +368,12 @@
   .cm-quote-back svg{width:14px;height:14px;}
   .cm-drawer.parasec .cm-section-head{margin:16px 0 0;font-size:16px;line-height:24px;}
   .cm-drawer.parasec .cm-section-count{font-size:14px;line-height:20px;}
-  .cm-drawer.parasec .cm-item{gap:10px;padding:16px 0 18px;border-bottom:1px solid var(--ink-04);}
-  .cm-drawer.parasec .cm-item .av{flex:0 0 36px;width:36px;height:36px;font-size:14px;}
+  .cm-drawer.parasec .cm-item{gap:10px;padding:8px 0 16px;border-bottom:0;}
+  .cm-drawer.parasec .cm-item .av{flex:0 0 28px;width:28px;height:28px;font-size:5px;}
   .cm-drawer.parasec .cm-item .body{padding-top:1px;}
   .cm-drawer.parasec .cm-item .nm-row{height:24px;margin-bottom:4px;}
   .cm-drawer.parasec .cm-item .nm{font-size:14px;line-height:22px;color:#808080;font-weight:500;}
-  .cm-drawer.parasec .cm-item .lv{height:18px;padding:0 6px;border-radius:4px;font-size:12px;line-height:18px;}
+  .cm-drawer.parasec .cm-item .lv{height:16px;padding:0 5px;border-radius:4px;font-size:10px;line-height:16px;}
   .cm-drawer.parasec .cm-item .content{font-size:16px;line-height:24px;color:#191919;}
   .cm-drawer.parasec .cm-item .meta{gap:12px;margin-top:8px;font-size:12px;line-height:20px;color:#ADADAD;}
   .paragraph-comment .content .cm-pin,
@@ -393,13 +396,30 @@
     margin-top:8px;border:0;background:transparent;color:#808080;font-size:14px;line-height:22px;
     padding:0;cursor:pointer;font-weight:500;
   }
-  .cm-item.full-comment{gap:10px;padding:8px 0 16px;border-bottom:1px solid var(--ink-04);}
+  .cm-full-module{
+    display:flex;flex-direction:column;gap:8px;padding:8px 0 16px;border-bottom:0;
+  }
+  .cm-section-link{
+    width:100%;height:32px;border:0;background:transparent;color:var(--ink-92);
+    display:flex;align-items:center;justify-content:center;gap:4px;font-size:14px;line-height:22px;
+    font-weight:500;cursor:pointer;font-family:var(--font);
+  }
+  .cm-section-link svg{width:10px;height:10px;transform:rotate(90deg);}
+  .cm-thread-replies{
+    display:flex;flex-direction:column;gap:10px;padding-top:8px;
+  }
+  .cm-reply-item{display:flex;gap:4px;align-items:flex-start;}
+  .cm-reply-item .reply-body{flex:1;min-width:0;}
+  .cm-reply-item .content{margin-top:4px;}
+  .cm-reply-item .content .to{color:#808080;font-weight:500;}
+  .cm-reply-item .meta{justify-content:space-between;}
+  .cm-item.full-comment{gap:10px;padding:0;border-bottom:0;}
   .cm-item.full-comment .av{flex:0 0 28px;width:28px;height:28px;font-size:10px;}
   .cm-item.full-comment .body{padding-top:0;}
   .cm-item.full-comment .nm-row{height:24px;margin-bottom:4px;}
   .cm-item.full-comment .nm{font-size:14px;line-height:22px;color:#808080;font-weight:500;}
-  .cm-item.full-comment .lv{height:18px;padding:0 6px;border-radius:4px;font-size:12px;line-height:18px;}
-  .cm-item.full-comment .content{font-size:14px;line-height:22px;color:#191919;}
+  .cm-item.full-comment .lv{height:16px;padding:0 5px;border-radius:4px;font-size:10px;line-height:16px;}
+  .cm-item.full-comment .content{font-size:16px;line-height:24px;color:#191919;}
   .cm-item.full-comment .meta{
     min-height:20px;gap:12px;margin-top:8px;font-size:12px;line-height:20px;color:#ADADAD;
     align-items:flex-start;
@@ -411,6 +431,8 @@
   .cm-item.full-comment .cm-meta-actions svg{width:20px;height:20px;}
   .cm-item.full-comment .cm-meta-like-count{font-family:var(--num);line-height:20px;}
   .cm-item.full-comment .cm-meta-more{width:20px;line-height:20px;text-align:center;}
+  .cm-item.full-comment .cm-reply-item .av,
+  .cm-drawer.parasec .cm-item .cm-reply-item .av{flex:0 0 24px;width:24px;height:24px;font-size:4px;}
 
   .cm-item{display:flex;gap:10px;padding:12px 4px;border-bottom:1px solid var(--ink-04);align-items:flex-start;}
   .cm-item:last-child{border-bottom:none;}
@@ -421,6 +443,10 @@
   .cm-item .av{
     flex:0 0 32px;width:32px;height:32px;border-radius:50%;
     display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:13px;
+  }
+  .cm-item .av.cm-avatar{
+    border:.5px solid rgba(0,0,0,.08);background:#ffd8df;color:#ff7d8a;
+    font-family:Arial,Helvetica,sans-serif;font-size:5px;font-weight:700;line-height:1;letter-spacing:0;
   }
   .cm-quote{
     padding:9px 10px;border-radius:6px;background:var(--ink-04);color:var(--ink-49);
@@ -1210,20 +1236,17 @@ CHAPTER_TREE.forEach(renderFolder);
   }
   function renderPanelCommentItem(c, index, extraClass){
     var isFullComment = extraClass === 'full-comment';
-    var avColor = avatarColor(c.user);
-    var lv = c.level ? '<span class="lv '+c.level+'">'+ ({
-      'lv-1':'学员','lv-2':'弟子','lv-3':'执事','lv-4':'堂主','lv-5':'舵主'
-    })[c.level] +'</span>' : '';
+    var lv = c.level ? '<span class="lv">盟主</span>' : '';
     var pin = index === 0 ? '<span class="cm-pin">置顶</span>' : '';
-    var image = index === 0 ? '<div class="cm-ugc">UGC<br/>IMAGE</div>' : '';
+    var replies = (index === 0 && c.replies && c.replies.length) ? renderPanelReplies(c.replies) : '';
     var moreReplies = index === 0 ? '<button class="cm-more-replies" type="button">展开23条回复⌄</button>' : '';
+    var moreReplyTail = replies ? '<button class="cm-more-replies" type="button">展开更多回复⌄</button>' : '';
     var metaLeft = (isFullComment ? (index + 1)+'楼 · '+fmtCommentMetaTime(c.time) : fmtTime(c.time))+' IP地址';
     return '<div class="cm-item '+(extraClass || 'paragraph-comment')+'">'
-      + '<span class="av" style="background:'+avColor+'">'+escapeHtml(avatarInitial(c.user))+'</span>'
+      + '<span class="av cm-avatar">AVATAR</span>'
       + '<div class="body">'
       +   '<div class="nm-row"><span class="nm">'+escapeHtml(c.user)+'</span>'+lv+'</div>'
       +   '<div class="content">'+pin+c.content+'</div>'
-      +   image
       +   '<div class="meta">'
       +     '<span class="cm-meta-left">'+metaLeft+'</span>'
       +     '<span class="cm-meta-actions">'
@@ -1234,7 +1257,33 @@ CHAPTER_TREE.forEach(renderFolder);
       +     '</span>'
       +   '</div>'
       +   moreReplies
+      +   replies
+      +   moreReplyTail
       + '</div></div>';
+  }
+  function renderPanelReplies(replies){
+    return '<div class="cm-thread-replies">'
+      + replies.slice(0, 2).map(function(r, i){
+        var content = i === 1 && r.replyTo
+          ? '回复 <span class="to">'+escapeHtml(r.replyTo)+'</span>：'+r.content
+          : r.content;
+        return '<div class="cm-reply-item">'
+          + '<span class="av cm-avatar">AVATAR</span>'
+          + '<div class="reply-body">'
+          +   '<div class="nm-row"><span class="nm">'+escapeHtml(r.user)+'</span></div>'
+          +   '<div class="content">'+content+'</div>'
+          +   '<div class="meta">'
+          +     '<span class="cm-meta-left">'+fmtCommentMetaTime(r.time)+' IP地址</span>'
+          +     '<span class="cm-meta-actions">'
+          +       '<span class="cm-meta-comment"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>'
+          +       '<span class="cm-meta-like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 22V11M14 4l-2-2-2 2v7h6l2 5h-6"/></svg></span>'
+          +       '<span class="cm-meta-like-count">'+r.likes+'</span>'
+          +       '<span class="cm-meta-more">···</span>'
+          +     '</span>'
+          +   '</div>'
+          + '</div></div>';
+      }).join('')
+      + '</div>';
   }
   function renderParagraphCommentItem(c, index){
     return renderPanelCommentItem(c, index, 'paragraph-comment');
@@ -1259,8 +1308,19 @@ CHAPTER_TREE.forEach(renderFolder);
   function renderFullReference(){
     return '<div class="cm-reference">'
       + '<span class="cm-quote-text">原文：蒸汽与机械的浪潮中，谁能触及非凡？历史和黑暗的迷雾里，又是谁在耳语？我从诡秘中醒来，睁眼看见这个世界...</span>'
-      + '<span class="cm-ref-bubble">2</span>'
+      + '<span class="cm-ref-bubble">167</span>'
       + '</div>';
+  }
+  function renderFullCommentModule(comments, bubbleCount){
+    return '<section class="cm-full-module">'
+      + renderFullReference()
+      + comments.map(function(c, index){
+        return renderFullCommentItem(c, index);
+      }).join('')
+      + '<button class="cm-section-link" type="button">查看本段'+bubbleCount+'条评论'
+      +   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>'
+      + '</button>'
+      + '</section>';
   }
   function bindReplyToggles(){
     $$('.sub-toggle').forEach(function(btn){
@@ -1410,12 +1470,11 @@ CHAPTER_TREE.forEach(renderFolder);
     renderCommentTags();
     bindCommentListScroll();
     var summary = renderAiSummaryCard();
-    var reference = renderFullReference();
-    var top = sortComments(SECTION_POOL.slice(0, 6)).map(function(c, index){
-      return renderFullCommentItem(c, index);
-    }).join('');
+    var top = sortComments(SECTION_POOL.slice(0, 6));
+    var groups = renderFullCommentModule(top.slice(0, 3), 167)
+      + renderFullCommentModule(top.slice(3, 6), 92);
     var more = '<div class="cm-empty">-到底了-</div>';
-    list.innerHTML = summary + reference + top + more;
+    list.innerHTML = summary + groups + more;
     bindReplyToggles();
   }
 

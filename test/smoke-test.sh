@@ -106,7 +106,7 @@ JS=$(cat <<'JSEOF'
   chk('段评列表首项为评论', $('.cm-list > :first-child').classList.contains('paragraph-comment'), true);
   chk('段评视图无章评', $$('.cm-list > .chapter-comment').length, 0);
   chk('段评只显示2条', $$('.cm-list > .paragraph-comment').length, 2);
-  chk('段评含UGC图占位', !!$('.paragraph-comment .cm-ugc'), true);
+  chk('段评无UGC图占位', !!$('.paragraph-comment .cm-ugc'), false);
   chk('段评元信息左右布局', getComputedStyle($('.paragraph-comment .meta')).justifyContent, 'space-between');
   chk('段评元信息右侧操作', !!$('.paragraph-comment .cm-meta-actions'), true);
   chk('选中段浅红背景', getComputedStyle(act).backgroundImage.indexOf('255, 121, 80') >= 0, true);
@@ -122,10 +122,11 @@ JS=$(cat <<'JSEOF'
   chk('全章段评模块不展示', $$('.cm-section-module:not(.single)').length, 0);
   chk('全章AI总结卡存在', !!$('.cm-ai-card'), true);
   chk('全章列表首项为AI总结', $('.cm-list > :first-child').classList.contains('cm-ai-card'), true);
+  chk('全章引用分组数', $$('.cm-full-module').length, 2);
   chk('全章引用条存在', !!$('.cm-reference'), true);
-  chk('全章引用条含气泡', $('.cm-ref-bubble').textContent.trim(), '2');
-  chk('全章评论项数', $$('.cm-list > .full-comment').length, 6);
-  chk('全章评论都有操作行', $$('.cm-list > .full-comment .cm-meta-actions').length, 6);
+  chk('全章引用条含气泡', $('.cm-ref-bubble').textContent.trim(), '167');
+  chk('全章评论项数', $$('.cm-full-module > .full-comment').length, 6);
+  chk('全章评论都有操作行', $$('.cm-full-module > .full-comment > .body > .meta > .cm-meta-actions').length, 6);
   chk('全章标签可见', getComputedStyle($('#cmTags')).display, 'flex');
   chk('排序项', $$('#cmSort .cm-tab').map(function(el){return el.textContent.trim();}).join('/'), '默认/最热/最新');
   chk('最热排序保持选中', $('#cmSortHot').classList.contains('on'), true);
@@ -153,15 +154,15 @@ JS=$(cat <<'JSEOF'
   chk('hover不改变列表滚动值', $('#cmList').scrollTop, listScrollBeforeHover);
   $('#cmTags').dispatchEvent(new Event('mouseleave'));
   chk('离开标签行收起', $('#cmTags').classList.contains('hover-open'), false);
-  chk('全章一级评论数量', $$('.cm-list > .full-comment').length, 6);
+  chk('全章一级评论数量', $$('.cm-full-module > .full-comment').length, 6);
   chk('AI总结含去提问', $('.cm-ai-ask').textContent.trim(), '去提问 >');
-  chk('全章引用最多一行', Math.round($('.cm-reference').getBoundingClientRect().height), 36);
+  chk('全章引用两行高度', Math.round($('.cm-reference').getBoundingClientRect().height) >= 52, true);
   $('#cmSortHot').click();
   chk('最热排序选中', $('#cmSortHot').classList.contains('on'), true);
-  chk('最热首条点赞最高', $('.cm-list > .full-comment .cm-meta-actions').textContent.indexOf('2872') >= 0, true);
+  chk('最热首条点赞最高', $('.cm-list .full-comment .cm-meta-actions').textContent.indexOf('2872') >= 0, true);
   $('#cmSortLatest').click();
   chk('最新排序选中', $('#cmSortLatest').classList.contains('on'), true);
-  chk('最新首条为最新日期', $('.cm-list > .full-comment .cm-meta-left').textContent.indexOf('05月09日 22:41') >= 0, true);
+  chk('最新首条为最新日期', $('.cm-list .full-comment .cm-meta-left').textContent.indexOf('05月09日 22:41') >= 0, true);
   $('#cmFilterBtn').click();
   chk('筛选按钮可激活', $('#cmFilterBtn').classList.contains('on'), true);
 
@@ -213,15 +214,18 @@ JS=$(cat <<'JSEOF'
   chk('气泡文字水平居中(差≤1)', Math.abs(leftGap - rightGap) <= 1, true);
 
   // --- 9. 全章评论流布局对齐 Figma 稿 ---
-  var fullFirst = $('.cm-list > .full-comment');
+  var fullFirst = $('.cm-full-module > .full-comment');
   chk('全章评论头像28px', Math.round(fullFirst.querySelector('.av').getBoundingClientRect().width), 28);
-  chk('全章评论正文14px', getComputedStyle(fullFirst.querySelector('.content')).fontSize, '14px');
-  chk('全章评论含UGC图', !!fullFirst.querySelector('.cm-ugc'), true);
+  chk('全章评论默认头像', fullFirst.querySelector('.av').textContent.trim(), 'AVATAR');
+  chk('全章评论正文16px', getComputedStyle(fullFirst.querySelector('.content')).fontSize, '16px');
+  chk('全章评论无UGC图', !!fullFirst.querySelector('.cm-ugc'), false);
   chk('全章评论元信息含楼层', fullFirst.querySelector('.cm-meta-left').textContent.indexOf('1楼 ·') >= 0, true);
   chk('全章评论元信息中文日期', fullFirst.querySelector('.cm-meta-left').textContent.indexOf('月') >= 0, true);
   chk('全章评论操作图标20px', Math.round(fullFirst.querySelector('.cm-meta-actions svg').getBoundingClientRect().width), 20);
   chk('全章评论操作间距12px', getComputedStyle(fullFirst.querySelector('.cm-meta-actions')).columnGap, '12px');
   chk('全章回复入口存在', !!fullFirst.querySelector('.cm-more-replies'), true);
+  chk('全章回复项存在', !!fullFirst.querySelector('.cm-reply-item'), true);
+  chk('查看本段入口存在', !!$('.cm-section-link'), true);
   chk('全章到底文案', $('.cm-empty').textContent.trim(), '-到底了-');
 
   return out.join('\n');
