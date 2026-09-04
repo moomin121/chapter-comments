@@ -58,7 +58,7 @@ innerWidth - r.right   // 必须 === 0，不论抽屉开还是关
 ```
 chapter-comments/index.html                  # 唯一源文件（JS 渲染层约 1700 行 + 内联数据块）
 chapter-comments/scripts/build_comment_data.py  # CSV → COMMENT_DATA 预处理脚本
-chapter-comments/test/smoke-test.sh          # 冒烟测试 v2（49 项，pre-commit 强制跑）
+chapter-comments/test/smoke-test.sh          # 冒烟测试 v2（60 项，pre-commit 强制跑）
 chapter-comments/prd.md                      # 产品需求（数据契约/验收标准）
 chapter-comments/doc/技术方案.md              # 技术方案（路线/排序策略/测试方案）
 chapter-comments/CLAUDE.md                   # 本文件
@@ -121,33 +121,44 @@ var CHAPTER = {
 
 始终遵循：**数据契约不变 → 渲染函数增加过滤条件 → 不破坏现有 DOM 结构**。
 
-## 已知数据边界（真实 CSV，2026-09-04）
+## 已知数据边界（真实 CSV，2026-09-05）
 
-- **越界段**：CSV 中 `段落ID = 190、191` 超出正文 190 段（idx 0-189）范围，按 PRD §14.3 归入"未匹配评论对象"分组，展示在章评块之后（`.cm-unmatched-module`）。
+- **CSV 段落ID 是 1-based**（与正文 0-based idx 错 1 位）：build_comment_data.py 通过 `normalize_target_id()` 把 `targetId >= 1` 都 -1 转成 0-based；-1 保留为章评；0 视为章评（CSV 里"阅～～～"类评论对象为空、正文是章评风格）。**改这个之前要先验证：build 脚本统计 idx=17 应等于 257（OCR 旧 SECTION_COUNTS[17]=257），吻合=偏移正确**。
+- **越界段**：CSV 中 `段落ID = 191` 偏移后 targetId=190 仍超出正文 idx 0-189 范围，按 PRD §14.3 归入"未匹配评论对象"分组，展示在章评块之后（`.cm-unmatched-module`，仅 1 个）。
 - **孤儿回复**：663 条回复的父级评论不在 CSV 内，按 PRD §14.6 不展示，仅在 build 统计里记录。
 - **昵称/头像/用户标签**：CSV 无真实昵称头像，昵称显示 `用户guid`，头像按 guid 哈希 8 色 + 昵称首字，用户标签隐藏（PRD §6 兜底策略）。
 - **排序**：`自定义排序` 全为 -1，默认按点赞数降序 + 原始行号稳定兜底（PRD §4 / 技术方案 §4）。
 
-## 当前数据快照（真实 CSV）
+## 当前数据快照（真实 CSV，1-based 偏移后）
 
 ```
 段落数            190
 有气泡的段         170
 无气泡的段          20
 有效评论总数      6830（一级 4465 + 挂载回复 2365）
-段评总数          6209
-章评数            621
-聚合块总数         173（170 段块 + 1 章评块 + 2 未匹配块）
-标签数            29（全部 + 13 固定 + 15 内容）
+段评总数          6098
+章评数            732（含 targetId=0 归入的 111 条章评类）
+有评段            171
+聚合块            172（170 段块 + 1 章评块 + 1 未匹配块）
+标签数            30（全部 + 13 固定 + 16 内容）
 作品名            谁让他修仙的第1章（CSV）/ 没钱修什么仙？（页面 CHAPTER）
 章节标题          第1章 面试
+热度 Top 5 (idx): 27(366) / 60(278) / 40(268) / 18(257) / 132(253)
 ```
+
+## 已知 UI 修正记录（2026-09-05）
+
+- **AI 总结卡筛选可见**：仅在 `currentCommentTag === '全部'` 时显示；标签筛选态隐藏（focus 在真实命中上）
+- **标签云样式**：4 列 flex-wrap 药丸形 + emoji 前缀（固定标签） + 数字后置；"全部"选中态蓝边白底蓝字；hover 蓝弱底蓝字
+- **筛选后自动滚动**：标签 click listener 末尾 `#cmList.scrollTop = 0`
+- **评论对象气泡可点击**：`.cm-ref-bubble` 加 `data-target-id` + cursor pointer + hover 高亮；在 bindTargetAnchors 里直接绑定 click（stopPropagation 防双重触发）
+- **评论底部操作**：日期 + IP 地址 + 评论图标 + 点赞图标 + "赞"字 + 点赞数 + ···（提取 `commentMetaRow()` helper 复用）
 
 ## 测试入口
 
 - `index.html`：默认直接进入评论模式（阅读视图 + 抽屉自动展开 + 全部评论聚合视图）
-- `index.html?cm=para-17`：跳到第 18 段（idx=17，5 条评论），验证单对象视图 + 高亮
-- `index.html?cm=para-0`：跳到第 1 段（111 条评论，热度较高），验证深红气泡档 + 单对象视图滚动
+- `index.html?cm=para-17`：跳到第 18 段（idx=17，257 条评论），验证单对象视图 + 高亮
+- `index.html?cm=para-0`：跳到第 1 段（105 条评论，"到了吗？"），验证 idx=0 段的气泡档位 + 单对象视图滚动
 
 ## 验证方法
 
@@ -162,7 +173,7 @@ cd chapter-comments
 
 **A. 数据预处理段**（无浏览器）：跑 build 脚本校验统计（4465 一级 / 2365 挂载回复 / 663 孤儿 / 172 有评段）+ 校验 index.html 内联数据块与 CSV 最新构建一致（防止改了 CSV 忘记 --update-index）。
 
-**B. 页面渲染段**（agent-browser）：49 项断言覆盖 PRD §16 十二条验收：
+**B. 页面渲染段**（agent-browser）：60 项断言覆盖 PRD §16 十二条验收：
 
 | 类别 | 断言 |
 |---|---|
@@ -219,8 +230,15 @@ agent-browser eval "document.querySelectorAll('.para').length"
 - [x] **标签真实筛选**（PRD §11.3）：点击标签过滤一级评论并按对象聚合重渲染；"全部"还原
 - [x] **评论对象定位**（PRD §13）：hover 滚动 + hover-preview 临时高亮；click 进单对象视图（标签复位全部）；章评气泡点击进章评视图
 - [x] **默认排序兜底**（PRD §4）：sortValue 优先，-1 时点赞数降序 + 行号稳定
-- [x] **冒烟测试 v2**（49 项，按 PRD §16）+ `.git/hooks/pre-commit` 强制跑测试
+- [x] **冒烟测试 v2**（60 项，按 PRD §16）+ `.git/hooks/pre-commit` 强制跑测试
 - [x] 修复 build 脚本 re.subn 转义 bug（数据块曾被去转义污染）
+- [x] **CSV targetId 1-based 偏移修复**（2026-09-05）：build_comment_data.py normalize_target_id() 处理；idx=17 段评论从 5 → 257（吻合 OCR 旧数据）；章评数 621 → 732（targetId=0 的"阅"类评论归入）
+- [x] **AI 总结卡仅"全部"筛选时显示**（2026-09-05）
+- [x] **标签云重做**（2026-09-05）：4 列 flex-wrap 药丸形 + 固定标签 emoji 前缀（👍/🍅/💡/❓/👈/📚/🎬/🐛/🍚/⭐/🚫/✨）+ 数字后置
+- [x] **标签筛选后自动滚到列表顶部**（2026-09-05）
+- [x] **评论对象气泡点击触发单对象视图**（2026-09-05）：.cm-ref-bubble 加 data-target-id + cursor pointer + hover 高亮 + 直接绑定 click
+- [x] **评论底部操作按 Figma 设计稿实现**（2026-09-05）：日期 + IP 地址 + 评论图标 + 点赞"赞"字 + 点赞数 + ···（commentMetaRow helper 复用）
+- [x] 冒烟测试 v3（60 项，新增 11 项覆盖以上 6 个修正点）
 
 未做 / 待定：
 
@@ -230,5 +248,4 @@ agent-browser eval "document.querySelectorAll('.para').length"
 - [ ] `#cmFilterBtn` 筛选按钮只有 toggle 视觉，未接真实筛选器 dropdown
 - [ ] AI 总结卡内容是硬编码文案（PRD 未要求动态生成）
 - [ ] 段评 tab（renderParagraphsOverview）还是旧布局，冒烟测试未覆盖；如需对齐 Figma 可后续迭代
-- [ ] 部署链路未接（gh-pages 子目录 / Vercel / CloudStudio 待定）
 - [ ] 部署链路未接（gh-pages 子目录 / Vercel / CloudStudio 待定）

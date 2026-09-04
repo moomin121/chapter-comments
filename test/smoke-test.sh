@@ -24,7 +24,7 @@ if [ ! -f "$CSV_PATH" ]; then
 else
   BUILD_OUT=$(python3 "$DIR/scripts/build_comment_data.py" 2>/dev/null | tail -1)
   echo "build: $BUILD_OUT"
-  echo "$BUILD_OUT" | grep -q "4465 main, 2365 replies, 172 paragraph targets, 663 orphan replies" \
+  echo "$BUILD_OUT" | grep -q "4465 main, 2365 replies, 171 paragraph targets, 663 orphan replies" \
     || { echo "FAIL: 数据预处理统计不符"; exit 1; }
   # 生成的数据块必须已在 index.html 里（比较生成区与落盘区一致）
   python3 - "$DIR/scripts/build_comment_data.py" "$DIR/index.html" <<'PYEOF'
@@ -70,24 +70,25 @@ JS=$(cat <<'JSEOF'
   // --- §16-1 默认展开评论侧边栏 + 全部评论视图 ---
   chk('抽屉默认展开', $('#cmDrawer').classList.contains('open'), true);
   chk('默认全部评论视图', !$('#cmDrawer').classList.contains('parasec'), true);
-  chk('有效评论总数(621+6209)', $('#cmCount').textContent, '6830条');
+  chk('有效评论总数(732+6098)', $('#cmCount').textContent, '6830条');
 
   // --- §16-2 气泡：真实计数 / 0 不显示 / 标题胶囊 ---
   chk('段落数', $$('.para').length, 190);
   chk('有评段气泡数', $$('.para-bubble').length, 170);
   chk('标题章评胶囊显示', getComputedStyle($('#chapBubble')).display, 'flex');
-  chk('标题章评数', $('#chapBubble').textContent, '621');
-  chk('段评总数', $('#chapSecTotal').textContent, '6209');
-  chk('章评聚合计数(气泡最后一块)', $$('.cm-reference[data-target-id="-1"] .cm-ref-bubble')[0].textContent, '621');
+  chk('标题章评数', $('#chapBubble').textContent, '732');
+  chk('段评总数', $('#chapSecTotal').textContent, '6098');
+  chk('章评聚合计数(气泡最后一块)', $$('.cm-reference[data-target-id="-1"] .cm-ref-bubble')[0].textContent, '732');
 
   // --- §16-4 全部评论：AI 卡置顶 + 按段聚合 + 章评最后 + 未匹配兜底 ---
   chk('AI总结卡存在', $$('.cm-ai-card').length, 1);
   chk('AI总结卡是首项', $('#cmList > :first-child').classList.contains('cm-ai-card'), true);
-  chk('聚合块总数(170段+1章评+2未匹配)', $$('.cm-full-module').length, 173);
+  chk('聚合块总数(170段+1章评+1未匹配)', $$('.cm-full-module').length, 172);
   chk('首个聚合块是段0', $('.cm-full-module').getAttribute('data-target-id'), '0');
-  chk('章评块排在最后', $$('.cm-full-module')[$$('.cm-full-module').length-3].getAttribute('data-target-id'), '-1');
-  chk('未匹配块数(CSV越界段190/191)', $$('.cm-unmatched-module').length, 2);
-  chk('未匹配块在章评之后', $$('.cm-full-module').pop().classList.contains('cm-unmatched-module'), true);
+  // 顺序：170 段块 → 1 章评块 (-1) → 1 未匹配块 (targetId=191 → 越界)；章评在倒数第 2
+  chk('章评块排倒数第二', $$('.cm-full-module')[$$('.cm-full-module').length-2].getAttribute('data-target-id'), '-1');
+  chk('未匹配块数(CSV越界段191)', $$('.cm-unmatched-module').length, 1);
+  chk('未匹配块排在最后', $$('.cm-full-module').pop().classList.contains('cm-unmatched-module'), true);
 
   // --- §16-5 每段最多 3 条一级评论 + 查看本段入口 ---
   var overThree = $$('.cm-full-module').filter(function(m){
@@ -106,12 +107,18 @@ JS=$(cat <<'JSEOF'
   chk('评论有正文', fc.querySelector('.content').textContent.length > 0, true);
   chk('有回复的评论有展开入口', $$('.sub-toggle').length > 100, true);
   chk('楼中楼默认收起', $$('.cm-sub[style*="display: none"], .cm-sub[style*="display:none"]').length === $$('.cm-sub').length, true);
+  // --- 需求6 评论底部操作：日期 + IP地址 + 评论 + 点赞"赞" + 点赞数 + ··· ---
+  var metaLeft = fc.querySelector('.cm-meta-left').textContent;
+  chk('评论底部含日期', /月.*日/.test(metaLeft), true);
+  chk('评论底部含IP地址', metaLeft.indexOf('IP地址') >= 0, true);
+  chk('评论底部含点赞赞字', (fc.querySelector('.cm-meta-like b')||{}).textContent, '赞');
+  chk('评论底部含更多', fc.querySelector('.cm-meta-more').textContent, '···');
 
   // --- §16-3 点击段气泡 → 单对象视图全部一级评论 ---
   $('.para-bubble[data-idx="17"]').click();
   chk('单对象视图态', $('#cmDrawer').classList.contains('parasec'), true);
-  chk('段17计数(一级+回复)', $('#cmCount').textContent, '5条');
-  chk('段17全部一级评论', $$('.cm-list > .paragraph-comment').length, 4);
+  chk('段17计数(一级+回复)', $('#cmCount').textContent, '257条');
+  chk('段17全部一级评论', $$('.cm-list > .paragraph-comment').length, 193);
   chk('段17高亮', ($('.para.active')||{dataset:{}}).dataset.idx, '17');
   chk('返回全部评论按钮', !!$('.cm-quote-back'), true);
   // 楼中楼展开/收起
@@ -124,7 +131,7 @@ JS=$(cat <<'JSEOF'
   }
   // 返回全部评论
   $('.cm-quote-back').click();
-  chk('返回后聚合视图', $$('.cm-full-module').length, 173);
+  chk('返回后聚合视图', $$('.cm-full-module').length, 172);
   chk('返回后计数', $('#cmCount').textContent, '6830条');
 
   // --- §16-10/11 标签真实筛选 ---
@@ -133,11 +140,16 @@ JS=$(cat <<'JSEOF'
   if(tagReal){
     tagReal.click();
     chk('标签选中态', $('.cm-tag.on').getAttribute('data-tag'), '这不就是现实/网贷还债太真实');
-    chk('筛选后聚合块变少', $$('.cm-full-module').length < 173, true);
+    chk('筛选后聚合块变少', $$('.cm-full-module').length < 172, true);
     chk('筛选后仍按段聚合', $$('.cm-full-module').length > 50, true);
+    // 筛选后应自动滚到列表顶部（scrolled-to-top 等价于 list.scrollTop === 0）
+    chk('筛选后自动滚到顶', $('#cmList').scrollTop, 0);
+    // 筛选后不应再显示 AI 卡
+    chk('筛选后隐藏AI卡', $$('.cm-ai-card').length, 0);
     var tagAll = $$('.cm-tag').filter(function(t){ return t.getAttribute('data-tag') === '全部'; })[0];
     tagAll.click();
-    chk('全部还原', $$('.cm-full-module').length, 173);
+    chk('全部还原', $$('.cm-full-module').length, 172);
+    chk('还原后恢复AI卡', $$('.cm-ai-card').length, 1);
   }
 
   // --- §16-8 hover 评论对象：滚动定位 + 临时高亮 ---
@@ -151,9 +163,17 @@ JS=$(cat <<'JSEOF'
   // --- §16-9 点击评论对象 → 单对象视图 ---
   $('.cm-reference[data-target-id="0"]').click();
   chk('点击进单对象视图', $('#cmDrawer').classList.contains('parasec'), true);
-  chk('对象0计数', $('#cmCount').textContent, '111条');
+  chk('对象0计数', $('#cmCount').textContent, '105条');
   $$('.para').length && null;
   chk('对象0高亮', ($('.para.active')||{dataset:{}}).dataset.idx, '0');
+  // 需求5: 点击评论对象气泡也要进单对象视图
+  $('.cm-quote-back').click();
+  var refBubble = $('.cm-ref-bubble[data-target-id="0"]');
+  chk('评论对象气泡有 data-target-id', !!refBubble, true);
+  chk('评论对象气泡 cursor pointer', getComputedStyle(refBubble).cursor, 'pointer');
+  refBubble.click();
+  chk('点击气泡进单对象视图', $('#cmDrawer').classList.contains('parasec'), true);
+  chk('点击气泡高亮段0', ($('.para.active')||{dataset:{}}).dataset.idx, '0');
   $('.cm-quote-back').click();
 
   // --- §16-12 刷新后默认打开（reload 由外层统一处理） ---
@@ -164,7 +184,7 @@ JS=$(cat <<'JSEOF'
   chk('关闭后抽屉宽度0', Math.round($('#cmDrawer').getBoundingClientRect().width), 0);
   $('#rrComments').click();
   chk('重开评论模式', document.body.classList.contains('comment-mode'), true);
-  chk('重开后恢复聚合视图', $$('.cm-full-module').length, 173);
+  chk('重开后恢复聚合视图', $$('.cm-full-module').length, 172);
 
   return out.join('\n');
 })()
