@@ -4,7 +4,7 @@
 
 ## 项目一句话总结
 
-单文件网页 `index.html`，起点风格的小说章节阅读页 + 段评气泡 + 评论抽屉。HTML + CSS + JS 全部内联。71KB。190 段示例章节正文 + 145 个段评气泡。
+单文件网页 `index.html`，起点风格的小说章节阅读页 + 段评气泡 + 评论抽屉。HTML + CSS + JS 全部内联（含真实评论数据块约 3.8MB）。190 段章节正文 + 170 个段评气泡（真实 CSV 聚合，4465 条一级评论 + 3028 条回复）。
 
 ---
 
@@ -36,13 +36,11 @@ innerWidth - r.right   // 必须 === 0，不论抽屉开还是关
 
 肉眼看截图会误判——抽屉宽 360px 加上图标栏 48px 连成一片，看起来像"贴右了"，实际中间被挤开了。
 
-### 2. 段评数字必须准确，不能编造
+### 2. 评论数字必须来自真实数据，不能编造
 
 需求原话：「评论数字要对」。
 
-所有数字来自起点章节页截图的 OCR，经过**三轮交叉验证**（原尺寸识别 → sips 放大 2× 再识别 → 裁剪气泡区域放大 10× 只认数字）。仍然有 45 段识别不到，兜底设为 0（不显示气泡）。
-
-**不要为了"让每段都有气泡"而编数字**。用户如果发现哪段该有数字却没显示，让他报段号，改 `SECTION_COUNTS` 对应下标即可（清单见下方「零值段清单」）。
+数字现在来自真实 CSV（`谁让他修仙的第1章评论_作者视角打标.csv`），由 `ensureCommentIndex()` 按评论对象（标题/段落）聚合"一级+回复"得出。改数据只能改 CSV 后重跑 `build_comment_data.py --update-index`，**不要手改页面里的数字**，也不要为了"让每段都有气泡"编数字。
 
 ### 3. 不要拆分为多文件
 
@@ -52,15 +50,19 @@ innerWidth - r.right   // 必须 === 0，不论抽屉开还是关
 
 - **纯原生**：HTML + CSS + 原生 JS（无构建步骤、无依赖、无打包）
 - **字体**：LXGW WenKai（jsdelivr CDN `<link rel="preconnect">` + `@font-face`）
-- **数据**：内置在 `var CHAPTER = {...}` 中
+- **数据**：正文在 `var CHAPTER = {...}`；评论在 `// GENERATED_COMMENT_DATA_START/END` 之间（脚本生成，勿手改）
 - **存储**：`localStorage.wb_comment_mode` 记忆评论开关（默认开启，可忽略）
 
 ## 文件边界
 
 ```
-chapter-comments/index.html        # 唯一源文件（约 12100 行，含大量空行/注释）
-chapter-comments/CLAUDE.md         # 本文件
-chapter-comments/README.md         # 人类开发文档
+chapter-comments/index.html                  # 唯一源文件（JS 渲染层约 1700 行 + 内联数据块）
+chapter-comments/scripts/build_comment_data.py  # CSV → COMMENT_DATA 预处理脚本
+chapter-comments/test/smoke-test.sh          # 冒烟测试 v2（49 项，pre-commit 强制跑）
+chapter-comments/prd.md                      # 产品需求（数据契约/验收标准）
+chapter-comments/doc/技术方案.md              # 技术方案（路线/排序策略/测试方案）
+chapter-comments/CLAUDE.md                   # 本文件
+chapter-comments/README.md                   # 人类开发文档
 ```
 
 **不要试图拆分 index.html**：单文件设计便于 diff 和热重载，协作时请保持原样。
@@ -74,29 +76,34 @@ chapter-comments/README.md         # 人类开发文档
 | `/* ============ 章节阅读视图（含段评气泡 / 评论抽屉） ============ */` | 段评气泡 + 评论抽屉 CSS 起始 |
 | `.cm-drawer{` | 评论抽屉容器 CSS |
 | `// 0) 示例章节：` | CHAPTER 数据块起始 |
-| `// 1) 工具` | `$(s)` / `$$(s)` / `escapeHtml` / `heatClass` / `avatarColor` 工具函数 |
+| `// GENERATED_COMMENT_DATA_START` | 真实评论数据块（脚本生成区） |
+| `// 1) 工具` | `$(s)` / `escapeHtml` / `heatClass` / `avatarColor` / `getParagraphByTarget` / `scrollToTarget` 工具函数 |
 | `// 2) 渲染 reader` | `renderReader()` 渲染段落 + 气泡 |
-| `// 3) 段选择联动` | `selectParagraph(idx)` 点击气泡 → 高亮 + 切抽屉 |
-| `// 4) 渲染段评列表` | `renderParagraphComments(idx)` 单段段评视图 |
-| `// 5) 渲染全部评论` | `renderAllComments()` 章评主楼 + 楼中楼 |
+| `// 3) 段选择联动` | `selectParagraph(idx)` → `enterTargetView(targetId)` 进单对象视图 |
+| `// 4) 渲染单对象评论列表` | `renderTargetComments(targetId)` 该对象全部一级评论 |
+| `// 5) 渲染全部评论` | `renderAllComments()` AI 卡 + 按段聚合 + 章评最后 + 未匹配兜底 |
 | `// 6) 段评 tab` | `renderParagraphsOverview()` 段评导航 |
 | `// 7) 模式控制：评论模式开关` | `setCommentMode(on)` / `switchCmTab(name)` |
-| `// 8) 初始化 + 事件绑定` | `init()` |
 
 ## 数据契约
 
 ```js
 var CHAPTER = {
   title: '...',                    // 章节标题
-  meta: {work, author, words, time},
-  chapterCommentCount: 621,        // 章评数（标题旁胶囊、抽屉标题、右栏徽章）
+  meta: {work, author, words, publishedAt, visibility},
   paragraphs: ['段1', '段2', ...]  // 190 段
 };
-var SECTION_COUNTS = [105, 21, ...];  // 190 个数字，与 paragraphs 一一对应
+// GENERATED_COMMENT_DATA_START ... END 之间的 var COMMENT_DATA（由脚本生成，勿手改）
 ```
 
-- 改章节数据：同步改 `paragraphs` 和 `SECTION_COUNTS`，长度必须一致
-- 改段评数显示位置：`getParagraphs()` / `renderReader()` 末尾的 DOM 更新
+**评论数据已接入真实 CSV**（2026-09-04）：
+- 来源：`/Users/moomin/Documents/ChatGPT/New project/outputs/who_made_him_cultivate_ch1_comments/谁让他修仙的第1章评论_作者视角打标.csv`
+- 重建：`python3 scripts/build_comment_data.py --update-index`（dry-run 校验：去掉 `--update-index`）
+- 规模：7493 行 → 4465 条一级评论 + 3028 条回复（其中 663 条孤儿回复不展示）、172 个有评段、章评 621 条
+- `SECTION_COUNTS / SECTION_POOL / COMMENT_TAGS` 等演示数据已删除；气泡计数由 `ensureCommentIndex()` 按评论对象聚合得出
+- CSV 更新后必须重跑 build 脚本并同步更新 `test/smoke-test.sh` 的数据锚点
+
+**注意**：`update_index` 必须用 lambda replacement（脚本已修），否则 `re.subn` 会把 block 里的 `\\` 解释成单个 `\` 污染数据。
 
 ## 不要做的修改
 
@@ -110,84 +117,66 @@ var SECTION_COUNTS = [105, 21, ...];  // 190 个数字，与 paragraphs 一一�
 
 1. **DOM**：在 `<aside class="cm-drawer" id="cmDrawer">` 里 `<div class="cm-toolbar">` 旁边加一个 `<div class="cm-follow-toggle">`
 2. **CSS**：在 `.cm-toolbar{...}` 附近加 `.cm-follow-toggle{...}`
-3. **JS**：在 `// 7) 模式控制：评论模式开关` 附近加 `function toggleFollowOnly(){...}`，并在 `renderAllComments` / `renderParagraphComments` 里调用时检查状态
+3. **JS**：在 `// 7) 模式控制：评论模式开关` 附近加 `function toggleFollowOnly(){...}`，并在 `renderAllComments` / `renderTargetComments` 里调用时检查状态
 
 始终遵循：**数据契约不变 → 渲染函数增加过滤条件 → 不破坏现有 DOM 结构**。
 
-## 已知 OCR 残留风险：零值段清单
+## 已知数据边界（真实 CSV，2026-09-04）
 
-CHAPTER 数据来自起点章节页截图，OCR **三轮交叉验证**后仍有 45 段识别不出数字，兜底设为 `0`（不渲染气泡）。
+- **越界段**：CSV 中 `段落ID = 190、191` 超出正文 190 段（idx 0-189）范围，按 PRD §14.3 归入"未匹配评论对象"分组，展示在章评块之后（`.cm-unmatched-module`）。
+- **孤儿回复**：663 条回复的父级评论不在 CSV 内，按 PRD §14.6 不展示，仅在 build 统计里记录。
+- **昵称/头像/用户标签**：CSV 无真实昵称头像，昵称显示 `用户guid`，头像按 guid 哈希 8 色 + 昵称首字，用户标签隐藏（PRD §6 兜底策略）。
+- **排序**：`自定义排序` 全为 -1，默认按点赞数降序 + 原始行号稳定兜底（PRD §4 / 技术方案 §4）。
 
-**零值段号（1-based，共 45 个）**：
-
-```
-5, 26, 37, 57, 62, 65, 66, 69, 74, 86, 89, 96, 99, 104, 106, 107, 108, 109,
-115, 118, 119, 121, 126, 131, 135, 137, 140, 143, 144, 149, 150, 152, 154,
-155, 156, 159, 160, 161, 166, 171, 172, 178, 180, 185, 186
-```
-
-这些段多为短句、纯对话或省略号（如第 5 段「良久之后，前方传来一阵叫号声。」、第 66 段「"哼。"」），气泡小、对比度低，OCR 漏识率高。
-
-若用户报「第 N 段应该有数字但没显示」：
-1. 确认 N 在上面的清单里
-2. 改 `SECTION_COUNTS[N-1]` 即可（下标 = 段号 - 1）
-3. 顺手更新本清单，把该段号移除
-
-**不要**批量把 0 改成非零——那等于编造数据。
-
-## 当前数据快照
+## 当前数据快照（真实 CSV）
 
 ```
-段落数        190
-有气泡的段     145
-无气泡的段      45
-段评总数      5744
-章评数        621
-作品名        没钱修什么仙？
-作者          熊狼狗
-章节标题      第1章 面试
-字数          6016
+段落数            190
+有气泡的段         170
+无气泡的段          20
+有效评论总数      6830（一级 4465 + 挂载回复 2365）
+段评总数          6209
+章评数            621
+聚合块总数         173（170 段块 + 1 章评块 + 2 未匹配块）
+标签数            29（全部 + 13 固定 + 15 内容）
+作品名            谁让他修仙的第1章（CSV）/ 没钱修什么仙？（页面 CHAPTER）
+章节标题          第1章 面试
 ```
-
-热度 Top 5 段（可用来做视觉回归的锚点）：
-
-| 段号 | 段评数 | 颜色档位 |
-|---|---|---|
-| 第 27 段 | 366 | 深红 |
-| 第 60 段 | 278 | 深红 |
-| 第 40 段 | 268 | 深红 |
-| 第 18 段 | 257 | 深红 |
-| 第 132 段 | 253 | 深红 |
 
 ## 测试入口
 
-- `index.html`：默认直接进入评论模式（阅读视图 + 抽屉自动展开）
-- `index.html?cm=para-17`：跳到第 18 段（257 条段评，**最高热度之一**），可一次验证：气泡深红档、段落高亮、抽屉切段评视图、楼中楼展开
-- `index.html?cm=para-19`：跳到第 20 段（21 条段评，长段落换行场景）
-- `index.html?cm=para-4`：跳到第 5 段（**零值段**，不该有气泡，用来验证 0 值不渲染）
-
-> 注意：旧文档里写的「para-19 = 14 条段评」是上一版示例数据，已过时。
+- `index.html`：默认直接进入评论模式（阅读视图 + 抽屉自动展开 + 全部评论聚合视图）
+- `index.html?cm=para-17`：跳到第 18 段（idx=17，5 条评论），验证单对象视图 + 高亮
+- `index.html?cm=para-0`：跳到第 1 段（111 条评论，热度较高），验证深红气泡档 + 单对象视图滚动
 
 ## 验证方法
 
-### 首选：跑冒烟测试（改完必做）
+### 首选：跑冒烟测试（改完必做，pre-commit hook 会强制跑）
 
 ```bash
 cd chapter-comments
 ./test/smoke-test.sh
 ```
 
-`test/smoke-test.sh` 会自动起静态服务器、开浏览器、跑 16 项断言，全绿才退出码 0。覆盖：
+`test/smoke-test.sh` v2（2026-09-04 重写）分两段：
+
+**A. 数据预处理段**（无浏览器）：跑 build 脚本校验统计（4465 一级 / 2365 挂载回复 / 663 孤儿 / 172 有评段）+ 校验 index.html 内联数据块与 CSV 最新构建一致（防止改了 CSV 忘记 --update-index）。
+
+**B. 页面渲染段**（agent-browser）：49 项断言覆盖 PRD §16 十二条验收：
 
 | 类别 | 断言 |
 |---|---|
-| 数据完整性 | 190 段 / 145 气泡 / 章评 621 / 段评总数 5744 / 标题 / 作品名 / 作者 |
-| 布局铁律 | 图标栏贴右 gap==0（**抽屉开、关两种状态各验一次**） |
-| 零值段 | idx=4（零值段）无气泡；idx=17（257 条）有气泡 |
-| 交互 | 点击气泡 → 高亮段 idx==17、抽屉切段评视图、标题含"第18段" |
-| 段评 tab | 列出全部 190 项 |
+| 默认态 | 抽屉展开 / 全部评论视图 / 有效评论总数 6830 |
+| 气泡 | 190 段 / 170 气泡 / 标题胶囊 621 / 段评总数 6209 |
+| 聚合视图 | AI 卡置顶 / 173 块 / 章评最后 / 未匹配兜底 / 每段前 3 条 + 查看入口 |
+| 单对象视图 | 全部一级评论 / 高亮 / 返回按钮 / 楼中楼展开收起 |
+| 标签筛选 | 真实标签"这不就是现实/网贷还债太真实"过滤生效 / 全部还原 |
+| 定位 | hover 临时高亮 + 不改筛选状态 / 点击进单对象视图 |
+| 布局铁律 | 图标栏贴右 gap==0（抽屉开、关两态） |
 
 **加新功能时同步往这个脚本里加断言**，别只手动点两下就说完成。
+
+**数据锚点提醒**：CSV 更新后，先 `--update-index`，再同步改 smoke-test 里 `170 / 173 / 6830 / 5条 / 111条` 等锚点数字。
 
 ### 手工探针（调试用）
 
@@ -212,7 +201,7 @@ agent-browser eval "document.querySelectorAll('.para').length"
 - 全局未配 `user.name`/`user.email`，本仓库已用局部配置（`moomin` / `moomin@local`）
 - 提交时加 `-c commit.gpgsign=false`，本机未配 GPG 签名，否则提交会失败
 
-## 交接状态（截至 2026-09-02）
+## 交接状态（截至 2026-09-04）
 
 已完成：
 
@@ -224,12 +213,22 @@ agent-browser eval "document.querySelectorAll('.para').length"
 - [x] 章评主楼 + 楼中楼展开/收起
 - [x] 右侧图标栏永久贴最右（flex order 修正）
 - [x] git 仓库初始化，首次提交 `df3d5ac`
+- [x] **真实评论数据接入**（2026-09-04）：CSV 7493 行经 `scripts/build_comment_data.py` 烤入 `COMMENT_DATA`，替换全部 SECTION_POOL/SECTION_COUNTS/COMMENT_TAGS 演示数据；气泡/计数全部按评论对象聚合
+- [x] **全部评论视图按段聚合**（PRD §10）：AI 总结卡置顶 → 按段顺序聚合块（前 3 条 + 查看本段入口）→ 章评块最后 → 未匹配对象兜底
+- [x] **单对象视图全部一级评论**（PRD §12）：气泡/评论对象/查看入口点击进入，不再截断 2 条；返回全部评论按钮
+- [x] **标签真实筛选**（PRD §11.3）：点击标签过滤一级评论并按对象聚合重渲染；"全部"还原
+- [x] **评论对象定位**（PRD §13）：hover 滚动 + hover-preview 临时高亮；click 进单对象视图（标签复位全部）；章评气泡点击进章评视图
+- [x] **默认排序兜底**（PRD §4）：sortValue 优先，-1 时点赞数降序 + 行号稳定
+- [x] **冒烟测试 v2**（49 项，按 PRD §16）+ `.git/hooks/pre-commit` 强制跑测试
+- [x] 修复 build 脚本 re.subn 转义 bug（数据块曾被去转义污染）
 
 未做 / 待定：
 
-- [ ] 45 个零值段的数字待用户肉眼核对
 - [ ] 章节列表是硬编码 16 章，未接真实接口
-- [ ] 评论输入框 `<input class="ipt" id="cmInput">` 只有 UI，回车无行为
-- [ ] 点赞 / 回复按钮无实际逻辑
-- [ ] 未接真实评论数据接口（当前评论内容来自内置 `SECTION_POOL` 循环复用）
+- [ ] 评论输入框 `<input class="ipt" id="cmInput">` 只有 UI，回车无行为（发布评论不在本期 PRD 范围）
+- [ ] 点赞 / 回复按钮无实际逻辑（不在本期 PRD 范围）
+- [ ] `#cmFilterBtn` 筛选按钮只有 toggle 视觉，未接真实筛选器 dropdown
+- [ ] AI 总结卡内容是硬编码文案（PRD 未要求动态生成）
+- [ ] 段评 tab（renderParagraphsOverview）还是旧布局，冒烟测试未覆盖；如需对齐 Figma 可后续迭代
+- [ ] 部署链路未接（gh-pages 子目录 / Vercel / CloudStudio 待定）
 - [ ] 部署链路未接（gh-pages 子目录 / Vercel / CloudStudio 待定）
