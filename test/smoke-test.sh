@@ -161,7 +161,7 @@ JS=$(cat <<'JSEOF'
   chk('最热首条点赞最高', $('.cm-list > .full-comment .cm-meta-actions').textContent.indexOf('2872') >= 0, true);
   $('#cmSortLatest').click();
   chk('最新排序选中', $('#cmSortLatest').classList.contains('on'), true);
-  chk('最新首条为最新日期', $('.cm-list > .full-comment .cm-meta-left').textContent.indexOf('05-09 22:41') >= 0, true);
+  chk('最新首条为最新日期', $('.cm-list > .full-comment .cm-meta-left').textContent.indexOf('05月09日 22:41') >= 0, true);
   $('#cmFilterBtn').click();
   chk('筛选按钮可激活', $('#cmFilterBtn').classList.contains('on'), true);
 
@@ -215,8 +215,12 @@ JS=$(cat <<'JSEOF'
   // --- 9. 全章评论流布局对齐 Figma 稿 ---
   var fullFirst = $('.cm-list > .full-comment');
   chk('全章评论头像28px', Math.round(fullFirst.querySelector('.av').getBoundingClientRect().width), 28);
-  chk('全章评论正文16px', getComputedStyle(fullFirst.querySelector('.content')).fontSize, '16px');
+  chk('全章评论正文14px', getComputedStyle(fullFirst.querySelector('.content')).fontSize, '14px');
   chk('全章评论含UGC图', !!fullFirst.querySelector('.cm-ugc'), true);
+  chk('全章评论元信息含楼层', fullFirst.querySelector('.cm-meta-left').textContent.indexOf('1楼 ·') >= 0, true);
+  chk('全章评论元信息中文日期', fullFirst.querySelector('.cm-meta-left').textContent.indexOf('月') >= 0, true);
+  chk('全章评论操作图标20px', Math.round(fullFirst.querySelector('.cm-meta-actions svg').getBoundingClientRect().width), 20);
+  chk('全章评论操作间距12px', getComputedStyle(fullFirst.querySelector('.cm-meta-actions')).columnGap, '12px');
   chk('全章回复入口存在', !!fullFirst.querySelector('.cm-more-replies'), true);
   chk('全章到底文案', $('.cm-empty').textContent.trim(), '-到底了-');
 

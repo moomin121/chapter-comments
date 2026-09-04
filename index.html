@@ -399,8 +399,18 @@
   .cm-item.full-comment .nm-row{height:24px;margin-bottom:4px;}
   .cm-item.full-comment .nm{font-size:14px;line-height:22px;color:#808080;font-weight:500;}
   .cm-item.full-comment .lv{height:18px;padding:0 6px;border-radius:4px;font-size:12px;line-height:18px;}
-  .cm-item.full-comment .content{font-size:16px;line-height:24px;color:#191919;}
-  .cm-item.full-comment .meta{gap:12px;margin-top:8px;font-size:12px;line-height:20px;color:#ADADAD;}
+  .cm-item.full-comment .content{font-size:14px;line-height:22px;color:#191919;}
+  .cm-item.full-comment .meta{
+    min-height:20px;gap:12px;margin-top:8px;font-size:12px;line-height:20px;color:#ADADAD;
+    align-items:flex-start;
+  }
+  .cm-item.full-comment .cm-meta-left{
+    flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;color:#ADADAD;
+  }
+  .cm-item.full-comment .cm-meta-actions{flex:0 0 auto;gap:12px;color:#808080;}
+  .cm-item.full-comment .cm-meta-actions svg{width:20px;height:20px;}
+  .cm-item.full-comment .cm-meta-like-count{font-family:var(--num);line-height:20px;}
+  .cm-item.full-comment .cm-meta-more{width:20px;line-height:20px;text-align:center;}
 
   .cm-item{display:flex;gap:10px;padding:12px 4px;border-bottom:1px solid var(--ink-04);align-items:flex-start;}
   .cm-item:last-child{border-bottom:none;}
@@ -1090,6 +1100,11 @@ CHAPTER_TREE.forEach(renderFolder);
     if(m){ return m[1]+'-'+m[2]+' '+m[3]+':'+m[4]; }
     return t;
   }
+  function fmtCommentMetaTime(t){
+    var m = String(t).match(/(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/);
+    if(m){ return m[1]+'月'+m[2]+'日 '+m[3]+':'+m[4]; }
+    return fmtTime(t);
+  }
   function renderCommentTags(){
     var tags = $('#cmTags');
     if(!tags) return;
@@ -1194,6 +1209,7 @@ CHAPTER_TREE.forEach(renderFolder);
       + '</div></div>';
   }
   function renderPanelCommentItem(c, index, extraClass){
+    var isFullComment = extraClass === 'full-comment';
     var avColor = avatarColor(c.user);
     var lv = c.level ? '<span class="lv '+c.level+'">'+ ({
       'lv-1':'学员','lv-2':'弟子','lv-3':'执事','lv-4':'堂主','lv-5':'舵主'
@@ -1201,6 +1217,7 @@ CHAPTER_TREE.forEach(renderFolder);
     var pin = index === 0 ? '<span class="cm-pin">置顶</span>' : '';
     var image = index === 0 ? '<div class="cm-ugc">UGC<br/>IMAGE</div>' : '';
     var moreReplies = index === 0 ? '<button class="cm-more-replies" type="button">展开23条回复⌄</button>' : '';
+    var metaLeft = (isFullComment ? (index + 1)+'楼 · '+fmtCommentMetaTime(c.time) : fmtTime(c.time))+' IP地址';
     return '<div class="cm-item '+(extraClass || 'paragraph-comment')+'">'
       + '<span class="av" style="background:'+avColor+'">'+escapeHtml(avatarInitial(c.user))+'</span>'
       + '<div class="body">'
@@ -1208,11 +1225,11 @@ CHAPTER_TREE.forEach(renderFolder);
       +   '<div class="content">'+pin+c.content+'</div>'
       +   image
       +   '<div class="meta">'
-      +     '<span class="cm-meta-left">'+fmtTime(c.time)+' IP地址</span>'
+      +     '<span class="cm-meta-left">'+metaLeft+'</span>'
       +     '<span class="cm-meta-actions">'
       +       '<span class="cm-meta-comment"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>'
       +       '<span class="cm-meta-like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 22V11M14 4l-2-2-2 2v7h6l2 5h-6"/></svg></span>'
-      +       '<span>'+c.likes+'</span>'
+      +       '<span class="cm-meta-like-count">'+c.likes+'</span>'
       +       '<span class="cm-meta-more">···</span>'
       +     '</span>'
       +   '</div>'
