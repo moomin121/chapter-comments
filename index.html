@@ -283,24 +283,21 @@
   .cm-drawer.parasec .cm-input{display:none;}
 
   .cm-tags{
-    position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 16px 4px;
+    position:relative;display:flex;align-items:center;align-content:flex-start;gap:8px;flex-wrap:wrap;padding:10px 16px 4px;
     border-bottom:0;background:var(--panel);flex:0 0 auto;
     max-height:194px;overflow:hidden;transition:max-height .18s ease, padding .18s ease;
   }
   .cm-tag{
-    height:32px;padding:0 14px;border-radius:16px;border:1px solid transparent;
-    background:var(--ink-04);color:var(--ink-92);font-size:13px;line-height:20px;cursor:pointer;
-    white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:4px;font-weight:500;
+    height:22px;padding:0 6px;border-radius:12px;border:1px solid transparent;
+    background:var(--ink-04);color:var(--ink-92);font-size:12px;line-height:18px;cursor:pointer;
+    white-space:nowrap;display:inline-flex;align-items:center;gap:2px;font-weight:500;
     transition:background .14s ease, border-color .14s ease, color .14s ease;
-    overflow:hidden;text-overflow:ellipsis;
   }
-  .cm-tag-num{color:var(--ink-49);font-family:var(--num);font-weight:400;font-size:12px;}
+  .cm-tag-num{color:var(--ink-49);font-family:var(--num);font-weight:400;font-size:11.5px;margin-left:3px;}
   .cm-tag:hover{background:var(--brand-weak);color:var(--brand);}
   .cm-tag:hover .cm-tag-num{color:var(--brand);}
   .cm-tag.on{background:#fff;border-color:var(--brand);color:var(--brand);font-weight:600;}
   .cm-tag.on .cm-tag-num{color:var(--brand);font-weight:600;}
-  /* 长标签（≥9 字）跨整行，允许换行避免截断；与 codex 原版节奏一致 */
-  .cm-tag.cm-tag-long{grid-column:1 / -1;white-space:normal;height:auto;min-height:32px;padding:6px 14px;line-height:18px;}
   .cm-tags.collapsed{height:38px;max-height:38px;padding-top:8px;padding-bottom:8px;}
   .cm-tags.collapsed:hover,
   .cm-tags.collapsed.hover-open{
@@ -1195,9 +1192,7 @@ CHAPTER_TREE.forEach(renderFolder);
     tags.innerHTML = COMMENT_TAGS.map(function(t){
       var isActive = t.name === currentCommentTag;
       var label = (t.emoji ? t.emoji + ' ' : '') + escapeHtml(t.name);
-      // 长标签（≥9 字）跨整行；与 codex 原版节奏一致：3 列网格 + 长标签独占一行
-      var longClass = t.name.length >= 9 ? ' cm-tag-long' : '';
-      return '<span class="cm-tag'+(isActive?' on':'')+longClass+'" data-tag="'+escapeHtml(t.name)+'">'
+      return '<span class="cm-tag'+(isActive?' on':'')+'" data-tag="'+escapeHtml(t.name)+'">'
         + '<span class="cm-tag-label">'+label+'</span>'
         + '<span class="cm-tag-num">'+t.count+'</span></span>';
     }).join('');

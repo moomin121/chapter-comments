@@ -137,15 +137,12 @@ JS=$(cat <<'JSEOF'
   // --- §16-10/11 标签真实筛选 ---
   var tagReal = $$('.cm-tag').filter(function(t){ return t.getAttribute('data-tag') === '这不就是现实/网贷还债太真实'; })[0];
   chk('真实内容标签存在', !!tagReal, true);
-  // 标签云按 codex 风格：3 列网格 + 长标签（≥9 字）跨整行
-  var longTags = $$('.cm-tag-long');
-  var longTagText = longTags.map(function(t){ return t.getAttribute('data-tag'); });
-  // "明确提及其他书籍/作者/其他领域的作品如游戏影视" 必须跨整行（27 字）
-  chk('明确提及标签跨整行', longTagText.indexOf('明确提及其他书籍/作者/其他领域的作品如游戏影视') >= 0, true);
-  // "建议加精的精彩评论"（9 字）也跨整行
-  chk('建议加精标签跨整行', longTagText.indexOf('建议加精的精彩评论') >= 0, true);
-  // 短标签如"好评"不跨整行
-  chk('短标签不跨整行', longTagText.indexOf('好评') < 0, true);
+  // 标签云以截图/Codex 交接版本为准：自然宽度胶囊流式换行，不使用等宽网格或长标签强制跨行。
+  var tagsStyle = getComputedStyle($('#cmTags'));
+  chk('标签云使用流式换行', tagsStyle.display, 'flex');
+  chk('标签云允许自然换行', tagsStyle.flexWrap, 'wrap');
+  chk('标签没有长标签特例', $$('.cm-tag-long').length, 0);
+  chk('标签胶囊紧凑高度', getComputedStyle($('.cm-tag')).height, '22px');
   if(tagReal){
     tagReal.click();
     chk('标签选中态', $('.cm-tag.on').getAttribute('data-tag'), '这不就是现实/网贷还债太真实');
