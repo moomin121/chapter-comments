@@ -182,7 +182,7 @@
     padding:0 8px;border-radius:11px;font-size:11.5px;color:#fff;font-weight:600;cursor:pointer;
     background:#E84D2F;transition:transform .15s, box-shadow .15s;user-select:none;font-family:var(--num);
   }
-  body.comment-mode .chap-bubble{display:none;}
+  body.comment-mode .chap-bubble{display:inline-flex;}
   .chap-bubble:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(232,77,47,.35);}
 
   .chap-info{display:flex;align-items:center;gap:4px;font-size:12px;line-height:16px;color:var(--ink-49);margin-bottom:32px;white-space:nowrap;}
@@ -204,6 +204,16 @@
   body.comment-mode .para.active{
     background:linear-gradient(90deg, rgba(255,121,80,.16) 0%, rgba(255,121,80,.05) 100%);
     box-shadow:inset 4px 0 0 #FF7A45;
+  }
+  body.comment-mode .para.hover-preview,
+  body.comment-mode .chap-title-row.active,
+  body.comment-mode .chap-title-row.hover-preview{
+    background:linear-gradient(90deg, rgba(30,113,239,.12) 0%, rgba(30,113,239,.04) 100%);
+    box-shadow:inset 4px 0 0 var(--brand);
+  }
+  body.comment-mode .chap-title-row.active,
+  body.comment-mode .chap-title-row.hover-preview{
+    border-radius:8px;padding:8px 14px 8px 18px;margin-left:-18px;
   }
   /* 对话段落（以引号开头）不加额外 class 缩进处理，与叙述段一致首行缩进 2em */
   /* 评论里的 emoji */
@@ -348,6 +358,18 @@
   .cm-reference .cm-quote-text{
     white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
   }
+  .cm-target{
+    width:100%;border:0;background:var(--ink-04);color:var(--ink-64);font-family:var(--font);
+    font-size:12px;line-height:20px;text-align:left;padding:8px 10px;border-radius:4px;
+    display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;
+    cursor:pointer;margin-bottom:8px;
+  }
+  .cm-target:hover{color:var(--brand);background:var(--brand-weak);}
+  .cm-group-title{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    margin:0 0 8px;color:var(--ink-92);font-size:13px;line-height:20px;font-weight:600;
+  }
+  .cm-group-title .cm-section-count{flex:0 0 auto;}
   .cm-ref-bubble{
     flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;
     height:18px;min-width:18px;padding:0 3px;border-radius:3px;border:1px solid #9AA1AA;
@@ -974,87 +996,15 @@ CHAPTER_TREE.forEach(renderFolder);
     ]
   };
 
-  // 段评数（按段落顺序，截图逐段核对）：气泡颜色映射 >=80红 / 30-79橙红 / 10-29橙 / 3-9黄 / <3灰
-  var SECTION_COUNTS = [105, 21, 98, 39, 0, 67, 4, 74, 21, 18, 30, 33, 43, 10, 3, 75, 5, 257, 92, 21, 5, 1, 5, 163, 15, 0, 366, 7, 128, 3, 9, 139, 68, 133, 15, 27, 0, 125, 160, 268, 4, 54, 99, 65, 27, 36, 9, 25, 12, 4, 74, 17, 27, 55, 1, 1, 0, 1, 1, 278, 8, 0, 2, 22, 0, 0, 26, 27, 0, 4, 2, 16, 13, 0, 19, 33, 23, 8, 30, 36, 82, 20, 13, 29, 4, 0, 50, 5, 0, 1, 14, 9, 6, 16, 25, 0, 10, 19, 0, 3, 11, 17, 10, 0, 2, 0, 0, 0, 0, 18, 1, 17, 63, 13, 0, 7, 33, 0, 0, 47, 0, 35, 35, 56, 20, 0, 4, 59, 12, 4, 0, 253, 7, 1, 0, 16, 0, 64, 5, 0, 76, 28, 0, 0, 16, 25, 49, 18, 0, 0, 5, 0, 14, 0, 0, 0, 19, 3, 0, 0, 0, 1, 85, 9, 11, 0, 2, 7, 55, 1, 0, 0, 25, 3, 20, 28, 84, 0, 37, 0, 40, 21, 33, 93, 0, 0, 7, 5, 7, 89];
+  // GENERATED_COMMENT_DATA_START
+  var COMMENT_DATA = {"source":{},"targetTotalCounts":{},"tagCounts":[{"name":"全部","count":0,"kind":"all"}],"comments":[]};
+  // GENERATED_COMMENT_DATA_END
 
-  // 段评：每条字段 { id, paraIdx, user, level, content, time, likes, replies:[] }
-  function mkCommentList(){
-    var pool = [
-      {user:'叶良辰美奈奈何天', level:'lv-3', time:'2024-12-15 01:14:58',
-       content:'看了简介和角色卡，感觉非常抽象，那我必须尝尝咸淡 <span class="emo">😏</span>',
-       likes:2872,
-       replies:[
-         {user:'书友2021203141523', level:'lv-3', time:'2024-12-15 09:02:11', replyTo:'叶良辰美奈奈何天', content:'抽象派的代表作，建议收藏夹常驻。', likes:642},
-         {user:'星月夜的天空', level:'lv-2', time:'2024-12-16 12:31:02', content:'今天发现这张卡还能这么玩，属实是被你看懂了。', likes:128}
-       ]},
-      {user:'书友20200504145123995', level:'lv-3', time:'2024-12-26 18:26:23',
-       content:'我就知道道作君是有多颠才能写出这样的文采。',
-       likes:1694,
-       replies:[
-         {user:'书友20230719034202043', level:'lv-2', time:'2025-01-27 13:41:28', content:'我愿称之为今年最抽象的一部作品 <span class="emo">😂</span>', likes:245}
-       ]},
-      {user:'大天使薇曦雨', level:'lv-2', time:'2025-02-28 13:39:09',
-       content:'熊猫狗的该是起点最早一批写颠佬文的',
-       likes:217,
-       replies:[]},
-      {user:'书友2022113173654855', level:'lv-3', time:'2025-03-12 21:08:44',
-       content:'对我这种十五年老书虫来说，熊猫狗的颠佬之简直太友好了 <span class="emo">😭</span>',
-       likes:102,
-       replies:[]},
-      {user:'旧巷里的猫', level:'lv-1', time:'2025-04-03 10:15:00',
-       content:'这段笑死我了，妈妈打零工那段直戳泪点。',
-       likes:78,
-       replies:[]},
-      {user:'书友2024052619910221', level:'lv-4', time:'2025-05-09 22:41:12',
-       content:'面试官：你坐下吧。这一句封神，把整章的悲喜都兜住了。',
-       likes:445,
-       replies:[
-         {user:'金陵小土豆', level:'lv-2', time:'2025-05-10 08:11:42', content:'我读这一段也是头皮发麻，确实封神。', likes:96}
-       ]},
-      {user:'在南方的北方人', level:'lv-5', time:'2025-06-17 14:08:39',
-       content:'387.6这个数字写得太狠了，谁破防了我不说。',
-       likes:301,
-       replies:[]},
-      {user:'书友2025080618720451', level:'lv-2', time:'2025-08-21 19:33:50',
-       content:'这就是传说中的细节决定成败，387.6 比一万字都重。',
-       likes:88,
-       replies:[]}
-    ];
-    // 复制一些给更多段落做池子
-    return pool;
-  }
-  var SECTION_POOL = mkCommentList();
-  var COMMENT_TAGS = [
-    {name:'全部', count:7293, active:true},
-    {name:'👍🏻好评', count:113},
-    {name:'🍅差评', count:12},
-    {name:'💡建议', count:10},
-    {name:'❓疑问', count:3},
-    {name:'👈🏻提及作者', count:133},
-    {name:'📚提及其他作品', count:111},
-    {name:'🍚️二创', count:61},
-    {name:'⭐️建议加精', count:69},
-    {name:'🚫建议屏蔽', count:10},
-    {name:'现实/太真实', count:401},
-    {name:'太颠/太抽象/太离谱', count:343},
-    {name:'笑死/绷不住', count:140},
-    {name:'好惨/心痛/压抑', count:116},
-    {name:'资本修仙/赛博朋克', count:320},
-    {name:'面试像找工作/太卷', count:205},
-    {name:'不睡觉太狠', count:231},
-    {name:'绝育/变性/器官改造太狠', count:200}
-  ];
-  var COMMENT_QUOTES = [
-    '看了简介和角色卡，感觉非常抽象，那我必须尝尝咸淡。',
-    '我就知道道作君是有多颠才能写出这样的文采。',
-    '熊猫狗的该是起点最早一批写颠佬文的。',
-    '对我这种十五年老书虫来说，熊猫狗的颠佬之简直太友好了。',
-    '这段笑死我了，妈妈打零工那段直戳泪点。',
-    '面试官：你坐下吧。这一句封神，把整章的悲喜都兜住了。'
-  ];
   var currentCommentSort = 'default';
   var currentCommentTag = '全部';
   var currentParagraphIdx = null;
+  var SECTION_DB = [];
+  var COMMENT_INDEX = null;
 
   /* ---------- 正文来源判定 ----------
      编辑器里若还是出厂说明文案（尚未创作），评论视角就展示内置示例章节，
@@ -1066,32 +1016,6 @@ CHAPTER_TREE.forEach(renderFolder);
     USING_SAMPLE = true;
     return CHAPTER.paragraphs.slice();
   }
-
-  /* 段落数超过预设段评表时循环复用，保证每段都有气泡 */
-  function countOf(i){ return SECTION_COUNTS[i % SECTION_COUNTS.length] || 0; }
-
-  /* 每次渲染时按当前段落数重建段评库（列表最多展示 12 条，气泡显示真实总数） */
-  function buildSectionComments(total){
-    var out = [];
-    for(var i=0;i<total;i++){
-      var n = countOf(i);
-      var arr = [];
-      var show = Math.min(n, 12);
-      for(var k=0;k<show;k++){
-        var src = SECTION_POOL[(i*7 + k*3) % SECTION_POOL.length];
-        arr.push({
-          user: src.user,
-          level: src.level,
-          time: src.time,
-          content: src.content,
-          likes: Math.max(1, Math.floor(src.likes / (k+3)))
-        });
-      }
-      out.push({idx:i, count:n, items:arr});
-    }
-    return out;
-  }
-  var SECTION_DB = [];
 
   // 1) 工具
   function $(s, root){ return (root||document).querySelector(s); }
@@ -1127,9 +1051,98 @@ CHAPTER_TREE.forEach(renderFolder);
     return t;
   }
   function fmtCommentMetaTime(t){
-    var m = String(t).match(/(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/);
-    if(m){ return m[1]+'月'+m[2]+'日 '+m[3]+':'+m[4]; }
+    var m = String(t).match(/(?:\d{4}[-\/])?(\d{1,2})[-\/](\d{1,2})\s+(\d{1,2}):(\d{2})/);
+    if(m){ return (+m[1])+'月'+(+m[2])+'日 '+m[3].padStart(2,'0')+':'+m[4]; }
     return fmtTime(t);
+  }
+  function commentLikes(c){ return +(c.likeCount != null ? c.likeCount : c.likes) || 0; }
+  function commentTime(c){ return c.createdAt || c.time || ''; }
+  function commentUser(c){ return c.nickname || c.userGuid || c.user || '匿名书友'; }
+  function commentTags(c){ return (c.fixedTags || []).concat(c.contentTags || []); }
+  function displayCount(n){ return n > 999 ? '999+' : String(n || 0); }
+  function validSortValue(c){ return c.sortValue != null && +c.sortValue >= 0; }
+  function getTargetText(targetId){
+    if(targetId === -1) return CHAPTER.title;
+    var paras = getParagraphs();
+    return paras[targetId] || '';
+  }
+  function makeTarget(targetId, targetText){
+    return {
+      idx: targetId,
+      targetId: targetId,
+      targetType: targetId === -1 ? 'chapter' : 'paragraph',
+      targetText: targetText || getTargetText(targetId),
+      count: 0,
+      totalCount: 0,
+      mainCount: 0,
+      items: [],
+      comments: []
+    };
+  }
+  function ensureCommentIndex(){
+    if(COMMENT_INDEX) return COMMENT_INDEX;
+    var paras = getParagraphs();
+    var targets = paras.map(function(p, i){ return makeTarget(i, p); });
+    var chapterTarget = makeTarget(-1, CHAPTER.title);
+    var targetMap = {'-1': chapterTarget};
+    targets.forEach(function(t){ targetMap[String(t.targetId)] = t; });
+
+    (COMMENT_DATA.comments || []).forEach(function(c){
+      var targetId = +c.targetId;
+      var target = targetMap[String(targetId)];
+      if(!target){
+        target = makeTarget(targetId, c.targetText || '');
+        target.unmatched = true;
+        targetMap[String(targetId)] = target;
+      }
+      if(!target.targetText && c.targetText) target.targetText = c.targetText;
+      target.items.push(c);
+      target.comments.push(c);
+    });
+
+    Object.keys(targetMap).forEach(function(key){
+      var t = targetMap[key];
+      t.mainCount = t.items.length;
+      t.totalCount = t.items.reduce(function(sum, c){
+        return sum + 1 + ((c.replies && c.replies.length) || 0);
+      }, 0);
+      t.count = t.totalCount;
+    });
+
+    var allMainCount = (COMMENT_DATA.comments || []).length;
+    var allTotalCount = COMMENT_DATA.source && COMMENT_DATA.source.rowCount
+      ? COMMENT_DATA.source.rowCount
+      : Object.keys(targetMap).reduce(function(sum, key){ return sum + targetMap[key].totalCount; }, 0);
+    COMMENT_TAGS = COMMENT_DATA.tagCounts && COMMENT_DATA.tagCounts.length
+      ? COMMENT_DATA.tagCounts
+      : [{name:'全部', count: allMainCount, kind:'all'}];
+
+    SECTION_DB = targets;
+    COMMENT_INDEX = {
+      targets: targets,
+      targetMap: targetMap,
+      chapterTarget: chapterTarget,
+      allMainCount: allMainCount,
+      allTotalCount: allTotalCount,
+      paragraphTotalCount: COMMENT_DATA.source && COMMENT_DATA.source.paragraphTotalCount
+        ? COMMENT_DATA.source.paragraphTotalCount
+        : targets.reduce(function(sum, t){ return sum + t.totalCount; }, 0)
+    };
+    return COMMENT_INDEX;
+  }
+  function countOf(i){
+    var target = ensureCommentIndex().targetMap[String(i)];
+    return target ? target.totalCount : 0;
+  }
+  function targetMatchesTag(target, tag){
+    return tag === '全部' ? target.items : target.items.filter(function(c){
+      return commentTags(c).indexOf(tag) >= 0;
+    });
+  }
+  function currentAllCount(){
+    if(currentCommentTag === '全部') return ensureCommentIndex().allMainCount;
+    var found = COMMENT_TAGS.find(function(t){ return t.name === currentCommentTag; });
+    return found ? found.count : 0;
   }
   function renderCommentTags(){
     var tags = $('#cmTags');
