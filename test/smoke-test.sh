@@ -8,8 +8,8 @@
 #   1. 数据完整性 — 190 段 / 145 气泡 / 章评 621 / 段评 5744
 #   2. 布局铁律   — 右侧图标栏贴 viewport 最右（抽屉开、关两种状态 gap 都必须为 0）
 #   3. Figma 对齐 — 左栏、标题区、工具栏、右侧栏入口与设计稿一致
-#   4. 评论面板   — 排序、标签云、筛选入口、一级评论原文引用
-#   4. 零值段     — count 为 0 的段不渲染气泡
+#   4. 评论面板   — 全章段评+章评、单段段评、排序、标签云、筛选入口、一级评论原文引用
+#   5. 零值段     — count 为 0 的段不渲染气泡
 set -uo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -47,6 +47,7 @@ JS=$(cat <<'JSEOF'
   chk('段落数', $$('.para').length, 190);
   chk('段评气泡数', $$('.para-bubble').length, 145);
   chk('章评数(抽屉标题)', $('#cmCount').textContent, 621);
+  chk('抽屉标题文案', $('#cmTitleText').textContent, '评论');
   chk('段评总数', $('#chapSecTotal').textContent, 5744);
   chk('章节标题', $('#chapTitle').textContent, '第1章 面试');
   chk('发布时间', $('#chapPublishedAt').textContent, '2023-07-31 19:26');
@@ -77,6 +78,7 @@ JS=$(cat <<'JSEOF'
   // --- 2. 布局铁律：抽屉展开时图标栏贴右 ---
   var rail = $('.rightrail').getBoundingClientRect();
   chk('图标栏贴右(抽屉开)', Math.round(innerWidth - rail.right), 0);
+  chk('评论抽屉宽度320', Math.round($('#cmDrawer').getBoundingClientRect().width), 320);
 
   // --- 3. 零值段不渲染气泡（第 5 段 / idx=4 是零值段）---
   chk('零值段无气泡(idx4)', !!$('.para[data-idx="4"] .para-bubble'), false);
@@ -87,12 +89,24 @@ JS=$(cat <<'JSEOF'
   var act = $('.para.active');
   chk('点击气泡后高亮段', act ? act.dataset.idx : 'none', 17);
   chk('抽屉切段评视图', $('#cmDrawer').classList.contains('parasec'), true);
+  chk('段评抽屉标题', $('#cmTitleText').textContent, '段评');
+  chk('段评抽屉计数', $('#cmCount').textContent, '257条');
+  chk('段评视图隐藏标签', getComputedStyle($('#cmTags')).display, 'none');
+  chk('段评视图保留排序', getComputedStyle($('#cmSort')).display, 'flex');
   chk('段评视图标题', ($('.cm-list').textContent||'').indexOf('第18段') >= 0, true);
+  chk('段评视图无章评', $$('.cm-list > .chapter-comment').length, 0);
+  $('#cmSortHot').click();
+  chk('段评内排序不退出', $('#cmDrawer').classList.contains('parasec'), true);
 
   // --- 5. 评论面板：排序、标签云、筛选入口、一级评论引用 ---
   $('#cmBack').click();
+  chk('返回后抽屉标题', $('#cmTitleText').textContent, '评论');
+  chk('返回后抽屉计数', $('#cmCount').textContent, '621');
+  chk('全章段评模块数', $$('.cm-section-module:not(.single)').length, 3);
+  chk('全章章评模块数', $$('.cm-list > .chapter-comment').length, 6);
+  chk('全章标签可见', getComputedStyle($('#cmTags')).display, 'flex');
   chk('排序项', $$('#cmSort .cm-tab').map(function(el){return el.textContent.trim();}).join('/'), '默认/最热/最新');
-  chk('默认排序选中', $('#cmSortDefault').classList.contains('on'), true);
+  chk('最热排序保持选中', $('#cmSortHot').classList.contains('on'), true);
   chk('筛选按钮存在', !!$('#cmFilterBtn'), true);
   chk('筛选按钮在右侧', $('#cmFilterBtn').getBoundingClientRect().left > $('#cmSort').getBoundingClientRect().right, true);
   chk('标签云数量', $$('.cm-tag').length, 16);

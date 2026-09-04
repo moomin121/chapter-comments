@@ -233,7 +233,7 @@
     transition:flex-basis .28s ease, width .28s ease;
   }
   body.comment-mode .cm-drawer{display:flex;}
-  body.comment-mode .cm-drawer.open{flex:0 0 360px;width:360px;}
+  body.comment-mode .cm-drawer.open{flex:0 0 320px;width:320px;}
   .cm-hd{
     display:flex;align-items:center;justify-content:space-between;
     padding:14px 18px 10px;border-bottom:1px solid var(--line);flex:0 0 auto;
@@ -264,9 +264,9 @@
     display:none;align-items:center;gap:4px;cursor:pointer;color:var(--brand);font-size:12.5px;font-weight:500;
   }
   .cm-toolbar .cm-back svg{width:12px;height:12px;}
+  .cm-drawer.parasec .cm-toolbar{gap:10px;}
   .cm-drawer.parasec .cm-toolbar .cm-back{display:inline-flex;}
-  .cm-drawer.parasec .cm-toolbar .cm-sort,
-  .cm-drawer.parasec .cm-toolbar .cm-filter,
+  .cm-drawer.parasec .cm-toolbar .cm-sort{gap:10px;}
   .cm-drawer.parasec .cm-tags{display:none;}
 
   .cm-tags{
@@ -300,6 +300,27 @@
 
   .cm-empty{padding:30px 20px;text-align:center;color:var(--ink-34);font-size:13px;line-height:1.7;}
   .cm-empty svg{width:36px;height:36px;color:var(--ink-12);margin-bottom:8px;}
+
+  .cm-overview{
+    margin:0 0 8px;padding:10px 8px;border-bottom:1px solid var(--ink-04);
+    font-size:12.5px;line-height:1.7;color:var(--ink-64);
+  }
+  .cm-overview b{color:var(--ink-92);font-weight:600;}
+  .cm-section-module{
+    padding:12px 4px 10px;border-bottom:1px solid var(--ink-04);
+  }
+  .cm-section-module.single{padding-top:4px;}
+  .cm-section-head{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    margin:10px 0 4px;font-size:13px;color:var(--ink-92);font-weight:600;
+  }
+  .cm-section-count{
+    color:var(--brand);font-family:var(--num);font-size:12px;font-weight:700;
+  }
+  .cm-section-module .cm-item{border-bottom:none;padding:9px 0 4px;}
+  .cm-list-label{
+    padding:12px 4px 4px;font-size:12px;color:var(--ink-49);font-weight:600;
+  }
 
   .cm-item{display:flex;gap:10px;padding:12px 4px;border-bottom:1px solid var(--ink-04);align-items:flex-start;}
   .cm-item:last-child{border-bottom:none;}
@@ -544,7 +565,7 @@
     <!-- 评论抽屉（在阅读视图打开后展开） -->
     <aside class="cm-drawer" id="cmDrawer" aria-label="评论">
       <div class="cm-hd">
-        <div class="cm-title">评论 <span class="cnt" id="cmCount">621</span></div>
+        <div class="cm-title"><span id="cmTitleText">评论</span> <span class="cnt" id="cmCount">621</span></div>
         <span class="cm-close" id="cmClose" title="收起评论">×</span>
       </div>
       <div class="cm-toolbar">
@@ -910,6 +931,7 @@ CHAPTER_TREE.forEach(renderFolder);
   ];
   var currentCommentSort = 'default';
   var currentCommentTag = '全部';
+  var currentParagraphIdx = null;
 
   /* ---------- 正文来源判定 ----------
      编辑器里若还是出厂说明文案（尚未创作），评论视角就展示内置示例章节，
@@ -984,6 +1006,7 @@ CHAPTER_TREE.forEach(renderFolder);
   function renderCommentTags(){
     var tags = $('#cmTags');
     if(!tags) return;
+    tags.classList.remove('collapsed','hover-open');
     tags.innerHTML = COMMENT_TAGS.map(function(t){
       var isActive = t.name === currentCommentTag;
       return '<span class="cm-tag'+(isActive?' on':'')+'" data-tag="'+escapeHtml(t.name)+'">'
@@ -1012,12 +1035,23 @@ CHAPTER_TREE.forEach(renderFolder);
       tags.classList.remove('hover-open');
     });
   }
+  function setCommentHeader(title, count){
+    var titleEl = $('#cmTitleText');
+    var countEl = $('#cmCount');
+    if(titleEl) titleEl.textContent = title;
+    if(countEl) countEl.textContent = count;
+  }
   function setCommentSort(sort){
     currentCommentSort = sort || 'default';
     $$('#cmSort .cm-tab').forEach(function(tab){
       tab.classList.toggle('on', tab.getAttribute('data-sort') === currentCommentSort);
     });
-    renderAllComments();
+    var drawer = $('#cmDrawer');
+    if(drawer && drawer.classList.contains('parasec') && currentParagraphIdx !== null){
+      renderParagraphComments(currentParagraphIdx);
+    } else {
+      renderAllComments();
+    }
   }
   function sortComments(list){
     var sorted = list.slice();
@@ -1027,6 +1061,64 @@ CHAPTER_TREE.forEach(renderFolder);
       sorted.sort(function(a,b){ return String(b.time).localeCompare(String(a.time)); });
     }
     return sorted;
+  }
+  function renderCommentItem(c, quote, extraClass){
+    var avColor = avatarColor(c.user);
+    var lv = c.level ? '<span class="lv '+c.level+'">'+ ({
+      'lv-1':'学员','lv-2':'弟子','lv-3':'执事','lv-4':'堂主','lv-5':'舵主'
+    })[c.level] +'</span>' : '';
+    var quoteHtml = quote ? '<div class="cm-quote">'+escapeHtml(quote)+'</div>' : '';
+    var repBtn = (c.replies && c.replies.length)
+      ? '<span class="sub-toggle" data-n="'+c.replies.length+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg><b>展开 '+c.replies.length+' 条回复</b></span>'
+      : '';
+    var sub = '';
+    if(c.replies && c.replies.length){
+      sub = '<div class="cm-sub" style="display:none;">'
+        + c.replies.map(function(r){
+            var avC = avatarColor(r.user);
+            return '<div class="cm-item">'
+              + '<span class="av" style="background:'+avC+'">'+escapeHtml(avatarInitial(r.user))+'</span>'
+              + '<div class="body">'
+              +   '<div class="nm-row"><span class="nm">'+escapeHtml(r.user)+'</span>'
+              +     (r.level?'<span class="lv '+r.level+'">'+({'lv-1':'学员','lv-2':'弟子','lv-3':'执事','lv-4':'堂主','lv-5':'舵主'})[r.level]+'</span>':'')
+              +   '</div>'
+              +   '<div class="content">'+(r.replyTo ? '<span class="to">回复</span> <span class="to">@'+escapeHtml(r.replyTo)+'</span>：' : '')+r.content+'</div>'
+              +   '<div class="meta">'
+              +     '<span>'+fmtTime(r.time)+'</span>'
+              +     '<span class="like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 22V11M14 4l-2-2-2 2v7h6l2 5h-6"/></svg> '+r.likes+'</span>'
+              +   '</div>'
+              + '</div></div>';
+          }).join('')
+        + '</div>';
+    }
+    return '<div class="cm-item '+(extraClass||'')+'">'
+      + quoteHtml
+      + '<span class="av" style="background:'+avColor+'">'+escapeHtml(avatarInitial(c.user))+'</span>'
+      + '<div class="body">'
+      +   '<div class="nm-row"><span class="nm">'+escapeHtml(c.user)+'</span>'+lv+'</div>'
+      +   '<div class="content">'+c.content+'</div>'
+      +   '<div class="meta">'
+      +     '<span>'+fmtTime(c.time)+'</span>'
+      +     '<span class="like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 22V11M14 4l-2-2-2 2v7h6l2 5h-6"/></svg> '+c.likes+'</span>'
+      +     '<span class="reply">回复</span>'
+      +   '</div>'
+      +   repBtn
+      +   sub
+      + '</div></div>';
+  }
+  function bindReplyToggles(){
+    $$('.sub-toggle').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var sub = btn.parentElement.querySelector('.cm-sub');
+        if(!sub) return;
+        var open = sub.style.display !== 'none';
+        var n = btn.getAttribute('data-n') || '0';
+        var ico = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
+        sub.style.display = open ? 'none' : 'block';
+        btn.classList.toggle('on', !open);
+        btn.innerHTML = ico + '<b>' + (open ? '展开 ' : '收起 ') + n + ' 条回复</b>';
+      });
+    });
   }
 
   // 2) 渲染 reader（按段渲染，气泡挂在段落末尾）
@@ -1067,8 +1159,8 @@ CHAPTER_TREE.forEach(renderFolder);
     var stEl = $('#chapSecTotal');
     if(stEl) stEl.textContent = USING_SAMPLE ? CHAPTER.sectionCommentTotal : secTotal;
 
-    // 评论抽屉右上角计数（仅章评，段评数在头部独立展示）
-    var cc = $('#cmCount'); if(cc) cc.textContent = CHAPTER.chapterCommentCount;
+    // 评论抽屉默认显示全章章评计数；选中段落后会切换为单段段评计数。
+    setCommentHeader('评论', CHAPTER.chapterCommentCount);
     // 绑定气泡点击
     $$('#paraList .para-bubble').forEach(function(b){
       b.addEventListener('click', function(e){
@@ -1092,6 +1184,7 @@ CHAPTER_TREE.forEach(renderFolder);
     // （2）评论抽屉进入「段评」视图
     var drawer = $('#cmDrawer'); drawer.classList.add('open');
     drawer.classList.add('parasec');
+    currentParagraphIdx = idx;
     renderParagraphComments(idx);
   }
 
@@ -1099,101 +1192,67 @@ CHAPTER_TREE.forEach(renderFolder);
   function renderParagraphComments(idx){
     var list = $('#cmList');
     var sec = SECTION_DB[idx];
-    var title = '第'+(idx+1)+'段 · '+sec.count+' 条评论';
-    var pTag = '<div style="padding:8px 4px 12px;font-size:12.5px;color:var(--ink-64);border-bottom:1px dashed var(--ink-12);">'+title+'</div>';
-    var body = sec.items.map(function(c){
-      var avColor = avatarColor(c.user);
-      var lv = c.level ? '<span class="lv '+c.level+'">'+ ({
-        'lv-1':'学员','lv-2':'弟子','lv-3':'执事','lv-4':'堂主','lv-5':'舵主'
-      })[c.level] +'</span>' : '';
-      return '<div class="cm-item">'
-        + '<span class="av" style="background:'+avColor+'">'+escapeHtml(avatarInitial(c.user))+'</span>'
-        + '<div class="body">'
-        +   '<div class="nm-row"><span class="nm">'+escapeHtml(c.user)+'</span>'+lv+'</div>'
-        +   '<div class="content">'+c.content+'</div>'
-        +   '<div class="meta">'
-        +     '<span>'+fmtTime(c.time)+'</span>'
-        +     '<span class="like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 22V11M14 4l-2-2-2 2v7h6l2 5h-6"/></svg> '+c.likes+'</span>'
-        +     '<span class="reply">回复</span>'
-        +   '</div>'
-        + '</div></div>';
+    var paras = getParagraphs();
+    currentParagraphIdx = idx;
+    setCommentHeader('段评', sec.count+'条');
+    var title = '第'+(idx+1)+'段';
+    var pTag = '<div class="cm-section-module single">'
+      + '<div class="cm-quote">'+escapeHtml(paras[idx] || '')+'</div>'
+      + '<div class="cm-section-head"><span>'+title+'</span><span class="cm-section-count">'+sec.count+'条</span></div>'
+      + '</div>';
+    var body = sortComments(sec.items).map(function(c){
+      return renderCommentItem(c, '', '');
     }).join('');
     if(sec.items.length===0){
-      var pq = '<div class="cm-empty" style="padding:14px 4px;color:var(--ink-34);font-size:12.5px;">本段暂无段评，做第一个评论的人吧～</div>';
+      var pq = '<div class="cm-empty">本段暂无段评，做第一个评论的人吧～</div>';
       list.innerHTML = pTag + pq;
     } else {
       list.innerHTML = pTag + body;
     }
+    bindReplyToggles();
   }
 
-  // 5) 渲染全部评论（整章评论 = 主楼 3 条 + 总章评 621）
+  function renderSectionCommentModule(sec, paraText){
+    var comments = sortComments(sec.items).slice(0, 2).map(function(c){
+      return renderCommentItem(c, '', 'section-comment');
+    }).join('');
+    return '<section class="cm-section-module" data-section-idx="'+sec.idx+'">'
+      + '<div class="cm-quote">'+escapeHtml(paraText || '')+'</div>'
+      + '<div class="cm-section-head">'
+      +   '<span>第'+(sec.idx+1)+'段段评</span>'
+      +   '<span class="cm-section-count">'+sec.count+'条</span>'
+      + '</div>'
+      + comments
+      + '</section>';
+  }
+
+  // 5) 渲染全部评论（未选中段落时：全章段评 + 章评）
   function renderAllComments(){
     var list = $('#cmList');
+    var drawer = $('#cmDrawer');
+    if(drawer) drawer.classList.remove('parasec');
+    currentParagraphIdx = null;
+    setCommentHeader('评论', CHAPTER.chapterCommentCount);
     renderCommentTags();
     bindCommentListScroll();
-    // 总览：插入几段「章评」 + 显示段评入口提示
-    var intro = '<div style="padding:10px 4px 14px;font-size:12.5px;color:var(--ink-64);border-bottom:1px solid var(--ink-04);line-height:1.7;">'
-      + '<b style="color:var(--ink-92);">本章共有 '+CHAPTER.chapterCommentCount+' 条评论 / '+CHAPTER.sectionCommentTotal+' 条段评</b><br/>'
+    var paras = getParagraphs();
+    var intro = '<div class="cm-overview">'
+      + '<b>本章共有 '+CHAPTER.chapterCommentCount+' 条评论 / '+CHAPTER.sectionCommentTotal+' 条段评</b><br/>'
       + '点击段落右侧的数字气泡，可查看该段的全部段评。'
       + '</div>';
+    var sectionModules = SECTION_DB.filter(function(s){ return s.count > 0; })
+      .sort(function(a,b){ return b.count - a.count; })
+      .slice(0, 3)
+      .map(function(sec){ return renderSectionCommentModule(sec, paras[sec.idx]); })
+      .join('');
+    var chapterLabel = '<div class="cm-list-label">章评</div>';
     var top = sortComments(SECTION_POOL.slice(0, 6)).map(function(c){
       var quoteIndex = SECTION_POOL.indexOf(c);
-      var avColor = avatarColor(c.user);
-      var lv = c.level ? '<span class="lv '+c.level+'">'+({'lv-1':'学员','lv-2':'弟子','lv-3':'执事','lv-4':'堂主','lv-5':'舵主'})[c.level]+'</span>' : '';
-      var repBtn = (c.replies && c.replies.length)
-        ? '<span class="sub-toggle" data-n="'+c.replies.length+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg><b>展开 '+c.replies.length+' 条回复</b></span>'
-        : '';
-      var sub = '';
-      if(c.replies && c.replies.length){
-        sub = '<div class="cm-sub" style="display:none;">'
-          + c.replies.map(function(r){
-              var avC = avatarColor(r.user);
-              return '<div class="cm-item">'
-                + '<span class="av" style="background:'+avC+'">'+escapeHtml(avatarInitial(r.user))+'</span>'
-                + '<div class="body">'
-                +   '<div class="nm-row"><span class="nm">'+escapeHtml(r.user)+'</span>'
-                +     (r.level?'<span class="lv '+r.level+'">'+({'lv-1':'学员','lv-2':'弟子','lv-3':'执事','lv-4':'堂主','lv-5':'舵主'})[r.level]+'</span>':'')
-                +   '</div>'
-                +   '<div class="content"><span class="to">回复</span> <span class="to">@'+escapeHtml(r.replyTo)+'</span>：'+r.content+'</div>'
-                +   '<div class="meta">'
-                +     '<span>'+fmtTime(r.time)+'</span>'
-                +     '<span class="like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 22V11M14 4l-2-2-2 2v7h6l2 5h-6"/></svg> '+r.likes+'</span>'
-                +   '</div>'
-                + '</div></div>';
-            }).join('')
-          + '</div>';
-      }
-      return '<div class="cm-item main-comment">'
-        + '<div class="cm-quote">'+escapeHtml(COMMENT_QUOTES[quoteIndex % COMMENT_QUOTES.length])+'</div>'
-        + '<span class="av" style="background:'+avColor+'">'+escapeHtml(avatarInitial(c.user))+'</span>'
-        + '<div class="body">'
-        +   '<div class="nm-row"><span class="nm">'+escapeHtml(c.user)+'</span>'+lv+'</div>'
-        +   '<div class="content">'+c.content+'</div>'
-        +   '<div class="meta">'
-        +     '<span>'+fmtTime(c.time)+'</span>'
-        +     '<span class="like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 22V11M14 4l-2-2-2 2v7h6l2 5h-6"/></svg> '+c.likes+'</span>'
-        +     '<span class="reply">回复</span>'
-        +   '</div>'
-        +   repBtn
-        +   sub
-        + '</div></div>';
+      return renderCommentItem(c, COMMENT_QUOTES[quoteIndex % COMMENT_QUOTES.length], 'main-comment chapter-comment');
     }).join('');
     var more = '<div class="cm-empty">— 已经到底啦 —</div>';
-    list.innerHTML = intro + top + more;
-
-    // 折叠/展开回复
-    $$('.sub-toggle').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        var sub = btn.parentElement.querySelector('.cm-sub');
-        if(!sub) return;
-        var open = sub.style.display !== 'none';
-        var n = btn.getAttribute('data-n') || '0';
-        var ico = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
-        sub.style.display = open ? 'none' : 'block';
-        btn.classList.toggle('on', !open);
-        btn.innerHTML = ico + '<b>' + (open ? '展开 ' : '收起 ') + n + ' 条回复</b>';
-      });
-    });
+    list.innerHTML = intro + sectionModules + chapterLabel + top + more;
+    bindReplyToggles();
   }
 
   // 6) 段评 tab
@@ -1268,7 +1327,6 @@ CHAPTER_TREE.forEach(renderFolder);
 
     $$('#cmSort .cm-tab').forEach(function(tab){
       tab.addEventListener('click', function(){
-        var drawer = $('#cmDrawer'); drawer.classList.remove('parasec');
         setCommentSort(tab.getAttribute('data-sort'));
       });
     });
