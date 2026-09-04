@@ -309,14 +309,17 @@
   .cm-tag.on{background:#fff;border-color:var(--brand);color:var(--brand);font-weight:600;}
   .cm-tag.on .cm-tag-num{color:var(--brand);font-weight:600;}
   .cm-tags.collapsed{height:38px;max-height:38px;padding-top:8px;padding-bottom:8px;}
+  /* 收起后悬停：按全部标签的实际换行高度展开，不能用固定高度裁掉末行。 */
   .cm-tags.collapsed:hover,
   .cm-tags.collapsed.hover-open{
-    height:38px;max-height:38px;padding-top:8px;padding-bottom:8px;overflow:visible;z-index:5;
+    height:auto;min-height:38px;max-height:none;padding-top:8px;padding-bottom:8px;
+    overflow:visible;z-index:5;
   }
   .cm-tags.collapsed:hover::before,
   .cm-tags.collapsed.hover-open::before{
-    content:"";position:absolute;left:0;right:0;top:0;height:194px;background:var(--panel);
-    border-bottom:1px solid var(--line);box-shadow:0 6px 12px rgba(20,30,41,.04);z-index:0;
+    content:"";position:absolute;left:0;right:0;top:0;bottom:0;height:auto;
+    background:var(--panel);border-bottom:1px solid var(--line);
+    box-shadow:0 6px 12px rgba(20,30,41,.04);z-index:0;
   }
   .cm-tags.collapsed:hover .cm-tag,
   .cm-tags.collapsed.hover-open .cm-tag{position:relative;z-index:1;}
