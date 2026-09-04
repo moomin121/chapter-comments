@@ -144,8 +144,12 @@ JS=$(cat <<'JSEOF'
   $('#cmList').dispatchEvent(new Event('scroll'));
   chk('滚动后标签折叠', $('#cmTags').classList.contains('collapsed'), true);
   chk('折叠后保持一行高度', Math.round($('#cmTags').getBoundingClientRect().height) <= 42, true);
+  var listTopBeforeHover = Math.round($('#cmList').getBoundingClientRect().top);
+  var listScrollBeforeHover = $('#cmList').scrollTop;
   $('#cmTags').dispatchEvent(new Event('mouseenter'));
   chk('hover标签行展开', $('#cmTags').classList.contains('hover-open'), true);
+  chk('hover不改变列表顶部', Math.round($('#cmList').getBoundingClientRect().top), listTopBeforeHover);
+  chk('hover不改变列表滚动值', $('#cmList').scrollTop, listScrollBeforeHover);
   $('#cmTags').dispatchEvent(new Event('mouseleave'));
   chk('离开标签行收起', $('#cmTags').classList.contains('hover-open'), false);
   chk('全章一级评论数量', $$('.cm-list > .full-comment').length, 6);

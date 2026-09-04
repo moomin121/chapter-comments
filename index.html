@@ -273,7 +273,7 @@
   .cm-drawer.parasec .cm-input{display:none;}
 
   .cm-tags{
-    display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding:8px 16px 0;
+    position:relative;display:flex;align-items:center;align-content:flex-start;gap:4px;flex-wrap:wrap;padding:8px 16px 0;
     border-bottom:0;background:var(--panel);flex:0 0 auto;
     max-height:168px;overflow:hidden;transition:max-height .18s ease, padding .18s ease;
   }
@@ -289,7 +289,16 @@
   .cm-tag.on .cm-tag-num{color:rgba(30,113,239,.6);}
   .cm-tags.collapsed{height:38px;max-height:38px;padding-top:8px;padding-bottom:8px;}
   .cm-tags.collapsed:hover,
-  .cm-tags.collapsed.hover-open{height:auto;max-height:168px;padding-top:8px;padding-bottom:0;}
+  .cm-tags.collapsed.hover-open{
+    height:38px;max-height:38px;padding-top:8px;padding-bottom:8px;overflow:visible;z-index:5;
+  }
+  .cm-tags.collapsed:hover::before,
+  .cm-tags.collapsed.hover-open::before{
+    content:"";position:absolute;left:0;right:0;top:0;height:168px;background:var(--panel);
+    border-bottom:1px solid var(--line);box-shadow:0 6px 12px rgba(20,30,41,.04);z-index:0;
+  }
+  .cm-tags.collapsed:hover .cm-tag,
+  .cm-tags.collapsed.hover-open .cm-tag{position:relative;z-index:1;}
 
   .cm-context{display:none;flex:0 0 auto;}
   .cm-drawer.parasec .cm-context{display:block;padding:8px 16px 0;}
