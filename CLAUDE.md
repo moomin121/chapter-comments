@@ -81,7 +81,7 @@ chapter-comments/README.md                   # 人类开发文档
 | `// 2) 渲染 reader` | `renderReader()` 渲染段落 + 气泡 |
 | `// 3) 段选择联动` | `selectParagraph(idx)` → `enterTargetView(targetId)` 进单对象视图 |
 | `// 4) 渲染单对象评论列表` | `renderTargetComments(targetId)` 该对象全部一级评论 |
-| `// 5) 渲染全部评论` | `renderAllComments()` AI 卡 + 按段聚合 + 章评最后 + 未匹配兜底 |
+| `// 5) 渲染全部评论` | `renderAllComments()` AI 卡 + 章节标题评论 + 按段聚合 + 未匹配兜底 |
 | `// 6) 段评 tab` | `renderParagraphsOverview()` 段评导航 |
 | `// 7) 模式控制：评论模式开关` | `setCommentMode(on)` / `switchCmTab(name)` |
 
@@ -149,7 +149,8 @@ var CHAPTER = {
 ## 已知 UI 修正记录（2026-09-05）
 
 - **AI 总结卡筛选可见**：仅在 `currentCommentTag === '全部'` 时显示；标签筛选态隐藏（focus 在真实命中上）
-- **标签云样式**：4 列 flex-wrap 药丸形 + emoji 前缀（固定标签） + 数字后置；"全部"选中态蓝边白底蓝字；hover 蓝弱底蓝字
+- **标签云样式**：截图/Codex 交接版的自然宽度 flex-wrap 紧凑胶囊 + emoji 前缀（固定标签）+ 数字后置；仅展示截图中的固定标签与高频内容标签，筛选仍使用 CSV 原始标签名；"全部"选中态蓝边白底蓝字；hover 蓝弱底蓝字
+- **章节标题评论位置**：`targetId=-1` 的章评块紧跟 AI 总结卡，排在第一个段评块之前；未匹配对象仍放在最后
 - **筛选后自动滚动**：标签 click listener 末尾 `#cmList.scrollTop = 0`
 - **评论对象气泡可点击**：`.cm-ref-bubble` 加 `data-target-id` + cursor pointer + hover 高亮；在 bindTargetAnchors 里直接绑定 click（stopPropagation 防双重触发）
 - **评论底部操作**：日期 + IP 地址 + 评论图标 + 点赞图标 + "赞"字 + 点赞数 + ···（提取 `commentMetaRow()` helper 复用）

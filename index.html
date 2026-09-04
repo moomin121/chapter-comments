@@ -1006,6 +1006,25 @@ CHAPTER_TREE.forEach(renderFolder);
   var currentCommentTag = '全部';
   var currentParagraphIdx = null;
   var COMMENT_TAGS = [{name:'全部', count:0, kind:'all'}];
+  // 标签展示遵循截图中的 Codex 版本；筛选仍使用 COMMENT_DATA 中的原始标签名。
+  var COMMENT_TAG_DISPLAY = {
+    '明确提及其他书籍/作者/其他领域的作品如游戏影视': '提及其他作品',
+    '精彩二创': '二创',
+    '建议屏蔽或禁言的评论': '建议屏蔽',
+    '这不就是现实/网贷还债太真实': '现实/太真实',
+    '睡太少/不睡觉太狠': '不睡觉太狠',
+    '面试像找工作/升学太卷': '面试像找工作/大卷',
+    '好惨/心疼/有点压抑': '好惨/心痛/压抑'
+  };
+  var COMMENT_TAG_VISIBLE = [
+    '全部', '好评', '差评', '建议', '疑问', '提及作者',
+    '明确提及其他书籍/作者/其他领域的作品如游戏影视', '精彩二创',
+    '建议加精的精彩评论', '建议屏蔽或禁言的评论',
+    '这不就是现实/网贷还债太真实', '资本修仙/赛博朋克',
+    '太癫/太抽象/太离谱', '笑死/绷不住', '好惨/心疼/有点压抑',
+    '睡太少/不睡觉太狠', '绝育/变性/器官改造太狠',
+    '面试像找工作/升学太卷'
+  ];
   var SECTION_DB = [];
   var COMMENT_INDEX = null;
 
@@ -1189,9 +1208,12 @@ CHAPTER_TREE.forEach(renderFolder);
     var tags = $('#cmTags');
     if(!tags) return;
     tags.classList.remove('collapsed','hover-open');
-    tags.innerHTML = COMMENT_TAGS.map(function(t){
+    tags.innerHTML = COMMENT_TAGS.filter(function(t){
+      return COMMENT_TAG_VISIBLE.indexOf(t.name) >= 0;
+    }).map(function(t){
       var isActive = t.name === currentCommentTag;
-      var label = (t.emoji ? t.emoji + ' ' : '') + escapeHtml(t.name);
+      var displayName = COMMENT_TAG_DISPLAY[t.name] || t.name;
+      var label = (t.emoji ? t.emoji + ' ' : '') + escapeHtml(displayName);
       return '<span class="cm-tag'+(isActive?' on':'')+'" data-tag="'+escapeHtml(t.name)+'">'
         + '<span class="cm-tag-label">'+label+'</span>'
         + '<span class="cm-tag-num">'+t.count+'</span></span>';
@@ -1552,18 +1574,18 @@ CHAPTER_TREE.forEach(renderFolder);
     if(currentCommentTag === '全部'){
       html += renderAiSummaryCard();
     }
-    // （1）段评按正文段落顺序从前到后聚合（PRD §10.1-1）
+    // 章评对应章节标题，应显示在第一段正文评论之前（截图 / PRD §10.1）。
+    var chapVisible = visibleItemsOf(idx.chapterTarget);
+    if(chapVisible.length){
+      html += renderFullCommentModule(-1, sortComments(chapVisible), idx.chapterTarget.totalCount);
+    }
+    // 段评按正文段落顺序从前到后聚合。
     idx.targets.forEach(function(t){
       var visible = visibleItemsOf(t);
       if(!visible.length) return;
       html += renderFullCommentModule(t.targetId, sortComments(visible), t.totalCount);
     });
-    // （2）章评聚合块展示在最后（PRD §10.1-2）
-    var chapVisible = visibleItemsOf(idx.chapterTarget);
-    if(chapVisible.length){
-      html += renderFullCommentModule(-1, sortComments(chapVisible), idx.chapterTarget.totalCount);
-    }
-    // （3）未匹配评论对象分组，展示在章评之后（PRD §14.3）
+    // 未匹配评论对象分组，展示在所有可匹配评论之后（PRD §14.3）
     Object.keys(idx.targetMap).forEach(function(key){
       var t = idx.targetMap[key];
       if(!t.unmatched) return;

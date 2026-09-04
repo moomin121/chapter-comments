@@ -80,15 +80,16 @@ JS=$(cat <<'JSEOF'
   chk('段评总数', $('#chapSecTotal').textContent, '6098');
   chk('章评聚合计数(气泡最后一块)', $$('.cm-reference[data-target-id="-1"] .cm-ref-bubble')[0].textContent, '732');
 
-  // --- §16-4 全部评论：AI 卡置顶 + 按段聚合 + 章评最后 + 未匹配兜底 ---
+  // --- §16-4 全部评论：AI 卡置顶 + 章节标题评论在首段之前 + 未匹配兜底 ---
   chk('AI总结卡存在', $$('.cm-ai-card').length, 1);
   chk('AI总结卡是首项', $('#cmList > :first-child').classList.contains('cm-ai-card'), true);
   chk('聚合块总数(170段+1章评+1未匹配)', $$('.cm-full-module').length, 172);
-  chk('首个聚合块是段0', $('.cm-full-module').getAttribute('data-target-id'), '0');
-  // 顺序：170 段块 → 1 章评块 (-1) → 1 未匹配块 (targetId=191 → 越界)；章评在倒数第 2
-  chk('章评块排倒数第二', $$('.cm-full-module')[$$('.cm-full-module').length-2].getAttribute('data-target-id'), '-1');
+  var modules = $$('.cm-full-module');
+  chk('章节标题评论存在', !!$('.cm-full-module[data-target-id="-1"]'), true);
+  chk('章节标题评论在首段之前', modules[0].getAttribute('data-target-id'), '-1');
+  chk('首段评论块紧随章评', modules[1].getAttribute('data-target-id'), '0');
   chk('未匹配块数(CSV越界段191)', $$('.cm-unmatched-module').length, 1);
-  chk('未匹配块排在最后', $$('.cm-full-module').pop().classList.contains('cm-unmatched-module'), true);
+  chk('未匹配块排在最后', modules[modules.length-1].classList.contains('cm-unmatched-module'), true);
 
   // --- §16-5 每段最多 3 条一级评论 + 查看本段入口 ---
   var overThree = $$('.cm-full-module').filter(function(m){
@@ -142,6 +143,8 @@ JS=$(cat <<'JSEOF'
   chk('标签云使用流式换行', tagsStyle.display, 'flex');
   chk('标签云允许自然换行', tagsStyle.flexWrap, 'wrap');
   chk('标签没有长标签特例', $$('.cm-tag-long').length, 0);
+  chk('截图标签采用短名称', $$('.cm-tag-label').map(function(el){ return el.textContent; }).indexOf('📚 提及其他作品') >= 0, true);
+  chk('表格长标签不直接展示', $$('.cm-tag-label').map(function(el){ return el.textContent; }).indexOf('明确提及其他书籍/作者/其他领域的作品如游戏影视') < 0, true);
   chk('标签胶囊紧凑高度', getComputedStyle($('.cm-tag')).height, '22px');
   if(tagReal){
     tagReal.click();
