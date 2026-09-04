@@ -5,10 +5,10 @@
 # 依赖： agent-browser（/opt/homebrew/bin/agent-browser）、python3
 #
 # 覆盖：
-#   1. 数据完整性 — 190 段 / 145 气泡 / 章评 621 / 段评 5744
+#   1. 数据完整性 — 190 段 / 145 气泡 / 全章评论 7293 / 段评 5744
 #   2. 布局铁律   — 右侧图标栏贴 viewport 最右（抽屉开、关两种状态 gap 都必须为 0）
 #   3. Figma 对齐 — 左栏、标题区、工具栏、右侧栏入口与设计稿一致
-#   4. 评论面板   — 全章段评+章评、单段段评、排序、标签云、筛选入口、一级评论原文引用
+#   4. 评论面板   — 全章评论、单段段评、排序、标签云、筛选入口、原文引用
 #   5. 零值段     — count 为 0 的段不渲染气泡
 set -uo pipefail
 
@@ -46,7 +46,7 @@ JS=$(cat <<'JSEOF'
   // --- 1. 数据完整性 ---
   chk('段落数', $$('.para').length, 190);
   chk('段评气泡数', $$('.para-bubble').length, 145);
-  chk('章评数(抽屉标题)', $('#cmCount').textContent, 621);
+  chk('全章评论数(抽屉标题)', $('#cmCount').textContent, '7293条');
   chk('抽屉标题文案', $('#cmTitleText').textContent, '评论');
   chk('段评总数', $('#chapSecTotal').textContent, 5744);
   chk('章节标题', $('#chapTitle').textContent, '第1章 面试');
@@ -117,41 +117,46 @@ JS=$(cat <<'JSEOF'
   // --- 5. 评论面板：排序、标签云、筛选入口、一级评论引用 ---
   $('.cm-quote-back').click();
   chk('返回后抽屉标题', $('#cmTitleText').textContent, '评论');
-  chk('返回后抽屉计数', $('#cmCount').textContent, '621');
-  chk('全章段评模块数', $$('.cm-section-module:not(.single)').length, 3);
-  chk('全章章评模块数', $$('.cm-list > .chapter-comment').length, 6);
+  chk('返回后抽屉计数', $('#cmCount').textContent, '7293条');
+  chk('全章统计说明隐藏', !!$('.cm-overview'), false);
+  chk('全章段评模块不展示', $$('.cm-section-module:not(.single)').length, 0);
+  chk('全章AI总结卡存在', !!$('.cm-ai-card'), true);
+  chk('全章列表首项为AI总结', $('.cm-list > :first-child').classList.contains('cm-ai-card'), true);
+  chk('全章引用条存在', !!$('.cm-reference'), true);
+  chk('全章引用条含气泡', $('.cm-ref-bubble').textContent.trim(), '2');
+  chk('全章评论项数', $$('.cm-list > .full-comment').length, 6);
+  chk('全章评论都有操作行', $$('.cm-list > .full-comment .cm-meta-actions').length, 6);
   chk('全章标签可见', getComputedStyle($('#cmTags')).display, 'flex');
   chk('排序项', $$('#cmSort .cm-tab').map(function(el){return el.textContent.trim();}).join('/'), '默认/最热/最新');
   chk('最热排序保持选中', $('#cmSortHot').classList.contains('on'), true);
   chk('筛选按钮存在', !!$('#cmFilterBtn'), true);
   chk('筛选按钮在右侧', $('#cmFilterBtn').getBoundingClientRect().left > $('#cmSort').getBoundingClientRect().right, true);
-  chk('标签云数量', $$('.cm-tag').length, 16);
-  chk('标签云内容', $$('.cm-tag').map(function(el){return el.textContent.trim();}).join('|'), '全部 7293|好评 113|差评 12|建议 10|疑问 3|提及作者 133|建议加精 69|建议屏蔽 10|现实/太真实 401|太颠/太抽象/太离谱 343|笑死/绷不住 140|好惨/心痛/压抑 116|资本修仙/赛博朋克 320|面试像找工作/太卷 205|不睡觉太狠 231|绝育/变性/器官改造太狠 200');
+  chk('标签云数量', $$('.cm-tag').length, 18);
+  chk('标签云内容', $$('.cm-tag').map(function(el){return el.textContent.trim();}).join('|'), '全部 7293|👍🏻好评 113|🍅差评 12|💡建议 10|❓疑问 3|👈🏻提及作者 133|📚提及其他作品 111|🍚️二创 61|⭐️建议加精 69|🚫建议屏蔽 10|现实/太真实 401|太颠/太抽象/太离谱 343|笑死/绷不住 140|好惨/心痛/压抑 116|资本修仙/赛博朋克 320|面试像找工作/太卷 205|不睡觉太狠 231|绝育/变性/器官改造太狠 200');
   chk('标签云默认全部', $('.cm-tag.on').textContent.trim(), '全部 7293');
-  chk('标签气泡圆角', Math.round(parseFloat(getComputedStyle($('.cm-tag')).borderRadius)) >= 15, true);
-  chk('选中标签有气泡尾巴', getComputedStyle($('.cm-tag.on'), '::after').opacity, '1');
+  chk('标签高度改小', Math.round($('.cm-tag').getBoundingClientRect().height), 22);
+  chk('标签字号改小', getComputedStyle($('.cm-tag')).fontSize, '12px');
+  chk('标签无气泡尾巴', getComputedStyle($('.cm-tag.on'), '::after').content, 'none');
   $$('.cm-tag').find(function(el){ return el.textContent.trim() === '现实/太真实 401'; }).click();
   chk('可切换当前标签', $('.cm-tag.on').textContent.trim(), '现实/太真实 401');
   chk('选中标签视觉置前', getComputedStyle($('.cm-tag.on')).order, '-1');
   $('#cmList').scrollTop = 90;
   $('#cmList').dispatchEvent(new Event('scroll'));
   chk('滚动后标签折叠', $('#cmTags').classList.contains('collapsed'), true);
-  chk('折叠后保持一行高度', Math.round($('#cmTags').getBoundingClientRect().height) <= 55, true);
+  chk('折叠后保持一行高度', Math.round($('#cmTags').getBoundingClientRect().height) <= 42, true);
   $('#cmTags').dispatchEvent(new Event('mouseenter'));
   chk('hover标签行展开', $('#cmTags').classList.contains('hover-open'), true);
   $('#cmTags').dispatchEvent(new Event('mouseleave'));
   chk('离开标签行收起', $('#cmTags').classList.contains('hover-open'), false);
-  chk('一级评论数量', $$('.cm-list > .main-comment').length, 6);
-  chk('一级评论都有引用', $$('.cm-list > .main-comment .cm-quote').length, 6);
-  var quoteStyle = getComputedStyle($('.cm-quote'));
-  var quoteMaxHeight = parseFloat(quoteStyle.lineHeight) * 2 + parseFloat(quoteStyle.paddingTop) + parseFloat(quoteStyle.paddingBottom);
-  chk('引用最多两行', quoteMaxHeight >= $('.cm-quote').getBoundingClientRect().height - 1, true);
+  chk('全章一级评论数量', $$('.cm-list > .full-comment').length, 6);
+  chk('AI总结含去提问', $('.cm-ai-ask').textContent.trim(), '去提问 >');
+  chk('全章引用最多一行', Math.round($('.cm-reference').getBoundingClientRect().height), 36);
   $('#cmSortHot').click();
   chk('最热排序选中', $('#cmSortHot').classList.contains('on'), true);
-  chk('最热首条点赞最高', $('.cm-list > .main-comment .like').textContent.indexOf('2872') >= 0, true);
+  chk('最热首条点赞最高', $('.cm-list > .full-comment .cm-meta-actions').textContent.indexOf('2872') >= 0, true);
   $('#cmSortLatest').click();
   chk('最新排序选中', $('#cmSortLatest').classList.contains('on'), true);
-  chk('最新首条为最新日期', $('.cm-list > .main-comment .meta').textContent.indexOf('05-09 22:41') >= 0, true);
+  chk('最新首条为最新日期', $('.cm-list > .full-comment .cm-meta-left').textContent.indexOf('05-09 22:41') >= 0, true);
   $('#cmFilterBtn').click();
   chk('筛选按钮可激活', $('#cmFilterBtn').classList.contains('on'), true);
 
@@ -202,22 +207,13 @@ JS=$(cat <<'JSEOF'
   var rightGap = Math.round(rb.right - rt.right);
   chk('气泡文字水平居中(差≤1)', Math.abs(leftGap - rightGap) <= 1, true);
 
-  // --- 9. 二级评论（楼中楼）布局对齐 Figma 稿 ---
-  // 先展开第一个用户的回复
-  var subToggle = $('.sub-toggle');
-  if(subToggle) subToggle.click();
-  var mainWithSub = $$('.cm-list > .main-comment').find(function(item){ return !!item.querySelector('.cm-sub .cm-item'); });
-  if(mainWithSub){
-    var subItems = mainWithSub.querySelectorAll('.cm-sub .cm-item');
-    chk('主评论头像32px', Math.round(mainWithSub.querySelector('.av').getBoundingClientRect().width), 32);
-    chk('二级评论头像24px', Math.round(subItems[0]?.querySelector('.av').getBoundingClientRect().width), 24);
-    // 头像顶对齐名字顶（不是垂直居中）
-    chk('头像顶对齐名字顶', Math.round(subItems[0]?.querySelector('.av').getBoundingClientRect().top), Math.round(subItems[0]?.querySelector('.nm').getBoundingClientRect().top));
-    // 二级评论无横线分隔
-    chk('二级评论无border-bottom', getComputedStyle(subItems[0]).borderBottomWidth, '0px');
-  } else {
-    chk('主评论存在', false, true);
-  }
+  // --- 9. 全章评论流布局对齐 Figma 稿 ---
+  var fullFirst = $('.cm-list > .full-comment');
+  chk('全章评论头像28px', Math.round(fullFirst.querySelector('.av').getBoundingClientRect().width), 28);
+  chk('全章评论正文16px', getComputedStyle(fullFirst.querySelector('.content')).fontSize, '16px');
+  chk('全章评论含UGC图', !!fullFirst.querySelector('.cm-ugc'), true);
+  chk('全章回复入口存在', !!fullFirst.querySelector('.cm-more-replies'), true);
+  chk('全章到底文案', $('.cm-empty').textContent.trim(), '-到底了-');
 
   return out.join('\n');
 })()
