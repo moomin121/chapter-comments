@@ -137,9 +137,10 @@ JS=$(cat <<'JSEOF'
   chk('标签高度改小', Math.round($('.cm-tag').getBoundingClientRect().height), 22);
   chk('标签字号改小', getComputedStyle($('.cm-tag')).fontSize, '12px');
   chk('标签无气泡尾巴', getComputedStyle($('.cm-tag.on'), '::after').content, 'none');
+  var tagOrderBeforeClick = $$('.cm-tag').map(function(el){return el.textContent.trim();}).join('|');
   $$('.cm-tag').find(function(el){ return el.textContent.trim() === '现实/太真实 401'; }).click();
   chk('可切换当前标签', $('.cm-tag.on').textContent.trim(), '现实/太真实 401');
-  chk('选中标签视觉置前', getComputedStyle($('.cm-tag.on')).order, '-1');
+  chk('选中后标签顺序固定', $$('.cm-tag').map(function(el){return el.textContent.trim();}).join('|'), tagOrderBeforeClick);
   $('#cmList').scrollTop = 90;
   $('#cmList').dispatchEvent(new Event('scroll'));
   chk('滚动后标签折叠', $('#cmTags').classList.contains('collapsed'), true);
