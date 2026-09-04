@@ -177,13 +177,23 @@
 
   .chap-title-row{display:flex;align-items:center;gap:14px;margin-bottom:8px;}
   .chap-title{font-family:var(--wenkai);font-size:28px;font-weight:700;color:var(--ink-92);line-height:36px;letter-spacing:0;margin:0;}
+  /* 章节标题气泡与正文段落气泡保持同一套描边角标样式。 */
   .chap-bubble{
-    display:none;align-items:center;justify-content:center;height:22px;min-width:32px;
-    padding:0 8px;border-radius:11px;font-size:11.5px;color:#fff;font-weight:600;cursor:pointer;
-    background:#E84D2F;transition:transform .15s, box-shadow .15s;user-select:none;font-family:var(--num);
+    display:none;align-items:center;justify-content:center;box-sizing:border-box;
+    height:18px;min-width:18px;width:auto;line-height:16px;padding:0 3px;
+    margin-left:4px;border-radius:3px;border:1px solid currentColor;
+    background:rgba(255,255,255,.7);font-size:11px;font-weight:600;color:#ff3b4f;
+    cursor:pointer;text-indent:0;user-select:none;font-family:var(--num);
+    font-variant-numeric:tabular-nums;vertical-align:baseline;
+    transition:background .15s, box-shadow .15s, color .15s, border-color .15s;
   }
   body.comment-mode .chap-bubble{display:inline-flex;}
-  .chap-bubble:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(232,77,47,.35);}
+  .chap-bubble:hover{background:#fff;box-shadow:0 2px 5px rgba(255,59,79,.18);}
+  .chap-bubble.lv-red,
+  .chap-bubble.lv-orange-red,
+  .chap-bubble.lv-orange{color:#ff3b4f;background:rgba(255,255,255,.7);}
+  .chap-bubble.lv-amber,
+  .chap-bubble.lv-mute{color:#6f737a;background:rgba(255,255,255,.58);}
 
   .chap-info{display:flex;align-items:center;gap:4px;font-size:12px;line-height:16px;color:var(--ink-49);margin-bottom:32px;white-space:nowrap;}
   .chap-info .item{display:flex;align-items:center;gap:4px;}
@@ -1445,7 +1455,13 @@ CHAPTER_TREE.forEach(renderFolder);
     var visEl = $('#chapVisibility');  if(visEl) visEl.textContent = CHAPTER.meta.visibility;
 
     // 章节顶部章评数（真实数据：章评对象下 一级+回复 总量）
-    var cb = $('#chapBubble'); if(cb) cb.textContent = displayCount(index.chapterTarget.totalCount);
+    var cb = $('#chapBubble');
+    if(cb){
+      cb.textContent = displayCount(index.chapterTarget.totalCount);
+      cb.className = 'chap-bubble '+heatClass(index.chapterTarget.totalCount);
+      cb.id = 'chapBubble';
+      cb.title = '查看本章全部评论';
+    }
 
     // 元信息里的字数：示例章节用 CHAPTER 演示值，作者自写则按当前正文实时计算
     var wEl = $('#chapWords');

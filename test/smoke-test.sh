@@ -77,6 +77,9 @@ JS=$(cat <<'JSEOF'
   chk('有评段气泡数', $$('.para-bubble').length, 170);
   chk('标题章评胶囊显示', getComputedStyle($('#chapBubble')).display, 'flex');
   chk('标题章评数', $('#chapBubble').textContent, '732');
+  chk('标题气泡复用热度样式', $('#chapBubble').classList.contains('lv-red'), true);
+  chk('标题气泡与段泡同高', getComputedStyle($('#chapBubble')).height, getComputedStyle($('.para-bubble')).height);
+  chk('标题气泡使用描边', getComputedStyle($('#chapBubble')).borderTopWidth, '1px');
   chk('段评总数', $('#chapSecTotal').textContent, '6098');
   chk('章评聚合计数(气泡最后一块)', $$('.cm-reference[data-target-id="-1"] .cm-ref-bubble')[0].textContent, '732');
 
