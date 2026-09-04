@@ -197,7 +197,8 @@ def js_block(payload: dict) -> str:
 def update_index(index_path: Path, block: str) -> None:
     content = index_path.read_text(encoding="utf-8")
     pattern = re.compile(re.escape(START) + r".*?" + re.escape(END), re.S)
-    next_content, count = pattern.subn(block, content)
+    # 用 lambda 作为 replacement，避免 block 中的 "\\" 被 re 解释为转义
+    next_content, count = pattern.subn(lambda _m: block, content)
     if count != 1:
         raise SystemExit("Could not find exactly one generated comment data block in index.html")
     index_path.write_text(next_content, encoding="utf-8")
