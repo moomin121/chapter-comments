@@ -91,6 +91,11 @@ JS=$(cat <<'JSEOF'
   chk('AI卡默认收起', !!$('.cm-ai-body.clamped'), true);
   chk('AI卡收起高度60', getComputedStyle($('.cm-ai-body')).maxHeight, '60px');
   chk('AI卡有展开按钮', !!$('.cm-ai-expand'), true);
+  // 展开全部按钮样式规格（doc/技术方案 §5.5.1：12px / 500 / rgba(20,30,41,0.64)）
+  var expandCs = getComputedStyle($('.cm-ai-expand'));
+  chk('展开按钮颜色', expandCs.color, 'rgba(20, 30, 41, 0.64)');
+  chk('展开按钮字号12', expandCs.fontSize, '12px');
+  chk('展开按钮字重500', expandCs.fontWeight, '500');
   $('.cm-ai-expand').click();
   chk('AI卡展开后无裁切', !!$('.cm-ai-body.clamped'), false);
   chk('AI卡展开后无按钮', !!$('.cm-ai-expand'), false);
