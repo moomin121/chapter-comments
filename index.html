@@ -1557,9 +1557,11 @@ CHAPTER_TREE.forEach(renderFolder);
     }
     // （2）标签筛选状态复位为"全部"（以评论对象筛选为主）
     if(currentCommentTag !== '全部'){ resetTagToAll(); }
-    // （3）抽屉进入单对象视图
+    // （3）抽屉进入单对象视图；评论列表自动回到顶部，不受之前滚动位置影响
     drawer.classList.add('parasec');
     renderTargetComments(targetId);
+    var list = $('#cmList');
+    if(list) list.scrollTop = 0;
   }
 
   // 4) 渲染单对象评论列表：该对象下全部一级评论（不截断），楼中楼默认收起

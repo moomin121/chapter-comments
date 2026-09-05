@@ -132,7 +132,9 @@ JS=$(cat <<'JSEOF'
   chk('点赞按钮为Figma拇指', !!fc.querySelector('.cm-meta-like svg path'), true);
 
   // --- §16-3 点击段气泡 → 单对象视图全部一级评论 ---
+  $('#cmList').scrollTop = 200;
   $('.para-bubble[data-idx="17"]').click();
+  chk('单对象视图列表自动滚到顶', $('#cmList').scrollTop, 0);
   chk('单对象视图态', $('#cmDrawer').classList.contains('parasec'), true);
   chk('段17计数(一级+回复)', $('#cmCount').textContent, '257条');
   chk('段17全部一级评论', $$('.cm-list > .paragraph-comment').length, 193);
