@@ -103,12 +103,17 @@ JS=$(cat <<'JSEOF'
   chk('未匹配块数(CSV越界段191)', $$('.cm-unmatched-module').length, 1);
   chk('未匹配块排在最后', modules[modules.length-1].classList.contains('cm-unmatched-module'), true);
 
-  // --- §16-5 每段最多 3 条一级评论 + 查看本段入口 ---
+  // --- §16-5 每段最多 3 条一级评论 + 查看入口（章/段统一为"查看 n 条评论"）---
   var overThree = $$('.cm-full-module').filter(function(m){
     var link = m.querySelector('.cm-section-link');
     return link && !link.closest('.cm-unmatched-module');
   });
   chk('超过3条的段有查看入口', overThree.length > 100, true);
+  // 章评与段评入口文案统一为"查看 n 条评论"
+  var linkTexts = $$('.cm-full-module:not(.cm-unmatched-module) .cm-section-link').map(function(b){ return b.textContent; });
+  chk('章评入口无"本章"', linkTexts.every(function(t){ return t.indexOf('本章') < 0; }), true);
+  chk('段评入口无"本段"', linkTexts.every(function(t){ return t.indexOf('本段') < 0; }), true);
+  chk('所有入口都是"查看 n 条评论"', linkTexts.every(function(t){ return /^查看\d+条评论$/.test(t); }), true);
   var firstModule = $('.cm-full-module[data-target-id]:not(.cm-unmatched-module)');
   var shown = firstModule ? firstModule.querySelectorAll(':scope > .full-comment').length : 0;
   chk('首段块展示前3条', shown <= 3, true);
