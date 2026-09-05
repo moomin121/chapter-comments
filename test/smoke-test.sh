@@ -209,7 +209,7 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
   chk('表格长标签不直接展示', $$('.cm-tag-label').map(function(el){ return el.textContent; }).indexOf('明确提及其他书籍/作者/其他领域的作品如游戏影视') < 0, true);
   chk('标签胶囊紧凑高度', getComputedStyle($('.cm-tag')).height, '20px');
   chk('标签字号与截图一致', getComputedStyle($('.cm-tag')).fontSize, '11px');
-  chk('标签间距紧凑', getComputedStyle($('#cmTags')).gap, '6px');
+  chk('标签间距紧凑', getComputedStyle($('#cmTags')).gap, '6px 12px');
   // --- §16-18 折叠态选中标签行可见（PRD §11.2.1）---
   var laughTag = $$('.cm-tag').filter(function(t){ return t.getAttribute('data-tag') === '笑死/绷不住'; })[0];
   if(laughTag){

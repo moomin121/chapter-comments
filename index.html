@@ -297,7 +297,7 @@
   .cm-drawer.parasec .cm-input{display:none;}
 
   .cm-tags{
-    position:relative;display:flex;align-items:center;align-content:flex-start;gap:6px;flex-wrap:wrap;padding:8px 16px 4px;
+    position:relative;display:flex;align-items:center;align-content:flex-start;gap:6px 12px;flex-wrap:wrap;padding:8px 16px 4px;
     border-bottom:0;background:var(--panel);flex:0 0 auto;
     max-height:194px;overflow:hidden;transition:max-height .18s ease, padding .18s ease;
   }
@@ -1772,7 +1772,8 @@ CHAPTER_TREE.forEach(renderFolder);
   }
   /* 聚合块锚点交互：hover 滚动定位 + 临时高亮；click 进单对象视图（PRD §13）
      hover 防误触（PRD §13.1.1）：指针轨迹判定（hover intent）——
-     mouseenter 后 150ms 观察窗内累计位移 > 20px 视为"扫过"，不触发滚动定位。 */
+     mouseenter 后 200ms 观察窗内累计位移 > 30px 视为"扫过"，不触发滚动定位。
+     阈值放宽以应对真实用户轻微抖动。 */
   var hoverIntent = { timer: null, x: 0, y: 0, targetId: null };
   function bindTargetAnchors(){
     // .cm-reference 引用行整体 + .cm-section-link 入口按钮 + .cm-ref-bubble 计数气泡
@@ -1790,13 +1791,13 @@ CHAPTER_TREE.forEach(renderFolder);
           if(hoverIntent.targetId === targetId){
             scrollToTarget(targetId, true);
           }
-        }, 150);
+        }, 200);
       });
       el.addEventListener('mousemove', function(e){
         if(!hoverIntent.timer || hoverIntent.targetId !== targetId) return;
         var dx = Math.abs(e.clientX - hoverIntent.x);
         var dy = Math.abs(e.clientY - hoverIntent.y);
-        if(dx + dy > 20){
+        if(dx + dy > 30){
           // 观察窗内大幅移动 = 扫过，取消本次滚动定位
           clearTimeout(hoverIntent.timer);
           hoverIntent.timer = null;
