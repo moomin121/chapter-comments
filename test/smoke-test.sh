@@ -216,7 +216,7 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
     laughTag.click();              // 选中靠后行的标签
     $('#cmList').scrollTop = 80;   // 向下滚动触发折叠
     $('#cmList').dispatchEvent(new Event('scroll'));
-    chk('折叠高度46px', getComputedStyle($('#cmTags')).height, '46px');
+    chk('折叠高度34px', getComputedStyle($('#cmTags')).height, '34px');
     var onRect = $('.cm-tag.on').getBoundingClientRect();
     var tagsRect = $('#cmTags').getBoundingClientRect();
     chk('折叠态选中行可见', onRect.top >= tagsRect.top - 1 && onRect.bottom <= tagsRect.bottom + 1, true);

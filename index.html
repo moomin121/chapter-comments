@@ -312,12 +312,12 @@
   .cm-tag:hover .cm-tag-num{color:var(--brand);}
   .cm-tag.on{background:#fff;border-color:var(--brand);color:var(--brand);font-weight:600;}
   .cm-tag.on .cm-tag-num{color:var(--brand);font-weight:600;}
-  /* 折叠态保留 2 行高度，并保证选中标签所在行始终可见（PRD §11.2.1） */
-  .cm-tags.collapsed{height:46px;max-height:46px;padding-top:6px;padding-bottom:6px;}
+  /* 折叠态保留 1 行高度；选中标签所在行由 syncSelectedTagInView 通过 scrollIntoView 保证可见（PRD §11.2.1） */
+  .cm-tags.collapsed{height:34px;max-height:34px;padding-top:6px;padding-bottom:6px;}
   /* 收起后悬停：按全部标签的实际换行高度展开，不能用固定高度裁掉末行。 */
   .cm-tags.collapsed:hover,
   .cm-tags.collapsed.hover-open{
-    height:auto;min-height:46px;max-height:none;padding-top:6px;padding-bottom:6px;
+    height:auto;min-height:34px;max-height:none;padding-top:6px;padding-bottom:6px;
     overflow:visible;z-index:5;
   }
   .cm-tags.collapsed:hover::before,
