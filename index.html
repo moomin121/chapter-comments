@@ -312,11 +312,12 @@
   .cm-tag:hover .cm-tag-num{color:var(--brand);}
   .cm-tag.on{background:#fff;border-color:var(--brand);color:var(--brand);font-weight:600;}
   .cm-tag.on .cm-tag-num{color:var(--brand);font-weight:600;}
-  .cm-tags.collapsed{height:34px;max-height:34px;padding-top:6px;padding-bottom:6px;}
+  /* 折叠态保留 2 行高度，并保证选中标签所在行始终可见（PRD §11.2.1） */
+  .cm-tags.collapsed{height:46px;max-height:46px;padding-top:6px;padding-bottom:6px;}
   /* 收起后悬停：按全部标签的实际换行高度展开，不能用固定高度裁掉末行。 */
   .cm-tags.collapsed:hover,
   .cm-tags.collapsed.hover-open{
-    height:auto;min-height:34px;max-height:none;padding-top:6px;padding-bottom:6px;
+    height:auto;min-height:46px;max-height:none;padding-top:6px;padding-bottom:6px;
     overflow:visible;z-index:5;
   }
   .cm-tags.collapsed:hover::before,
@@ -1276,14 +1277,30 @@ CHAPTER_TREE.forEach(renderFolder);
     if(!list || !tags || list.dataset.scrollBound === '1') return;
     list.dataset.scrollBound = '1';
     list.addEventListener('scroll', function(){
+      var wasCollapsed = tags.classList.contains('collapsed');
       tags.classList.toggle('collapsed', list.scrollTop > 12);
+      // 折叠态变化时保证选中标签所在行可见（PRD §11.2.1）
+      if(!wasCollapsed && tags.classList.contains('collapsed')) syncSelectedTagInView();
     });
     tags.addEventListener('mouseenter', function(){
       tags.classList.add('hover-open');
     });
     tags.addEventListener('mouseleave', function(){
       tags.classList.remove('hover-open');
+      // 离开后重新折叠时同样保证选中行可见
+      if(tags.classList.contains('collapsed')) syncSelectedTagInView();
     });
+  }
+  /* 折叠态下把选中的标签滚动到可视行：overflow:hidden 容器仍可编程设置 scrollTop */
+  function syncSelectedTagInView(){
+    var tags = $('#cmTags');
+    var on = tags ? tags.querySelector('.cm-tag.on') : null;
+    if(!on || !tags.classList.contains('collapsed')) return;
+    try{
+      on.scrollIntoView({block:'nearest', inline:'nearest'});
+    }catch(e){
+      tags.scrollTop = Math.max(0, on.offsetTop - tags.clientHeight + on.offsetHeight);
+    }
   }
   function setCommentHeader(title, count){
     var titleEl = $('#cmTitleText');
