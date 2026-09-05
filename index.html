@@ -760,7 +760,7 @@
       <div class="cm-list" id="cmList"></div>
       <div class="cm-input">
         <span class="av">我</span>
-        <input class="ipt" id="cmInput" placeholder="写下你的想法…" />
+        <input class="ipt" id="cmInput" placeholder="作者有话说" />
       </div>
     </aside>
   </div>
@@ -1330,9 +1330,12 @@ CHAPTER_TREE.forEach(renderFolder);
     }
     return sorted;
   }
-  /* 评论正文（安全渲染：真实数据必须转义；字面量 \n 与真实换行都转为 <br>） */
+  /* 评论正文（安全渲染：真实数据必须转义；字面量 \n 与真实换行都转为 <br>；
+     [fn=N] 为起点评论脚注标记（PRD §A：完全移除），渲染层清洗，原始数据保留） */
   function commentBodyHtml(c){
-    return escapeHtml(c.body || '').replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+    var body = escapeHtml(c.body || '');
+    body = body.replace(/\[fn=\d+\]/g, '');
+    return body.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
   }
   /* 评论底部操作行（PRD §9 + 设计稿）：日期 + IP地址 + 评论 + 点赞（数字>0 显示，=0 仅图标）+ ··· */
   function commentMetaRow(c){

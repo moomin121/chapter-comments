@@ -118,6 +118,10 @@ JS=$(cat <<'JSEOF'
   chk('评论有昵称', fc.querySelector('.nm').textContent.length > 0, true);
   chk('评论有正文', fc.querySelector('.content').textContent.length > 0, true);
   chk('评论正文字号14', getComputedStyle(fc.querySelector('.content')).fontSize, '14px');
+  // 占位符文案（PRD §16-13）
+  chk('输入框占位符', $('#cmInput').getAttribute('placeholder'), '作者有话说');
+  // fn 脚注标记清洗（PRD §9.1）：全页所有评论正文都不应出现 [fn= 字样
+  chk('正文无fn标记', $$('.content').every(function(el){ return el.textContent.indexOf('[fn=') < 0; }), true);
   chk('有回复的评论有展开入口', $$('.sub-toggle').length > 100, true);
   chk('楼中楼默认收起', $$('.cm-sub[style*="display: none"], .cm-sub[style*="display:none"]').length === $$('.cm-sub').length, true);
   // --- 需求6 评论底部操作：日期 + IP地址 + 评论 + 点赞"赞" + 点赞数 + ··· ---
