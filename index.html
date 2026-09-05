@@ -1466,9 +1466,15 @@ CHAPTER_TREE.forEach(renderFolder);
     if(titleRow) titleRow.classList.remove('active');
     clearHoverPreview();
     switchCmTab('all');
-    // 渲染全部评论后，恢复之前进入单对象视图时的滚动位置，避免每次都跳回顶部
+    // 渲染全部评论后，恢复之前进入单对象视图时的滚动位置。innerHTML 替换后浏览器可能
+    // 先绘制 scrollTop=0 的中间帧再切回 saved 值造成"跳一下"，用 rAF 双帧保险解决。
     var list0 = $('#cmList');
-    if(list0) list0.scrollTop = savedAllCommentsScrollTop;
+    if(list0){
+      list0.scrollTop = savedAllCommentsScrollTop;
+      requestAnimationFrame(function(){
+        list0.scrollTop = savedAllCommentsScrollTop;
+      });
+    }
   }
 
   // 2) 渲染 reader（按段渲染，气泡挂在段落末尾）
