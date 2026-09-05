@@ -147,8 +147,15 @@ JS=$(cat <<'JSEOF'
   var tg = $('.cm-list .sub-toggle');
   if(tg){
     tg.click();
-    chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !== 'none', true);
-    tg.click();
+chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !== 'none', true);
+  // 二级评论头像应与一级评论昵称同列对齐（Figma 80-44007 Reply 在父 Body 内，左对齐到父 nickname）
+  var replyAv = tg.parentElement.querySelector('.cm-sub .cm-item .av');
+  var parNm = tg.parentElement.querySelector('.nm');
+  if(replyAv && parNm){
+    var diff = Math.abs(replyAv.getBoundingClientRect().left - parNm.getBoundingClientRect().left);
+    chk('二级评论对齐一级昵称', diff <= 6, true);
+  } else { chk('二级评论对齐一级昵称', '?', 'skip'); }
+  tg.click();
     chk('楼中楼再收起', tg.parentElement.querySelector('.cm-sub').style.display === 'none', true);
   }
   // 返回全部评论
