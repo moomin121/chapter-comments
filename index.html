@@ -1714,7 +1714,7 @@ CHAPTER_TREE.forEach(renderFolder);
           tip = renderFullReference(c.targetId, c.targetText || getTargetText(c.targetId), t ? t.totalCount : 0);
           lastTipId = c.targetId;
         }
-        return tip + renderParagraphCommentItem(c, i, true); // 最新模式默认展开楼中楼
+        return tip + renderParagraphCommentItem(c, i); // 最新模式楼中楼默认收起，按钮展开（与单对象视图一致）
       }).join('');
     } else {
       // default / hot：按评论对象聚合。先收集块，再按排序决定块顺序。

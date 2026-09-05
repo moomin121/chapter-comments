@@ -172,6 +172,11 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
   });
   chk('单对象最热点赞降序', objLikes.every(function(v,i){ return i===0 || objLikes[i-1] >= v; }), true);
   chk('单对象最热滚到顶', $('#cmList').scrollTop, 0);
+  // 单对象视图 + 最新：楼中楼默认收起 + 显示「展开 N 条回复」按钮（用户澄清）
+  $('#cmSortLatest').click();
+  chk('单对象最新tab高亮', $('#cmSortLatest').classList.contains('on'), true);
+  chk('单对象最新楼中楼收起', $$('.cm-list > .paragraph-comment .cm-sub').every(function(s){ return s.style.display === 'none'; }), true);
+  chk('单对象最新按钮为展开', $$('.cm-list > .paragraph-comment .sub-toggle').every(function(t){ return t.textContent.indexOf('展开') >= 0; }), true);
   $('#cmSortDefault').click();
   chk('单对象恢复默认', $('#cmSortDefault').classList.contains('on'), true);
   // 返回全部评论
@@ -279,9 +284,9 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
   chk('最新平铺一级评论', $$('.cm-list > .paragraph-comment').length, 4465);
   chk('最新滚到顶', $('#cmList').scrollTop, 0);
   chk('最新隐藏AI卡', $$('.cm-ai-card').length, 0);
-  // 最新模式楼中楼默认展开（用户补充：最新模式也要看到二级回复 + 按钮文案与状态同步）
-  chk('最新模式楼中楼默认展开', $$('.cm-list > .paragraph-comment .cm-sub').some(function(s){ return s.style.display !== 'none' || getComputedStyle(s).display === 'block'; }), true);
-  chk('最新模式按钮文案为收起', $$('.cm-list > .paragraph-comment .sub-toggle').every(function(t){ return t.textContent.indexOf('收起') >= 0; }), true);
+  // 最新模式楼中楼默认收起 + 显示「展开 N 条回复」按钮（用户澄清：与默认/单对象视图一致）
+  chk('最新模式楼中楼默认收起', $$('.cm-list > .paragraph-comment .cm-sub').every(function(s){ return s.style.display === 'none'; }), true);
+  chk('最新模式按钮文案为展开', $$('.cm-list > .paragraph-comment .sub-toggle').every(function(t){ return t.textContent.indexOf('展开') >= 0; }), true);
   // 原文行复用默认聚合块引用行样式（Figma 80-44095）：带背景、气泡、data-target-id
   var latestRefs = $$('.cm-list > .cm-reference');
   chk('最新有原文引用行', latestRefs.length >= 2, true);
