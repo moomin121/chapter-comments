@@ -354,6 +354,12 @@
   .cm-ai-body{font-size:14px;line-height:20px;color:var(--ink-92);}
   .cm-ai-body p{margin:0 0 12px;}
   .cm-ai-body p:last-child{margin-bottom:0;}
+  /* 最新模式单条评论上方的原文提示（PRD §10.4.3 + 用户补充） */
+  .cm-source-tip{display:flex;align-items:center;gap:8px;padding:10px 16px 2px;
+    font-size:12px;line-height:18px;color:var(--ink-64);}
+  .cm-source-tip .cm-source-label{flex:0 0 auto;font-weight:600;color:var(--ink-49);}
+  .cm-source-tip .cm-source-text{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .cm-list > .cm-source-tip + .cm-item{border-top:0;}
   /* 收起态：正文固定 3 行（3 × 20px 行高），超出裁切（Figma 88-9492） */
   .cm-ai-body.clamped{max-height:60px;overflow:hidden;}
   /* 展开全部按钮：全宽居中 + chevron-down（Figma 92-13358） */
@@ -1424,6 +1430,15 @@ CHAPTER_TREE.forEach(renderFolder);
   function renderParagraphCommentItem(c, index){
     return renderPanelCommentItem(c, index, 'paragraph-comment');
   }
+  /* 最新模式单条评论上方的"原文"小行：每段 target 首次出现时展示，
+     无气泡、无背景、不带 data-target-id，避免触发 hover intent 与 click */
+  function renderSourceTip(c){
+    var text = c.targetText || '';
+    return '<div class="cm-source-tip">'
+      + '<span class="cm-source-label">原文</span>'
+      + '<span class="cm-source-text">'+escapeHtml(text)+'</span>'
+      + '</div>';
+  }
   function renderFullCommentItem(c, index){
     return renderPanelCommentItem(c, index, 'full-comment');
   }
@@ -1671,7 +1686,7 @@ CHAPTER_TREE.forEach(renderFolder);
     }
 
     if(currentCommentSort === 'latest'){
-      // 最新：不按评论对象聚合，全部一级评论按 createdAt 从新到旧平铺（PRD §10.4.3）
+      // 最新：不按评论对象聚合块；按 createdAt 从新到旧平铺；每条评论上方显示原文提示（PRD §10.4.3 + 用户补充）
       var flat = [];
       flat = flat.concat(visibleItemsOf(idx.chapterTarget));
       idx.targets.forEach(function(t){
@@ -1686,7 +1701,15 @@ CHAPTER_TREE.forEach(renderFolder);
         if(dt !== 0) return dt;
         return (a.rowIndex || 0) - (b.rowIndex || 0);
       });
-      html += flat.map(function(c, i){ return renderParagraphCommentItem(c, i); }).join('');
+      var lastTipId = null;
+      html += flat.map(function(c, i){
+        var tip = '';
+        if(c.targetId !== lastTipId){
+          tip = renderSourceTip(c);
+          lastTipId = c.targetId;
+        }
+        return tip + renderParagraphCommentItem(c, i);
+      }).join('');
     } else {
       // default / hot：按评论对象聚合。先收集块，再按排序决定块顺序。
       var blocks = [];

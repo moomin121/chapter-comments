@@ -266,13 +266,19 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
     return mm ? +mm[1] : 0;
   });
   chk('最热聚合块热度降序', hotCounts.every(function(v,i){ return i===0 || hotCounts[i-1] >= v; }), true);
-  // 最新：不按对象聚合，全部一级评论平铺；无「展开此段」按钮
+  // 最新：不按对象聚合，全部一级评论平铺；每条评论上方显示原文提示（PRD §10.4.3 + 用户补充）
   $('#cmSortLatest').click();
   chk('最新tab高亮', $('#cmSortLatest').classList.contains('on'), true);
   chk('最新无聚合块', $$('.cm-full-module').length, 0);
   chk('最新无展开按钮', $$('.cm-section-link').length, 0);
   chk('最新平铺一级评论', $$('.cm-list > .paragraph-comment').length, 4465);
   chk('最新滚到顶', $('#cmList').scrollTop, 0);
+  // 最新模式下每条评论上方应有原文提示行（用户补充："每条评论上方还是要显示原文的，只是不做聚合"）
+  var latestTips = $$('.cm-list .cm-source-tip');
+  chk('最新有原文提示', latestTips.length >= 2, true);
+  chk('原文提示含"原文"标签', latestTips[0].textContent.indexOf('原文') >= 0, true);
+  chk('原文提示不含data-target-id', latestTips[0].hasAttribute('data-target-id'), false);
+  chk('原文提示不触发hover intent', $$('.cm-source-tip[data-target-id]').length, 0);
   // 标签筛选在最新模式下同样生效（平铺数量变少）
   if(tagReal){
     tagReal.click();
