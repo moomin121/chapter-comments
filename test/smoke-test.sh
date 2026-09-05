@@ -117,6 +117,7 @@ JS=$(cat <<'JSEOF'
   chk('评论有头像', !!fc.querySelector('.av'), true);
   chk('评论有昵称', fc.querySelector('.nm').textContent.length > 0, true);
   chk('评论有正文', fc.querySelector('.content').textContent.length > 0, true);
+  chk('评论正文字号14', getComputedStyle(fc.querySelector('.content')).fontSize, '14px');
   chk('有回复的评论有展开入口', $$('.sub-toggle').length > 100, true);
   chk('楼中楼默认收起', $$('.cm-sub[style*="display: none"], .cm-sub[style*="display:none"]').length === $$('.cm-sub').length, true);
   // --- 需求6 评论底部操作：日期 + IP地址 + 评论 + 点赞"赞" + 点赞数 + ··· ---
@@ -162,6 +163,7 @@ JS=$(cat <<'JSEOF'
   chk('标签云允许自然换行', tagsStyle.flexWrap, 'wrap');
   chk('标签没有长标签特例', $$('.cm-tag-long').length, 0);
   chk('截图标签采用短名称', $$('.cm-tag-label').map(function(el){ return el.textContent; }).indexOf('📚 提及其他作品') >= 0, true);
+  chk('建议加精短名称', $$('.cm-tag-label').map(function(el){ return el.textContent; }).indexOf('⭐ 建议加精') >= 0, true);
   chk('表格长标签不直接展示', $$('.cm-tag-label').map(function(el){ return el.textContent; }).indexOf('明确提及其他书籍/作者/其他领域的作品如游戏影视') < 0, true);
   chk('标签胶囊紧凑高度', getComputedStyle($('.cm-tag')).height, '20px');
   chk('标签字号与截图一致', getComputedStyle($('.cm-tag')).fontSize, '11px');
