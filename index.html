@@ -1747,16 +1747,45 @@ CHAPTER_TREE.forEach(renderFolder);
       + more
       + '</section>';
   }
-  /* 聚合块锚点交互：hover 滚动定位 + 临时高亮；click 进单对象视图（PRD §13） */
+  /* 聚合块锚点交互：hover 滚动定位 + 临时高亮；click 进单对象视图（PRD §13）
+     hover 防误触（PRD §13.1.1）：指针轨迹判定（hover intent）——
+     mouseenter 后 150ms 观察窗内累计位移 > 20px 视为"扫过"，不触发滚动定位。 */
+  var hoverIntent = { timer: null, x: 0, y: 0, targetId: null };
   function bindTargetAnchors(){
     // .cm-reference 引用行整体 + .cm-section-link 入口按钮 + .cm-ref-bubble 计数气泡
     $$('.cm-reference[data-target-id], .cm-section-link[data-target-id], .cm-ref-bubble[data-target-id]').forEach(function(el){
       var targetId = parseInt(el.getAttribute('data-target-id'), 10);
       if(isNaN(targetId)) return;
-      el.addEventListener('mouseenter', function(){
-        scrollToTarget(targetId, true);
+      el.addEventListener('mouseenter', function(e){
+        // 新的观察窗：取消上一个未决的 hover 意图
+        if(hoverIntent.timer){ clearTimeout(hoverIntent.timer); hoverIntent.timer = null; }
+        clearHoverPreview();
+        hoverIntent.x = e.clientX; hoverIntent.y = e.clientY;
+        hoverIntent.targetId = targetId;
+        hoverIntent.timer = setTimeout(function(){
+          hoverIntent.timer = null;
+          if(hoverIntent.targetId === targetId){
+            scrollToTarget(targetId, true);
+          }
+        }, 150);
+      });
+      el.addEventListener('mousemove', function(e){
+        if(!hoverIntent.timer || hoverIntent.targetId !== targetId) return;
+        var dx = Math.abs(e.clientX - hoverIntent.x);
+        var dy = Math.abs(e.clientY - hoverIntent.y);
+        if(dx + dy > 20){
+          // 观察窗内大幅移动 = 扫过，取消本次滚动定位
+          clearTimeout(hoverIntent.timer);
+          hoverIntent.timer = null;
+          hoverIntent.targetId = null;
+        }
       });
       el.addEventListener('mouseleave', function(){
+        if(hoverIntent.timer && hoverIntent.targetId === targetId){
+          clearTimeout(hoverIntent.timer);
+          hoverIntent.timer = null;
+          hoverIntent.targetId = null;
+        }
         clearHoverPreview();
       });
       el.addEventListener('click', function(e){

@@ -59,13 +59,14 @@ sleep 4
 # ---------- B. 页面渲染断言 ----------
 # JS 里用 key 断言，输出 "状态|名称|实际|期望"
 JS=$(cat <<'JSEOF'
-(function(){
+(async function(){
   var out = [];
   function chk(name, actual, expected){
     out.push((String(actual)===String(expected)?'PASS':'FAIL')+'|'+name+'|'+actual+'|'+expected);
   }
   var $  = function(s){ return document.querySelector(s); };
   var $$ = function(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); };
+  var wait = function(ms){ return new Promise(function(r){ setTimeout(r, ms); }); };
 
   // --- §16-1 默认展开评论侧边栏 + 全部评论视图 ---
   chk('抽屉默认展开', $('#cmDrawer').classList.contains('open'), true);
@@ -284,13 +285,21 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
   chk('默认恢复聚合块', $$('.cm-full-module').length, 172);
   chk('默认tab高亮', $('#cmSortDefault').classList.contains('on'), true);
 
-  // --- §16-8 hover 评论对象：滚动定位 + 临时高亮 ---
+  // --- §16-8 hover 评论对象：滚动定位 + 临时高亮（hover intent：150ms 观察窗后触发） ---
   var ref0 = $('.cm-reference[data-target-id="0"]');
-  ref0.dispatchEvent(new Event('mouseenter'));
+  ref0.dispatchEvent(new MouseEvent('mouseenter', {clientX: 10, clientY: 10}));
+  await wait(250);
   chk('hover临时高亮', $$('.para.hover-preview').length, 1);
   chk('hover不改筛选状态', !$('#cmDrawer').classList.contains('parasec'), true);
-  ref0.dispatchEvent(new Event('mouseleave'));
+  ref0.dispatchEvent(new MouseEvent('mouseleave'));
   chk('离开后高亮清除', $$('.para.hover-preview').length, 0);
+  // 扫过防误触（PRD §13.1.1）：观察窗内位移 > 20px 不触发滚动定位
+  var ref1 = $('.cm-reference[data-target-id="1"]') || ref0;
+  ref1.dispatchEvent(new MouseEvent('mouseenter', {clientX: 10, clientY: 10}));
+  ref1.dispatchEvent(new MouseEvent('mousemove', {clientX: 120, clientY: 80}));
+  await wait(250);
+  chk('扫过不触发滚动定位', $$('.para.hover-preview').length, 0);
+  ref1.dispatchEvent(new MouseEvent('mouseleave'));
 
   // --- §16-9 点击评论对象 → 单对象视图 ---
   $('.cm-reference[data-target-id="0"]').click();
