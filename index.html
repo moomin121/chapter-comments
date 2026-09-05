@@ -1030,6 +1030,8 @@ CHAPTER_TREE.forEach(renderFolder);
   var currentParagraphIdx = null;
   // AI 总结卡展开态（Figma 88-9492 收起 / 97-14607 展开；展开后不收起）
   var aiSummaryExpanded = false;
+  // 进入单对象视图前的聚合视图滚动位置；返回全部评论时恢复
+  var savedAllCommentsScrollTop = 0;
   var COMMENT_TAGS = [{name:'全部', count:0, kind:'all'}];
   // 标签展示遵循截图中的 Codex 版本；筛选仍使用 COMMENT_DATA 中的原始标签名。
   var COMMENT_TAG_DISPLAY = {
@@ -1464,6 +1466,9 @@ CHAPTER_TREE.forEach(renderFolder);
     if(titleRow) titleRow.classList.remove('active');
     clearHoverPreview();
     switchCmTab('all');
+    // 渲染全部评论后，恢复之前进入单对象视图时的滚动位置，避免每次都跳回顶部
+    var list0 = $('#cmList');
+    if(list0) list0.scrollTop = savedAllCommentsScrollTop;
   }
 
   // 2) 渲染 reader（按段渲染，气泡挂在段落末尾）
@@ -1538,6 +1543,11 @@ CHAPTER_TREE.forEach(renderFolder);
     var p = getParagraphByTarget(targetId);
     if(!p) return;
     var drawer = $('#cmDrawer');
+    // 进入前记录聚合视图滚动位置（仅从聚合态进入时才保存，避免被单对象视图内部滚动覆盖）
+    if(drawer && !drawer.classList.contains('parasec')){
+      var list0 = $('#cmList');
+      if(list0) savedAllCommentsScrollTop = list0.scrollTop;
+    }
     drawer.classList.add('open');
     // （1）清空旧高亮，应用新高亮并滚动定位
     $$('.para').forEach(function(el){ el.classList.remove('active'); });

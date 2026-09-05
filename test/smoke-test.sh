@@ -161,6 +161,8 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
   // 返回全部评论
   $('.cm-quote-back').click();
   chk('返回后聚合视图', $$('.cm-full-module').length, 172);
+  // 返回后恢复进入单对象视图前的滚动位置（200），而不是跳到顶部
+  chk('返回后恢复原滚动位置', $('#cmList').scrollTop, 200);
   chk('返回后计数', $('#cmCount').textContent, '6830条');
 
   // --- §16-10/11 标签真实筛选 ---
