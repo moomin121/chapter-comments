@@ -279,8 +279,9 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
   chk('最新平铺一级评论', $$('.cm-list > .paragraph-comment').length, 4465);
   chk('最新滚到顶', $('#cmList').scrollTop, 0);
   chk('最新隐藏AI卡', $$('.cm-ai-card').length, 0);
-  // 最新模式楼中楼默认展开（用户补充：最新模式也要看到二级回复）
+  // 最新模式楼中楼默认展开（用户补充：最新模式也要看到二级回复 + 按钮文案与状态同步）
   chk('最新模式楼中楼默认展开', $$('.cm-list > .paragraph-comment .cm-sub').some(function(s){ return s.style.display !== 'none' || getComputedStyle(s).display === 'block'; }), true);
+  chk('最新模式按钮文案为收起', $$('.cm-list > .paragraph-comment .sub-toggle').every(function(t){ return t.textContent.indexOf('收起') >= 0; }), true);
   // 原文行复用默认聚合块引用行样式（Figma 80-44095）：带背景、气泡、data-target-id
   var latestRefs = $$('.cm-list > .cm-reference');
   chk('最新有原文引用行', latestRefs.length >= 2, true);

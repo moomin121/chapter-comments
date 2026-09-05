@@ -1414,10 +1414,10 @@ CHAPTER_TREE.forEach(renderFolder);
     var avColor = avatarColor(c.userGuid || name);
     var quoteHtml = quote ? '<div class="cm-quote">'+escapeHtml(quote)+'</div>' : '';
     var replyCount = (c.replies && c.replies.length) || 0;
-    // 最新模式（时间线）默认展开楼中楼，省去点击
+    // 最新模式（时间线）默认展开楼中楼，省去点击；按钮初始文案与状态同步
     var subDisplay = defaultExpand && replyCount ? 'block' : 'none';
     var repBtn = replyCount
-      ? '<span class="sub-toggle" data-n="'+replyCount+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg><b>展开 '+replyCount+' 条回复</b></span>'
+      ? '<span class="sub-toggle'+(subDisplay === 'block' ? ' on' : '')+'" data-n="'+replyCount+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg><b>'+(subDisplay === 'block' ? '收起 ' : '展开 ')+replyCount+' 条回复</b></span>'
       : '';
     var sub = replyCount
       ? '<div class="cm-sub" style="display:'+subDisplay+';">'
