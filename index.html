@@ -1302,6 +1302,9 @@ CHAPTER_TREE.forEach(renderFolder);
     } else {
       renderAllComments();
     }
+    // 切换排序后评论列表自动滚到顶部（PRD §10.4）
+    var list = $('#cmList');
+    if(list) list.scrollTop = 0;
   }
   function sortComments(list){
     var sorted = list.slice();
@@ -1620,7 +1623,8 @@ CHAPTER_TREE.forEach(renderFolder);
     bindReplyToggles();
   }
 
-  // 5) 渲染全部评论（按段落顺序聚合 + 章评块最后 + 未匹配对象兜底，PRD §10）
+  // 5) 渲染全部评论（PRD §10）
+  // default：章评 → 段落序 → 未匹配；hot：聚合块按对象总评论数降序；latest：拍平单条流
   function renderAllComments(){
     var list = $('#cmList');
     var context = $('#cmContext');
@@ -1648,25 +1652,54 @@ CHAPTER_TREE.forEach(renderFolder);
     if(currentCommentTag === '全部'){
       html += renderAiSummaryCard();
     }
-    // 章评对应章节标题，应显示在第一段正文评论之前（截图 / PRD §10.1）。
-    var chapVisible = visibleItemsOf(idx.chapterTarget);
-    if(chapVisible.length){
-      html += renderFullCommentModule(-1, sortComments(chapVisible), idx.chapterTarget.totalCount);
+
+    if(currentCommentSort === 'latest'){
+      // 最新：不按评论对象聚合，全部一级评论按 createdAt 从新到旧平铺（PRD §10.4.3）
+      var flat = [];
+      flat = flat.concat(visibleItemsOf(idx.chapterTarget));
+      idx.targets.forEach(function(t){
+        flat = flat.concat(visibleItemsOf(t));
+      });
+      Object.keys(idx.targetMap).forEach(function(key){
+        var t = idx.targetMap[key];
+        if(t.unmatched) flat = flat.concat(visibleItemsOf(t));
+      });
+      flat.sort(function(a,b){
+        var dt = String(commentTime(b)).localeCompare(String(commentTime(a)));
+        if(dt !== 0) return dt;
+        return (a.rowIndex || 0) - (b.rowIndex || 0);
+      });
+      html += flat.map(function(c, i){ return renderParagraphCommentItem(c, i); }).join('');
+    } else {
+      // default / hot：按评论对象聚合。先收集块，再按排序决定块顺序。
+      var blocks = [];
+      var chapVisible = visibleItemsOf(idx.chapterTarget);
+      if(chapVisible.length) blocks.push({target: idx.chapterTarget, visible: chapVisible, unmatched: false});
+      idx.targets.forEach(function(t){
+        var visible = visibleItemsOf(t);
+        if(visible.length) blocks.push({target: t, visible: visible, unmatched: false});
+      });
+      Object.keys(idx.targetMap).forEach(function(key){
+        var t = idx.targetMap[key];
+        if(!t.unmatched) return;
+        var visible = visibleItemsOf(t);
+        if(visible.length) blocks.push({target: t, visible: visible, unmatched: true});
+      });
+      if(currentCommentSort === 'hot'){
+        // 最热：聚合块按对象总评论数（含回复）从高到低；未匹配仍排最后（PRD §10.4.2）
+        blocks.sort(function(a,b){
+          if(!!a.unmatched !== !!b.unmatched) return a.unmatched ? 1 : -1;
+          return b.target.totalCount - a.target.totalCount;
+        });
+      }
+      blocks.forEach(function(b){
+        if(b.unmatched){
+          html += renderUnmatchedModule(b.target, sortComments(b.visible));
+        } else {
+          html += renderFullCommentModule(b.target.targetId, sortComments(b.visible), b.target.totalCount);
+        }
+      });
     }
-    // 段评按正文段落顺序从前到后聚合。
-    idx.targets.forEach(function(t){
-      var visible = visibleItemsOf(t);
-      if(!visible.length) return;
-      html += renderFullCommentModule(t.targetId, sortComments(visible), t.totalCount);
-    });
-    // 未匹配评论对象分组，展示在所有可匹配评论之后（PRD §14.3）
-    Object.keys(idx.targetMap).forEach(function(key){
-      var t = idx.targetMap[key];
-      if(!t.unmatched) return;
-      var visible = visibleItemsOf(t);
-      if(!visible.length) return;
-      html += renderUnmatchedModule(t, sortComments(visible));
-    });
     html += '<div class="cm-empty">-到底了-</div>';
     list.innerHTML = html;
     bindReplyToggles();
