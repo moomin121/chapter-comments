@@ -1409,16 +1409,18 @@ CHAPTER_TREE.forEach(renderFolder);
       +   commentMetaRow(r)
       + '</div></div>';
   }
-  function renderCommentItem(c, quote, extraClass){
+  function renderCommentItem(c, quote, extraClass, defaultExpand){
     var name = commentUser(c);
     var avColor = avatarColor(c.userGuid || name);
     var quoteHtml = quote ? '<div class="cm-quote">'+escapeHtml(quote)+'</div>' : '';
     var replyCount = (c.replies && c.replies.length) || 0;
+    // 最新模式（时间线）默认展开楼中楼，省去点击
+    var subDisplay = defaultExpand && replyCount ? 'block' : 'none';
     var repBtn = replyCount
       ? '<span class="sub-toggle" data-n="'+replyCount+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg><b>展开 '+replyCount+' 条回复</b></span>'
       : '';
     var sub = replyCount
-      ? '<div class="cm-sub" style="display:none;">'
+      ? '<div class="cm-sub" style="display:'+subDisplay+';">'
         + c.replies.map(renderReplyItem).join('')
         + '</div>'
       : '';
@@ -1433,11 +1435,11 @@ CHAPTER_TREE.forEach(renderFolder);
       +   sub
       + '</div></div>';
   }
-  function renderPanelCommentItem(c, index, extraClass){
-    return renderCommentItem(c, '', extraClass || 'paragraph-comment');
+  function renderPanelCommentItem(c, index, extraClass, defaultExpand){
+    return renderCommentItem(c, '', extraClass || 'paragraph-comment', defaultExpand);
   }
-  function renderParagraphCommentItem(c, index){
-    return renderPanelCommentItem(c, index, 'paragraph-comment');
+  function renderParagraphCommentItem(c, index, defaultExpand){
+    return renderPanelCommentItem(c, index, 'paragraph-comment', defaultExpand);
   }
   function renderFullCommentItem(c, index){
     return renderPanelCommentItem(c, index, 'full-comment');
@@ -1712,7 +1714,7 @@ CHAPTER_TREE.forEach(renderFolder);
           tip = renderFullReference(c.targetId, c.targetText || getTargetText(c.targetId), t ? t.totalCount : 0);
           lastTipId = c.targetId;
         }
-        return tip + renderParagraphCommentItem(c, i);
+        return tip + renderParagraphCommentItem(c, i, true); // 最新模式默认展开楼中楼
       }).join('');
     } else {
       // default / hot：按评论对象聚合。先收集块，再按排序决定块顺序。
