@@ -176,6 +176,16 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
   chk('更多按钮不是文本', $('#cmMoreBtn').textContent.indexOf('···') < 0, true);
   chk('更多按钮28x28', getComputedStyle($('#cmMoreBtn')).width, '28px');
   chk('更多按钮高度28', getComputedStyle($('#cmMoreBtn')).height, '28px');
+  // Figma 74-23081：tab list 居左、筛选+更多按钮组居右（space-between），按钮组紧挨无间距
+  var sortRight = $('#cmSort').getBoundingClientRect().right;
+  var filterLeft = $('#cmFilterBtn').getBoundingClientRect().left;
+  var filterRight = $('#cmFilterBtn').getBoundingClientRect().right;
+  var moreLeft = $('#cmMoreBtn').getBoundingClientRect().left;
+  chk('筛选按钮在tab右侧', filterLeft > sortRight, true);
+  chk('更多紧邻筛选右侧', Math.round(moreLeft - filterRight), 0);
+  var moreRight = $('#cmMoreBtn').getBoundingClientRect().right;
+  chk('按钮组贴右16px', Math.round($('#cmDrawer').getBoundingClientRect().right - moreRight), 16);
+  chk('tab间距按Figma8px', getComputedStyle($('#cmSort')).gap, '8px');
   chk('标签云允许自然换行', tagsStyle.flexWrap, 'wrap');
   chk('标签没有长标签特例', $$('.cm-tag-long').length, 0);
   chk('截图标签采用短名称', $$('.cm-tag-label').map(function(el){ return el.textContent; }).indexOf('📚 提及其他作品') >= 0, true);
