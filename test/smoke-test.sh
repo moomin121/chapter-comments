@@ -257,10 +257,11 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
   }
 
   // --- §16-15/16 全部评论排序模式（PRD §10.4.2 / §10.4.3）---
-  // 最热：聚合块按对象总评论数从高到低；未匹配仍在最后
+  // 最热：聚合块按对象总评论数从高到低；未匹配仍在最后；AI 卡不显示
   $('#cmSortHot').click();
   chk('最热tab高亮', $('#cmSortHot').classList.contains('on'), true);
   chk('最热滚到顶', $('#cmList').scrollTop, 0);
+  chk('最热隐藏AI卡', $$('.cm-ai-card').length, 0);
   var hotMods = $$('.cm-full-module');
   chk('最热聚合块数不变', hotMods.length, 172);
   chk('最热未匹配仍在最后', hotMods[hotMods.length-1].classList.contains('cm-unmatched-module'), true);
@@ -270,19 +271,21 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
     return mm ? +mm[1] : 0;
   });
   chk('最热聚合块热度降序', hotCounts.every(function(v,i){ return i===0 || hotCounts[i-1] >= v; }), true);
-  // 最新：不按对象聚合，全部一级评论平铺；每条评论上方显示原文提示（PRD §10.4.3 + 用户补充）
+  // 最新：不按对象聚合，全部一级评论平铺；每条评论上方显示原文提示；AI 卡不显示
   $('#cmSortLatest').click();
   chk('最新tab高亮', $('#cmSortLatest').classList.contains('on'), true);
   chk('最新无聚合块', $$('.cm-full-module').length, 0);
   chk('最新无展开按钮', $$('.cm-section-link').length, 0);
   chk('最新平铺一级评论', $$('.cm-list > .paragraph-comment').length, 4465);
   chk('最新滚到顶', $('#cmList').scrollTop, 0);
-  // 最新模式下每条评论上方应有原文提示行（用户补充："每条评论上方还是要显示原文的，只是不做聚合"）
-  var latestTips = $$('.cm-list .cm-source-tip');
-  chk('最新有原文提示', latestTips.length >= 2, true);
-  chk('原文提示含"原文"标签', latestTips[0].textContent.indexOf('原文') >= 0, true);
-  chk('原文提示不含data-target-id', latestTips[0].hasAttribute('data-target-id'), false);
-  chk('原文提示不触发hover intent', $$('.cm-source-tip[data-target-id]').length, 0);
+  chk('最新隐藏AI卡', $$('.cm-ai-card').length, 0);
+  // 原文行复用默认聚合块引用行样式（Figma 80-44095）：带背景、气泡、data-target-id
+  var latestRefs = $$('.cm-list > .cm-reference');
+  chk('最新有原文引用行', latestRefs.length >= 2, true);
+  chk('原文行含"原文："前缀', latestRefs[0].textContent.indexOf('原文：') >= 0, true);
+  chk('原文行带data-target-id', latestRefs[0].hasAttribute('data-target-id'), true);
+  chk('原文行有计数气泡', latestRefs[0].querySelectorAll('.cm-ref-bubble').length, 1);
+  chk('原文行背景同默认', getComputedStyle(latestRefs[0]).backgroundColor, 'rgba(20, 30, 41, 0.04)');
   // 标签筛选在最新模式下同样生效（平铺数量变少）
   if(tagReal){
     tagReal.click();
@@ -290,9 +293,10 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
     var tagAll2 = $$('.cm-tag').filter(function(t){ return t.getAttribute('data-tag') === '全部'; })[0];
     tagAll2.click();
   }
-  // 切回默认恢复聚合视图
+  // 切回默认恢复聚合视图与 AI 卡
   $('#cmSortDefault').click();
   chk('默认恢复聚合块', $$('.cm-full-module').length, 172);
+  chk('默认恢复AI卡', $$('.cm-ai-card').length, 1);
   chk('默认tab高亮', $('#cmSortDefault').classList.contains('on'), true);
 
   // --- §16-8 hover 评论对象：滚动定位 + 临时高亮（hover intent：150ms 观察窗后触发） ---
