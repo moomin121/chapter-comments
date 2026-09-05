@@ -209,17 +209,21 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
   chk('表格长标签不直接展示', $$('.cm-tag-label').map(function(el){ return el.textContent; }).indexOf('明确提及其他书籍/作者/其他领域的作品如游戏影视') < 0, true);
   chk('标签胶囊紧凑高度', getComputedStyle($('.cm-tag')).height, '20px');
   chk('标签字号与截图一致', getComputedStyle($('.cm-tag')).fontSize, '11px');
-  chk('标签间距紧凑', getComputedStyle($('#cmTags')).gap, '6px 12px');
+  chk('标签间距紧凑', getComputedStyle($('#cmTags')).gap, '6px');
   // --- §16-18 折叠态选中标签行可见（PRD §11.2.1）---
   var laughTag = $$('.cm-tag').filter(function(t){ return t.getAttribute('data-tag') === '笑死/绷不住'; })[0];
   if(laughTag){
     laughTag.click();              // 选中靠后行的标签
     $('#cmList').scrollTop = 80;   // 向下滚动触发折叠
     $('#cmList').dispatchEvent(new Event('scroll'));
+    await wait(300);                // 等 220ms 延迟兜底重校正完成
     chk('折叠高度34px', getComputedStyle($('#cmTags')).height, '34px');
     var onRect = $('.cm-tag.on').getBoundingClientRect();
     var tagsRect = $('#cmTags').getBoundingClientRect();
     chk('折叠态选中行可见', onRect.top >= tagsRect.top - 1 && onRect.bottom <= tagsRect.bottom + 1, true);
+    // 行对齐：选中行贴 padding 之下完整显示，上方不露半行
+    var padTop = parseFloat(getComputedStyle($('#cmTags')).paddingTop) || 0;
+    chk('折叠行对齐无半行', Math.abs(onRect.top - (tagsRect.top + padTop)) <= 1, true);
     // 还原"全部"避免影响后续断言
     var tagAll0 = $$('.cm-tag').filter(function(t){ return t.getAttribute('data-tag') === '全部'; })[0];
     tagAll0.click();

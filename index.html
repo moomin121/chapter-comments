@@ -297,9 +297,9 @@
   .cm-drawer.parasec .cm-input{display:none;}
 
   .cm-tags{
-    position:relative;display:flex;align-items:center;align-content:flex-start;gap:6px 12px;flex-wrap:wrap;padding:8px 16px 4px;
+    position:relative;display:flex;align-items:center;align-content:flex-start;gap:6px;flex-wrap:wrap;padding:8px 16px 4px;
     border-bottom:0;background:var(--panel);flex:0 0 auto;
-    max-height:194px;overflow:hidden;transition:max-height .18s ease, padding .18s ease;
+    max-height:194px;overflow:hidden;transition:max-height .18s ease;
   }
   .cm-tag{
     height:20px;padding:0 6px;border-radius:10px;border:1px solid transparent;
@@ -312,8 +312,11 @@
   .cm-tag:hover .cm-tag-num{color:var(--brand);}
   .cm-tag.on{background:#fff;border-color:var(--brand);color:var(--brand);font-weight:600;}
   .cm-tag.on .cm-tag-num{color:var(--brand);font-weight:600;}
-  /* 折叠态保留 1 行高度；选中标签所在行由 syncSelectedTagInView 通过 scrollIntoView 保证可见（PRD §11.2.1） */
+  /* 折叠态保留 1 行高度；选中标签所在行由 syncSelectedTagInView 通过行对齐保证可见（PRD §11.2.1） */
   .cm-tags.collapsed{height:34px;max-height:34px;padding-top:6px;padding-bottom:6px;}
+  /* 尾部滚动余量：最后一行标签要贴顶显示需要滚过 bottom padding，
+     scrollHeight 不足以滚到位时上方会露半行；加 spacer 扩展可滚动范围 */
+  .cm-tags.collapsed::after{content:'';display:block;width:100%;height:12px;}
   /* 收起后悬停：按全部标签的实际换行高度展开，不能用固定高度裁掉末行。 */
   .cm-tags.collapsed:hover,
   .cm-tags.collapsed.hover-open{
@@ -1286,7 +1289,12 @@ CHAPTER_TREE.forEach(renderFolder);
       var wasCollapsed = tags.classList.contains('collapsed');
       tags.classList.toggle('collapsed', list.scrollTop > 12);
       // 折叠态变化时保证选中标签所在行可见（PRD §11.2.1）
-      if(!wasCollapsed && tags.classList.contains('collapsed')) syncSelectedTagInView();
+      // 注意：标签点击会重置 list.scrollTop，引发原生 scroll 事件异步二次触发折叠，
+      // 布局切换瞬间的读数有偏差，同步校正 + 延迟兜底重校正（sync 幂等）
+      if(!wasCollapsed && tags.classList.contains('collapsed')){
+        syncSelectedTagInView();
+        setTimeout(syncSelectedTagInView, 220);
+      }
     });
     tags.addEventListener('mouseenter', function(){
       tags.classList.add('hover-open');
@@ -1294,18 +1302,25 @@ CHAPTER_TREE.forEach(renderFolder);
     tags.addEventListener('mouseleave', function(){
       tags.classList.remove('hover-open');
       // 离开后重新折叠时同样保证选中行可见
-      if(tags.classList.contains('collapsed')) syncSelectedTagInView();
+      if(tags.classList.contains('collapsed')){
+        syncSelectedTagInView();
+        setTimeout(syncSelectedTagInView, 220);
+      }
     });
   }
-  /* 折叠态下把选中的标签滚动到可视行：overflow:hidden 容器仍可编程设置 scrollTop */
+  /* 折叠态下把选中的标签整行滚到可视区顶部。
+     不用 scrollIntoView：block:'nearest' 底部对齐会把 scrollTop 落在行中间，上方露半行。
+     也不用 offsetTop 推算：切换折叠态瞬间的布局 flush 时序不可靠。
+     采用增量 rect 校正：读当前真实渲染位置与目标的差值，直接调整 scrollTop，
+     padding/对齐等系统性偏差被自动消除。 */
   function syncSelectedTagInView(){
     var tags = $('#cmTags');
     var on = tags ? tags.querySelector('.cm-tag.on') : null;
     if(!on || !tags.classList.contains('collapsed')) return;
-    try{
-      on.scrollIntoView({block:'nearest', inline:'nearest'});
-    }catch(e){
-      tags.scrollTop = Math.max(0, on.offsetTop - tags.clientHeight + on.offsetHeight);
+    var padTop = parseFloat(getComputedStyle(tags).paddingTop) || 0;
+    var delta = (on.getBoundingClientRect().top - tags.getBoundingClientRect().top) - padTop;
+    if(Math.abs(delta) >= 1){
+      tags.scrollTop += delta;
     }
   }
   function setCommentHeader(title, count){
