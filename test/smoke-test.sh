@@ -171,6 +171,11 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
   // 标签云以截图/Codex 交接版本为准：自然宽度胶囊流式换行，不使用等宽网格或长标签强制跨行。
   var tagsStyle = getComputedStyle($('#cmTags'));
   chk('标签云使用流式换行', tagsStyle.display, 'flex');
+  // 顶部更多按钮：Figma 74-23081 使用 28x28 icon button，文本"···"太硕大
+  chk('更多按钮含Figma三点', $$('#cmMoreBtn svg').length > 0, true);
+  chk('更多按钮不是文本', $('#cmMoreBtn').textContent.indexOf('···') < 0, true);
+  chk('更多按钮28x28', getComputedStyle($('#cmMoreBtn')).width, '28px');
+  chk('更多按钮高度28', getComputedStyle($('#cmMoreBtn')).height, '28px');
   chk('标签云允许自然换行', tagsStyle.flexWrap, 'wrap');
   chk('标签没有长标签特例', $$('.cm-tag-long').length, 0);
   chk('截图标签采用短名称', $$('.cm-tag-label').map(function(el){ return el.textContent; }).indexOf('📚 提及其他作品') >= 0, true);
