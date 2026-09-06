@@ -66,7 +66,7 @@ HTTP=$(curl -s -o /dev/null -w '%{http_code}' "${URL}")
 echo "  线上 HTTP ${HTTP}"
 [ "${HTTP}" = "200" ] || { echo "✗ 线上不可达"; exit 1; }
 
-if curl -s "${URL}" | grep -q "GENERATED_COMMENT_DATA_START"; then
+if curl -sL --compressed --max-time 120 "${URL}" | grep -q "GENERATED_COMMENT_DATA_START"; then
   echo "  评论数据块已部署 ✓"
 else
   echo "✗ 页面可达但未检测到评论数据块标记"
