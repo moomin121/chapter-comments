@@ -10,3 +10,6 @@
 
 # 本地依赖（当前无，预留）
 node_modules/
+
+# WorkBuddy 本地数据（会话记忆等，不公开）
+.workbuddy/
