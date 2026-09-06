@@ -579,7 +579,7 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
   chk('筛选按钮存在', !!$('#cmFilterBtn'), true);
   chk('更多按钮存在', !!$('#cmMoreBtn'), true);
   chk('筛选菜单6项', $('#cmFilterWrap').querySelectorAll('.cm-menu-item').length, 6);
-  chk('筛选菜单第1项文案', $('#cmFilterWrap').querySelectorAll('.cm-menu-item')[0].textContent, '高读者粉丝值');
+  chk('筛选菜单第1项文案', $('#cmFilterWrap').querySelectorAll('.cm-menu-item')[0].textContent, '高粉丝值读者');
   chk('筛选菜单第6项文案', $('#cmFilterWrap').querySelectorAll('.cm-menu-item')[5].textContent, '加精历史');
   chk('更多菜单4项', $('#cmMoreWrap').querySelectorAll('.cm-menu-item').length, 4);
   chk('更多菜单第1项文案', $('#cmMoreWrap').querySelectorAll('.cm-menu-item')[0].textContent, '精选评论设置');
