@@ -2,6 +2,9 @@
 
 起点风格的小说章节阅读页 + 段评气泡 + 评论抽屉。基于 Figma 稿 + qidian.com 章节页实现。
 
+> **在线体验**：https://moomin121.github.io/chapter-comments/
+> 全部评论数据内嵌在页面里（零二次加载），打开即可流畅筛选、排序、查看 6830 条评论。
+
 ## 这是什么
 
 把 write.html（原 1.3MB）拆成两个独立网页后的**评论模块独立项目**。和根目录 `write.html`（专注监测页）解耦，可单独启动、修改、部署。
@@ -13,9 +16,12 @@
 
 ```
 chapter-comments/
-├── index.html        # 单文件应用：HTML + CSS + JS 全部内联（71KB）
+├── index.html        # 单文件应用：HTML + CSS + JS + 全部评论数据内联（3.7MB）
+├── publish.sh        # 一键发布：冒烟测试 → commit → push → 验证 Pages
 ├── README.md         # 本文件
 ├── CLAUDE.md         # 给 Codex / Claude 看的项目约定
+├── scripts/          # build_comment_data.py：CSV → 内联数据块
+├── test/             # smoke-test.sh：262 项浏览器断言冒烟测试
 └── screenshots/      # 渲染效果截图（可选）
 ```
 
@@ -30,6 +36,21 @@ cd chapter-comments
 python3 -m http.server 8211        # 或用项目根的 server.py
 open http://127.0.0.1:8211/index.html
 ```
+
+或直接打开线上地址：https://moomin121.github.io/chapter-comments/
+
+## 一键发布（GitHub Pages）
+
+本地修改并通过验证后，一条命令发布上线：
+
+```bash
+./publish.sh                # 自动：冒烟测试 → commit → push → 等 Pages 构建 → 验证线上可达
+./publish.sh "fix: xxx"     # 可选：自定义 commit 消息
+```
+
+- 测试失败会中止，不会发布
+- 无改动时提示"已最新"，不产生空提交
+- 仓库：https://github.com/moomin121/chapter-comments （Pages 服务 master 根目录）
 
 ## URL 参数
 
