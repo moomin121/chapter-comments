@@ -102,9 +102,11 @@ JS=$(cat <<'JSEOF'
   chk('AI卡展开后有按钮', !!$('.cm-ai-expand'), true);
   chk('AI卡展开后按钮为收起', $('.cm-ai-expand').textContent.trim().indexOf('收起') >= 0, true);
   chk('AI卡展开高度超3行', $('.cm-ai-body').getBoundingClientRect().height > 60, true);
-  // 点击收起按钮可恢复
+  // 点击收起按钮可恢复 + 列表回到顶部（AI 卡是首项，回顶即可看到）
+  $('.cm-list').scrollTop = 50;
   $('.cm-ai-expand').click();
   chk('AI卡收起后按钮为展开', $('.cm-ai-expand').textContent.trim().indexOf('展开') >= 0, true);
+  chk('AI卡收起后列表回顶', $('.cm-list').scrollTop, 0);
   chk('聚合块总数(170段+1章评+1未匹配)', $$('.cm-full-module').length, 172);
   var modules = $$('.cm-full-module');
   chk('章节标题评论存在', !!$('.cm-full-module[data-target-id="-1"]'), true);

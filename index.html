@@ -1993,13 +1993,19 @@ CHAPTER_TREE.forEach(renderFolder);
     bindAiSummaryExpand();
     bindInspirationNoteButtons();   // 灵感便签（PRD §17）
   }
-  /* AI 总结卡【展开全部/收起全文】切换按钮（Figma 92-13358） */
+  /* AI 总结卡【展开全部/收起全文】切换按钮（Figma 92-13358）
+     点击展开后重渲染；收起后列表回到顶部（AI 卡是首项，回顶即可看到） */
   function bindAiSummaryExpand(){
     var btn = $('.cm-ai-expand');
     if(!btn) return;
     btn.addEventListener('click', function(){
+      var willCollapse = aiSummaryExpanded;        // 当前已展开 → 即将收起
       aiSummaryExpanded = !aiSummaryExpanded;
       renderAllComments();
+      if(willCollapse){
+        var list = $('#cmList');
+        if(list) list.scrollTop = 0;
+      }
     });
   }
   /* 未匹配评论对象块：CSV targetId 超出正文段落范围 */
