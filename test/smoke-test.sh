@@ -441,12 +441,13 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
     return mm ? +mm[1] : 0;
   });
   chk('最热聚合块热度降序', hotCounts.every(function(v,i){ return i===0 || hotCounts[i-1] >= v; }), true);
-  // 最新：不按对象聚合，全部一级评论平铺；每条评论上方显示原文提示；AI 卡不显示
+  // 最新：不按对象聚合，全部一级评论平铺（首屏分页 FLAT_PAGE_SIZE=50 + 触底加载）；AI 卡不显示
   $('#cmSortLatest').click();
   chk('最新tab高亮', $('#cmSortLatest').classList.contains('on'), true);
   chk('最新无聚合块', $$('.cm-full-module').length, 0);
   chk('最新无展开按钮', $$('.cm-section-link').length, 0);
-  chk('最新平铺一级评论', $$('.cm-list > .paragraph-comment').length, 4465);
+  chk('最新首屏50条', $$('.cm-list > .paragraph-comment').length, 50);
+  chk('最新有分页哨兵', !!$('[data-flat-sentinel]'), true);
   chk('最新滚到顶', $('#cmList').scrollTop, 0);
   chk('最新隐藏AI卡', $$('.cm-ai-card').length, 0);
   // 最新模式楼中楼默认收起 + 显示「展开 N 条回复」按钮（用户澄清：与默认/单对象视图一致）
@@ -459,12 +460,19 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
   chk('原文行带data-target-id', latestRefs[0].hasAttribute('data-target-id'), true);
   chk('原文行有计数气泡', latestRefs[0].querySelectorAll('.cm-ref-bubble').length, 1);
   chk('原文行背景同默认', getComputedStyle(latestRefs[0]).backgroundColor, 'rgba(20, 30, 41, 0.04)');
-  // 标签筛选在最新模式下同样生效（平铺数量变少）
+  // 分页加载：通过 window.__flatTest.loadMore() 手动触底加载下一批
+  window.__flatTest.loadMore();
+  await wait(80);
+  chk('最新加载后100条', $$('.cm-list > .paragraph-comment').length, 100);
+  // 标签筛选在最新模式下同样生效（flatCache 按 key 重建，分页从 0 开始）
   if(tagReal){
+    var beforeTagList = $('#cmList').innerHTML;
     tagReal.click();
-    chk('最新+标签筛选生效', $$('.cm-list > .paragraph-comment').length < 4465, true);
+    await wait(120);
+    chk('最新+标签筛选生效', $('#cmList').innerHTML !== beforeTagList, true);
     var tagAll2 = $$('.cm-tag').filter(function(t){ return t.getAttribute('data-tag') === '全部'; })[0];
     tagAll2.click();
+    await wait(120);
   }
 
   // --- §16-17 长评 tab（PRD §10.4.4）：扁平单条流，按 1 级评论正文字数降序 ---
@@ -475,7 +483,8 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
   chk('长评其他tab关闭', !$('#cmSortLatest').classList.contains('on') && !$('#cmSortDefault').classList.contains('on') && !$('#cmSortHot').classList.contains('on'), true);
   chk('长评无聚合块', $$('.cm-full-module').length, 0);
   chk('长评无展开按钮', $$('.cm-section-link').length, 0);
-  chk('长评平铺一级评论', $$('.cm-list > .paragraph-comment').length, 4465);
+  chk('长评首屏50条', $$('.cm-list > .paragraph-comment').length, 50);
+  chk('长评有分页哨兵', !!$('[data-flat-sentinel]'), true);
   chk('长评滚到顶', $('#cmList').scrollTop, 0);
   chk('长评隐藏AI卡', $$('.cm-ai-card').length, 0);
   chk('长评楼中楼默认收起', $$('.cm-list > .paragraph-comment .cm-sub').every(function(s){ return s.style.display === 'none'; }), true);
