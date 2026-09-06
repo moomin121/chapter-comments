@@ -200,9 +200,10 @@ JS=$(cat <<'JSEOF'
   chk('便签无新建按钮', !!noteEl.querySelector('.cm-note-new'), false);
   chk('便签有拖动手柄', !!noteEl.querySelector('.cm-note-drag'), true);
   chk('便签有关闭按钮', !!noteEl.querySelector('.cm-note-close'), true);
-  // 操作栏图标尺寸与颜色（Figma 80-43884：16×16、#808080）
+  // 操作栏图标（Figma 107-9285 下载的真实 SVG：16×16、fill #141E29 + fill-opacity 0.34）
   chk('操作栏图标尺寸16px', getComputedStyle($('.cm-meta-actions svg')).width, '16px');
-  chk('操作栏图标颜色', getComputedStyle($('.cm-meta-note svg')).color, 'rgb(128, 128, 128)');
+  chk('操作栏图标fill色', $('.cm-meta-note svg path').getAttribute('fill'), '#141E29');
+  chk('操作栏图标透明度', $('.cm-meta-note svg path').getAttribute('fill-opacity'), '0.34');
   // 关闭便签
   note2.querySelector('.cm-note-close').click();
   chk('关闭便签移除', $$('.cm-note').length, 1);
@@ -220,7 +221,7 @@ JS=$(cat <<'JSEOF'
   chk('昵称徽章实际间距', Math.round(badges[0].getBoundingClientRect().left - nmEl.getBoundingClientRect().right), 0);
   // 昵称宽度 hug（Figma 105-9089：TEXT sizing horizontal=hug，无 max-width 约束）
   chk('昵称宽度hug', getComputedStyle(nmEl).maxWidth, 'none');
-  chk('更多为Figma三点', fc.querySelector('.cm-meta-more svg').getAttribute('viewBox'), '0 0 20 20');
+  chk('更多为Figma三点', fc.querySelector('.cm-meta-more svg').getAttribute('viewBox'), '0 0 16 16');
   chk('评论按钮为Figma评论', !!fc.querySelector('.cm-meta-comment svg path'), true);
   chk('点赞按钮为Figma拇指', !!fc.querySelector('.cm-meta-like svg path'), true);
 
