@@ -584,6 +584,24 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
   chk('更多菜单4项', $('#cmMoreWrap').querySelectorAll('.cm-menu-item').length, 4);
   chk('更多菜单第1项文案', $('#cmMoreWrap').querySelectorAll('.cm-menu-item')[0].textContent, '精选评论设置');
   chk('更多菜单第4项文案', $('#cmMoreWrap').querySelectorAll('.cm-menu-item')[3].textContent, '禁言名单');
+  // 菜单可点击性修复：hover 触发后 wrap 有 .open class、popover 可见且 pointer-events:auto
+  var filterWrap2 = $('#cmFilterWrap');
+  filterWrap2.dispatchEvent(new MouseEvent('mouseenter', {bubbles:true}));
+  await wait(20);
+  chk('筛选wrap有open', filterWrap2.classList.contains('open'), true);
+  chk('筛选popover可见', getComputedStyle(filterWrap2.querySelector('.cm-popover')).visibility, 'visible');
+  chk('筛选popover可点击', getComputedStyle(filterWrap2.querySelector('.cm-popover')).pointerEvents, 'auto');
+  filterWrap2.querySelectorAll('.cm-menu-item')[0].click();
+  await wait(50);
+  chk('点击筛选菜单命中路由', $('#cmToast').textContent, '开发中');
+  var moreWrap2 = $('#cmMoreWrap');
+  moreWrap2.dispatchEvent(new MouseEvent('mouseenter', {bubbles:true}));
+  await wait(20);
+  chk('更多wrap有open', moreWrap2.classList.contains('open'), true);
+  chk('更多popover可点击', getComputedStyle(moreWrap2.querySelector('.cm-popover')).pointerEvents, 'auto');
+  moreWrap2.querySelectorAll('.cm-menu-item')[2].click();
+  await wait(50);
+  chk('点击更多菜单命中路由', $('#cmToast').textContent, '开发中');
   // toast：点击更多/筛选菜单项 → 「开发中」
   $('#cmMoreWrap').querySelectorAll('.cm-menu-item')[0].click();
   await wait(50);

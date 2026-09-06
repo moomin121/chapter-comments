@@ -282,7 +282,10 @@
   .cm-toolbar .cm-more:hover{background:var(--ink-04);color:var(--brand);}
   .cm-toolbar .cm-filter.on{background:var(--brand-weak);color:var(--brand);}
   .cm-toolbar .cm-filter svg{width:16px;height:16px;}
-  /* hover 菜单：toolbar 上的 trigger 包住按钮与 popover，无缝 hover（PRD §18） */
+  /* hover 菜单：toolbar 上的 trigger 包住按钮与 popover，无缝 hover（PRD §18）
+     popover 在 wrap 外侧下方 4px，鼠标穿越间隙时纯 CSS :hover 会掉线导致 popover 立刻隐藏且
+     pointer-events:none 让菜单项无法点击；改用 .open class + JS mouseenter/mouseleave 150ms
+     延迟，鼠标进入 wrap 或 popover 都保持打开，离开后再 150ms 才收起，给鼠标穿越间隙留出窗口。 */
   .cm-menu-wrap{position:relative;display:inline-flex;align-items:center;}
   .cm-popover{
     position:absolute;top:100%;right:0;margin-top:4px;
@@ -291,8 +294,9 @@
     opacity:0;visibility:hidden;pointer-events:none;
     transition:opacity .12s ease;z-index:9999;
   }
-  .cm-menu-wrap:hover .cm-popover,
+  .cm-menu-wrap.open .cm-popover,
   .cm-menu-wrap:focus-within .cm-popover{opacity:1;visibility:visible;pointer-events:auto;}
+  .cm-menu-wrap:hover .cm-popover{opacity:1;visibility:visible;}
   .cm-popover-floating{
     position:fixed;top:0;left:0;margin:0;min-width:160px;
     display:none;
@@ -2326,6 +2330,33 @@ CHAPTER_TREE.forEach(renderFolder);
     }
     showToast('开发中');
   }
+
+  // toolbar 菜单的 hover gap 修复：wrap + popover 各自 mouseenter/mouseleave 触发同一个 .open
+  // class，离开 150ms 内回到 wrap 或 popover 即取消收起；避免 4px 间隙导致 CSS :hover 掉线。
+  function setupMenuWrapHover(wrap){
+    if(!wrap) return;
+    var timer = null;
+    function show(){
+      if(timer){ clearTimeout(timer); timer = null; }
+      wrap.classList.add('open');
+    }
+    function scheduleHide(){
+      if(timer) clearTimeout(timer);
+      timer = setTimeout(function(){
+        timer = null;
+        wrap.classList.remove('open');
+      }, 150);
+    }
+    wrap.addEventListener('mouseenter', show);
+    wrap.addEventListener('mouseleave', scheduleHide);
+    var popover = wrap.querySelector('.cm-popover');
+    if(popover){
+      popover.addEventListener('mouseenter', show);
+      popover.addEventListener('mouseleave', scheduleHide);
+    }
+  }
+  setupMenuWrapHover($('#cmFilterWrap'));
+  setupMenuWrapHover($('#cmMoreWrap'));
 
   // 事件委托：menu-item 点击 → 路由；avatar mouseover → 浮动 popover
   function bindGlobalMenuEvents(){
