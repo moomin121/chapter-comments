@@ -575,6 +575,60 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
   chk('重开评论模式', document.body.classList.contains('comment-mode'), true);
   chk('重开后恢复聚合视图', $$('.cm-full-module').length, 172);
 
+  // --- §16-18 hover 菜单 + toast（PRD §18 / Figma 110-10463 / 110-10409 / 110-10381） ---
+  chk('筛选按钮存在', !!$('#cmFilterBtn'), true);
+  chk('更多按钮存在', !!$('#cmMoreBtn'), true);
+  chk('筛选菜单6项', $('#cmFilterWrap').querySelectorAll('.cm-menu-item').length, 6);
+  chk('筛选菜单第1项文案', $('#cmFilterWrap').querySelectorAll('.cm-menu-item')[0].textContent, '高读者粉丝值');
+  chk('筛选菜单第6项文案', $('#cmFilterWrap').querySelectorAll('.cm-menu-item')[5].textContent, '加精历史');
+  chk('更多菜单4项', $('#cmMoreWrap').querySelectorAll('.cm-menu-item').length, 4);
+  chk('更多菜单第1项文案', $('#cmMoreWrap').querySelectorAll('.cm-menu-item')[0].textContent, '精选评论设置');
+  chk('更多菜单第4项文案', $('#cmMoreWrap').querySelectorAll('.cm-menu-item')[3].textContent, '禁言名单');
+  // toast：点击更多/筛选菜单项 → 「开发中」
+  $('#cmMoreWrap').querySelectorAll('.cm-menu-item')[0].click();
+  await wait(50);
+  chk('更多菜单点击触发toast', $('#cmToast').textContent, '开发中');
+  chk('toast显示态', $('#cmToast').getAttribute('data-open') === '1', true);
+  $('#cmFilterWrap').querySelectorAll('.cm-menu-item')[2].click();
+  chk('筛选菜单点击也触发toast', $('#cmToast').textContent, '开发中');
+
+  // 头像菜单：hover 头像触发浮动 popover
+  var av = $$('.cm-item .av')[0];
+  var guid = av.getAttribute('data-guid') || '';
+  var overEv = new MouseEvent('mouseover', {bubbles:true});
+  av.dispatchEvent(overEv);
+  await wait(50);
+  var popover = $('#cmAvPopover');
+  chk('头像popover打开', popover.getAttribute('data-open') === '1', true);
+  chk('头像popover承载guid', popover.dataset.guid, guid);
+  chk('头像菜单2项', popover.querySelectorAll('.cm-menu-item').length, 2);
+  chk('头像菜单第1项文案', popover.querySelectorAll('.cm-menu-item')[0].textContent, '查看此读者所有评论');
+  chk('头像菜单第2项文案', popover.querySelectorAll('.cm-menu-item')[1].textContent, '禁言');
+  popover.querySelectorAll('.cm-menu-item')[1].click();
+  await wait(50);
+  chk('禁言菜单走toast', $('#cmToast').textContent, '开发中');
+
+  // 「查看此读者所有评论」→ 此读者视图
+  popover.querySelectorAll('.cm-menu-item')[0].click();
+  await wait(80);
+  chk('点击头像菜单进入usersec', $('#cmDrawer').classList.contains('usersec'), true);
+  chk('此读者视图移除parasec', $('#cmDrawer').classList.contains('parasec'), false);
+  chk('此读者视图隐藏标签栏', getComputedStyle($('.cm-tags-wrap')).display, 'none');
+  chk('此读者视图保留排序tab', !!$('#cmSort').offsetParent, true);
+  chk('此读者视图引用行文案', ($('.cm-quote-text').textContent || '').trim(), '用户昵称的所有评论');
+  var userTotal = $$('.cm-list > .paragraph-comment').length;
+  chk('此读者视图评论计数', $('#cmCount').textContent, userTotal + '条');
+  chk('此读者视图无聚合块', $$('.cm-full-module').length, 0);
+  chk('此读者视图列表非空', $$('.cm-list > .paragraph-comment').length > 0, true);
+  chk('此读者视图楼中楼默认收起',
+    $$('.cm-list > .paragraph-comment .cm-sub').every(function(s){ return s.style.display === 'none'; }), true);
+  // 返回全部评论
+  $('.cm-quote-back').click();
+  await wait(80);
+  chk('返回后usersec移除', $('#cmDrawer').classList.contains('usersec'), false);
+  chk('返回后恢复聚合视图', $$('.cm-full-module').length, 172);
+  chk('返回后恢复标签栏', getComputedStyle($('.cm-tags-wrap')).display !== 'none', true);
+
   return out.join('\n');
 })()
 JSEOF

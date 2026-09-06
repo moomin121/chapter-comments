@@ -282,6 +282,36 @@
   .cm-toolbar .cm-more:hover{background:var(--ink-04);color:var(--brand);}
   .cm-toolbar .cm-filter.on{background:var(--brand-weak);color:var(--brand);}
   .cm-toolbar .cm-filter svg{width:16px;height:16px;}
+  /* hover 菜单：toolbar 上的 trigger 包住按钮与 popover，无缝 hover（PRD §18） */
+  .cm-menu-wrap{position:relative;display:inline-flex;align-items:center;}
+  .cm-popover{
+    position:absolute;top:100%;right:0;margin-top:4px;
+    min-width:140px;background:#fff;border:.5px solid var(--color-border-tertiary);border-radius:8px;
+    box-shadow:0 4px 16px rgba(0,0,0,.08);padding:4px 0;
+    opacity:0;visibility:hidden;pointer-events:none;
+    transition:opacity .12s ease;z-index:9999;
+  }
+  .cm-menu-wrap:hover .cm-popover,
+  .cm-menu-wrap:focus-within .cm-popover{opacity:1;visibility:visible;pointer-events:auto;}
+  .cm-popover-floating{
+    position:fixed;top:0;left:0;margin:0;min-width:160px;
+    display:none;
+  }
+  .cm-popover-floating[data-open="1"]{display:block;opacity:1;visibility:visible;pointer-events:auto;}
+  .cm-menu-item{
+    display:block;width:100%;padding:8px 14px;font-size:13px;color:var(--ink-92);
+    text-align:left;background:transparent;border:0;cursor:pointer;line-height:1.5;
+    font-family:var(--font);
+  }
+  .cm-menu-item:hover{background:var(--ink-04);color:var(--brand);}
+  /* 全局 toast（PRD §18.1）：菜单点击统一占位「开发中」 */
+  .cm-toast{
+    position:fixed;top:24px;left:50%;transform:translateX(-50%);
+    padding:8px 16px;background:rgba(20,30,41,.92);color:#fff;border-radius:6px;
+    font-size:13px;opacity:0;pointer-events:none;
+    transition:opacity .2s ease;z-index:100000;box-shadow:0 4px 12px rgba(0,0,0,.18);
+  }
+  .cm-toast[data-open="1"]{opacity:1;}
   .cm-toolbar .cm-back{
     display:none;align-items:center;gap:4px;cursor:pointer;color:var(--brand);font-size:14px;font-weight:400;white-space:nowrap;
   }
@@ -289,6 +319,8 @@
   .cm-drawer.parasec .cm-toolbar{gap:8px;}
   .cm-drawer.parasec .cm-toolbar .cm-back{display:none;}
   .cm-drawer.parasec .cm-toolbar .cm-sort{gap:8px;}
+  /* 此读者视图（PRD §19 + Figma 110-9333）：保留排序 tab；隐藏标签栏；引用行文案改为「用户昵称的所有评论」 */
+  .cm-drawer.usersec .cm-tags-wrap{display:none;}
   .cm-drawer.parasec .cm-tags,
   .cm-drawer.parasec .cm-tags-wrap{display:none;}
   .cm-drawer.parasec .cm-input{display:none;}
@@ -803,10 +835,28 @@
           <span class="cm-tab" data-sort="long" id="cmSortLong">长评</span>
         </span>
         <span class="cm-actions">
-          <button class="cm-filter" id="cmFilterBtn" title="筛选评论" aria-label="筛选评论">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16l-6 7v5l-4 2v-7z"/></svg>
-          </button>
-          <button class="cm-more" id="cmMoreBtn" title="更多" aria-label="更多"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 10C5 10.6904 4.44036 11.25 3.75 11.25C3.05964 11.25 2.5 10.6904 2.5 10C2.5 9.30964 3.05964 8.75 3.75 8.75C4.44036 8.75 5 9.30964 5 10ZM11.25 10C11.25 10.6904 10.6904 11.25 10 11.25C9.30964 11.25 8.75 10.6904 8.75 10C8.75 9.30964 9.30964 8.75 10 8.75C10.6904 8.75 11.25 9.30964 11.25 10ZM16.25 11.25C16.9404 11.25 17.5 10.6904 17.5 10C17.5 9.30964 16.9404 8.75 16.25 8.75C15.5596 8.75 15 9.30964 15 10C15 10.6904 15.5596 11.25 16.25 11.25Z" fill="currentColor"/></svg></button>
+          <span class="cm-menu-wrap" id="cmFilterWrap">
+            <button class="cm-filter" id="cmFilterBtn" title="筛选评论" aria-label="筛选评论">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16l-6 7v5l-4 2v-7z"/></svg>
+            </button>
+            <div class="cm-popover" role="menu" aria-label="筛选菜单">
+              <button class="cm-menu-item" data-action="filter-fans" type="button">高读者粉丝值</button>
+              <button class="cm-menu-item" data-action="filter-replyme" type="button">回复我的</button>
+              <button class="cm-menu-item" data-action="filter-liked" type="button">点赞历史</button>
+              <button class="cm-menu-item" data-action="filter-replied" type="button">回复历史</button>
+              <button class="cm-menu-item" data-action="filter-pinned" type="button">置顶历史</button>
+              <button class="cm-menu-item" data-action="filter-featured" type="button">加精历史</button>
+            </div>
+          </span>
+          <span class="cm-menu-wrap" id="cmMoreWrap">
+            <button class="cm-more" id="cmMoreBtn" title="更多" aria-label="更多"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 10C5 10.6904 4.44036 11.25 3.75 11.25C3.05964 11.25 2.5 10.6904 2.5 10C2.5 9.30964 3.05964 8.75 3.75 8.75C4.44036 8.75 5 9.30964 5 10ZM11.25 10C11.25 10.6904 10.6904 11.25 10 11.25C9.30964 11.25 8.75 10.6904 8.75 10C8.75 9.30964 9.30964 8.75 10 8.75C10.6904 8.75 11.25 9.30964 11.25 10ZM16.25 11.25C16.9404 11.25 17.5 10.6904 17.5 10C17.5 9.30964 16.9404 8.75 16.25 8.75C15.5596 8.75 15 9.30964 15 10C15 10.6904 15.5596 11.25 16.25 11.25Z" fill="currentColor"/></svg></button>
+            <div class="cm-popover" role="menu" aria-label="更多菜单">
+              <button class="cm-menu-item" data-action="more-pin" type="button">精选评论设置</button>
+              <button class="cm-menu-item" data-action="more-threshold" type="button">评论门槛管理</button>
+              <button class="cm-menu-item" data-action="more-ops" type="button">运营管理</button>
+              <button class="cm-menu-item" data-action="more-mute" type="button">禁言名单</button>
+            </div>
+          </span>
         </span>
       </div>
       <div class="cm-tags-wrap"><div class="cm-tags" id="cmTags" aria-label="评论标签"></div></div>
@@ -818,6 +868,11 @@
       </div>
     </aside>
   </div>
+
+  <!-- 浮动头像菜单（PRD §18）：所有评论头像共用一个 popover，hover 时定位到头像左下方 -->
+  <div class="cm-popover cm-popover-floating" id="cmAvPopover" role="menu" aria-label="评论者菜单"></div>
+  <!-- 全局 toast（PRD §18.1）：菜单点击统一占位「开发中」 -->
+  <div id="cmToast" class="cm-toast" role="status" aria-live="polite"></div>
 
 
 <!-- ===== 章节列表渲染（左侧面板） ===== -->
@@ -1088,6 +1143,7 @@ CHAPTER_TREE.forEach(renderFolder);
   var currentCommentSort = 'default';
   var currentCommentTag = '全部';
   var currentParagraphIdx = null;
+  var currentUserGuid = null;   // PRD §19：此读者所有评论视图，hover 头像菜单点「此读者所有评论」进入
   // AI 总结卡展开态（Figma 88-9492 收起 / 97-14607 展开；展开后不收起）
   var aiSummaryExpanded = false;
   // 进入单对象视图前的聚合视图滚动位置；返回全部评论时恢复
@@ -1464,7 +1520,7 @@ CHAPTER_TREE.forEach(renderFolder);
     var name = commentUser(r);
     var avC = avatarColor(r.userGuid || name);
     return '<div class="cm-item">'
-      + '<span class="av" style="background:'+avC+'">'+escapeHtml(avatarInitial(name))+'</span>'
+      + '<span class="av" data-guid="'+escapeHtml(String(r.userGuid||''))+'" style="background:'+avC+'">'+escapeHtml(avatarInitial(name))+'</span>'
       + '<div class="body">'
       +   '<div class="nm-row"><span class="nm">'+escapeHtml(name)+'</span>'+(String(r.userGuid||'').endsWith('56')?'<span class="cm-user-badge">'+USER_BADGE_SVG+'</span>':'')+'</div>'
       +   '<div class="content">'+commentBodyHtml(r)+'</div>'
@@ -1488,7 +1544,7 @@ CHAPTER_TREE.forEach(renderFolder);
       : '';
     return '<div class="cm-item '+(extraClass||'')+'" data-len="'+commentLength(c)+'">'
       + quoteHtml
-      + '<span class="av" style="background:'+avColor+'">'+escapeHtml(avatarInitial(name))+'</span>'
+      + '<span class="av" data-guid="'+escapeHtml(String(c.userGuid||''))+'" style="background:'+avColor+'">'+escapeHtml(avatarInitial(name))+'</span>'
       + '<div class="body">'
       +   '<div class="nm-row"><span class="nm">'+escapeHtml(name)+'</span>'+(String(c.userGuid||'').endsWith('56')?'<span class="cm-user-badge">'+USER_BADGE_SVG+'</span>':'')+'</div>'
       +   '<div class="content">'+commentBodyHtml(c)+'</div>'
@@ -1747,8 +1803,9 @@ CHAPTER_TREE.forEach(renderFolder);
   }
   function returnToAllComments(){
     var drawer = $('#cmDrawer');
-    if(drawer) drawer.classList.remove('parasec');
+    if(drawer) drawer.classList.remove('parasec', 'usersec');
     currentParagraphIdx = null;
+    currentUserGuid = null;
     $$('.para').forEach(function(el){ el.classList.remove('active'); });
     var titleRow = $('.chap-title-row');
     if(titleRow) titleRow.classList.remove('active');
@@ -2179,6 +2236,127 @@ CHAPTER_TREE.forEach(renderFolder);
       setTimeout(function(){ selectParagraph(idx); }, 30);
     }
   }
+
+  // 此读者所有评论视图（PRD §19 / Figma 110-9333）：按 userGuid 过滤当前章节全部一级评论，
+  // 默认排序展示，引用行文案「用户昵称的所有评论」+ 返回全部评论 按钮。
+  function renderUserComments(guid){
+    var list = $('#cmList');
+    var context = $('#cmContext');
+    var drawer = $('#cmDrawer');
+    if(drawer) drawer.classList.remove('parasec');
+    drawer.classList.add('usersec');
+    currentUserGuid = guid;
+    currentParagraphIdx = null;
+    var items = (COMMENT_DATA.comments || []).filter(function(c){
+      return String(c.userGuid||'') === String(guid);
+    });
+    items = sortComments(items);
+    setCommentHeader('评论', items.length+'条');
+    var pTag = '<div class="cm-section-module single">'
+      + '<div class="cm-quote">'
+      +   '<span class="cm-quote-text">用户昵称的所有评论</span>'
+      +   '<button class="cm-quote-back" type="button">'
+      +     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 10l-4 4 4 4"/><path d="M5 14h9a5 5 0 0 0 0-10h-2"/></svg>'
+      +     '返回全部评论'
+      +   '</button>'
+      + '</div></div>';
+    context.innerHTML = pTag;
+    list.innerHTML = items.length
+      ? items.map(function(c, i){ return renderParagraphCommentItem(c, i); }).join('') + '<div class="cm-empty">-到底了-</div>'
+      : '<div class="cm-empty">该读者暂无评论</div>';
+    var back = $('.cm-quote-back', context);
+    if(back) back.addEventListener('click', returnToAllComments);
+    bindReplyToggles();
+    bindInspirationNoteButtons();
+  }
+
+  // PRD §18 全局 toast：菜单点击统一占位「开发中」
+  var toastTimer = null;
+  function showToast(text){
+    var el = $('#cmToast');
+    if(!el) return;
+    el.textContent = text;
+    el.setAttribute('data-open', '1');
+    if(toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){
+      el.removeAttribute('data-open');
+      toastTimer = null;
+    }, 6000);
+  }
+
+  // PRD §18 hover 头像菜单（共享浮动 popover，避免给每个评论都渲染 5 行菜单 DOM）
+  var avPopoverHideTimer = null;
+  var avPopoverCurrentGuid = '';
+  function fillAvPopover(guid){
+    var popover = $('#cmAvPopover');
+    if(!popover) return;
+    popover.innerHTML = '<button class="cm-menu-item" data-action="user-all" type="button">查看此读者所有评论</button>'
+      + '<button class="cm-menu-item" data-action="user-mute" type="button">禁言</button>';
+    popover.dataset.guid = guid;
+    avPopoverCurrentGuid = guid;
+  }
+  function showAvPopover(avEl){
+    if(avPopoverHideTimer){ clearTimeout(avPopoverHideTimer); avPopoverHideTimer = null; }
+    var guid = avEl.getAttribute('data-guid') || '';
+    fillAvPopover(guid);
+    var popover = $('#cmAvPopover');
+    var r = avEl.getBoundingClientRect();
+    popover.style.left = Math.round(r.left) + 'px';
+    popover.style.top  = Math.round(r.bottom + 4) + 'px';
+    popover.setAttribute('data-open', '1');
+  }
+  function hideAvPopover(){
+    var popover = $('#cmAvPopover');
+    if(popover) popover.removeAttribute('data-open');
+  }
+  function scheduleHideAvPopover(){
+    if(avPopoverHideTimer) clearTimeout(avPopoverHideTimer);
+    avPopoverHideTimer = setTimeout(function(){
+      avPopoverHideTimer = null;
+      hideAvPopover();
+    }, 180);
+  }
+  // 菜单点击路由：头像菜单的「查看此读者所有评论」是真动作，其他都 toast（PRD §18）
+  function handleMenuAction(action, ev){
+    if(action === 'user-all'){
+      hideAvPopover();
+      var guid = avPopoverCurrentGuid || ($('#cmAvPopover').dataset.guid || '');
+      if(guid) renderUserComments(guid);
+      return;
+    }
+    showToast('开发中');
+  }
+
+  // 事件委托：menu-item 点击 → 路由；avatar mouseover → 浮动 popover
+  function bindGlobalMenuEvents(){
+    document.addEventListener('click', function(ev){
+      var item = ev.target.closest && ev.target.closest('.cm-menu-item');
+      if(item) handleMenuAction(item.getAttribute('data-action'), ev);
+    });
+    document.addEventListener('mouseover', function(ev){
+      var av = ev.target.closest && ev.target.closest('.cm-item .av, .cm-reply-item .av');
+      if(av) showAvPopover(av);
+    });
+    document.addEventListener('mouseout', function(ev){
+      var av = ev.target.closest && ev.target.closest('.cm-item .av, .cm-reply-item .av');
+      if(!av) return;
+      var to = ev.relatedTarget;
+      if(to && (to.closest('#cmAvPopover') || to.closest('.cm-item .av') || to.closest('.cm-reply-item .av'))) return;
+      scheduleHideAvPopover();
+    });
+    var popover = $('#cmAvPopover');
+    if(popover){
+      popover.addEventListener('mouseenter', function(){
+        if(avPopoverHideTimer){ clearTimeout(avPopoverHideTimer); avPopoverHideTimer = null; }
+      });
+      popover.addEventListener('mouseleave', function(ev){
+        var to = ev.relatedTarget;
+        if(to && (to.closest('.cm-item .av') || to.closest('.cm-reply-item .av'))) return;
+        scheduleHideAvPopover();
+      });
+    }
+  }
+  bindGlobalMenuEvents();
 
   if(document.readyState==='loading'){
     document.addEventListener('DOMContentLoaded', init);

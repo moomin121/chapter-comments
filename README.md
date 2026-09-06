@@ -46,6 +46,8 @@ open http://127.0.0.1:8211/index.html
 | 全部 tab | 章评主楼 + 楼中楼回复（展开/收起） |
 | 顶部 ← 返回全部评论 | 从段评视图回到全部评论 |
 | 排序 tab：默认 / 最热 / 最新 / 长评 | 全部评论 + 单对象视图共用，默认按 sortValue 升序、对象总评论数降序、`createdAt` 倒序、正文字数倒序 |
+| hover 筛选按钮 / 更多按钮 / 评论者头像 | 弹出菜单（MVP），菜单项点击除「此读者所有评论」外提示「开发中」 |
+| 点击菜单「此读者所有评论」 | 跳转到此读者视图，按默认排序展示其全部一级评论 |
 
 ## 排序模式
 
@@ -99,6 +101,8 @@ open http://127.0.0.1:8211/index.html
 | `#cmCount` / `#cmTabAll` / `#cmTabPara` / `#cmBack` / `#cmClose` | 抽屉内部 |
 | `#cmList` | 评论列表容器 |
 | `#cmInput` | 底部输入框 |
+| `#cmFilterBtn` / `#cmMoreBtn` | toolbar 右侧按钮；hover 弹出 popover 菜单 |
+| `#cmToast` | 全局 toast（MVP：菜单点击「开发中」提示） |
 | `#chapterList` | 左侧章节列表容器 |
 
 ## 开发注意事项
