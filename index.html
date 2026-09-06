@@ -1604,9 +1604,10 @@ CHAPTER_TREE.forEach(renderFolder);
     + '</svg>';
   /* 创建便签 DOM。MVP 演示版标题栏只有右上角关闭按钮（PRD §17.2）；
      内容区 contenteditable 支持直接编辑（PRD §17.2.6） */
-  function createNoteDom(contentHtml){
+  function createNoteDom(contentHtml, noteKey){
     var note = document.createElement('div');
     note.className = 'cm-note';
+    if(noteKey) note.dataset.noteKey = noteKey;   // 关闭时从 savedNoteKeys 清除（PRD §17.1.4 重新打开）
     var off = 16 * (noteCount % 10);          // 偏移叠放（PRD §17.3.2）
     note.style.left = off + 'px';
     note.style.top = off + 'px';
@@ -1663,9 +1664,10 @@ CHAPTER_TREE.forEach(renderFolder);
     }
     head.addEventListener('pointerup', endDrag);
     head.addEventListener('pointercancel', endDrag);
-    // 关闭按钮
+    // 关闭按钮：移除便签并清除防重复标记，允许同一评论重新打开便签
     note.querySelector('.cm-note-close').addEventListener('click', function(e){
       e.stopPropagation();
+      if(note.dataset.noteKey) delete savedNoteKeys[note.dataset.noteKey];
       note.remove();
     });
   }
@@ -1698,7 +1700,7 @@ CHAPTER_TREE.forEach(renderFolder);
     var found = findCommentById(cid);
     var bodyHtml = found ? commentBodyHtml(found) : '';
     var signature = '<br><br>——用户'+escapeHtml(guid)+'在《没钱修什么仙》第1章 面试的评论';
-    createNoteDom(bodyHtml + signature);
+    createNoteDom(bodyHtml + signature, cid);
   }
   /* 灵感便签按钮事件委托（技术方案 §5.9.5）：click + hover tooltip */
   function bindInspirationNoteButtons(){

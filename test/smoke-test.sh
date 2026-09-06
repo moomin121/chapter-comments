@@ -198,6 +198,12 @@ JS=$(cat <<'JSEOF'
   // 重复点击：不重复创建
   noteBtn.click();
   chk('重复点击不重建', $$('.cm-note').length, 1);
+  // Bug 修复：关闭便签后，同一评论可重新打开便签
+  noteEl.querySelector('.cm-note-close').click();
+  chk('关闭后便签清空', $$('.cm-note').length, 0);
+  noteBtn.click();
+  chk('关闭后可重新打开', $$('.cm-note').length, 1);
+  noteEl = $('.cm-note');   // 重新获取新便签引用（后续断言使用）
   // 第二个便签：偏移叠放
   var noteBtn2 = $$('.cm-meta-note')[1];
   noteBtn2.click();
