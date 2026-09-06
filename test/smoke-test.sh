@@ -466,6 +466,35 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
     var tagAll2 = $$('.cm-tag').filter(function(t){ return t.getAttribute('data-tag') === '全部'; })[0];
     tagAll2.click();
   }
+
+  // --- §16-17 长评 tab（PRD §10.4.4）：扁平单条流，按 1 级评论正文字数降序 ---
+  chk('长评tab存在', !!$('#cmSortLong'), true);
+  chk('长评tab文案', $('#cmSortLong') && $('#cmSortLong').textContent, '长评');
+  $('#cmSortLong').click();
+  chk('长评tab高亮', $('#cmSortLong').classList.contains('on'), true);
+  chk('长评其他tab关闭', !$('#cmSortLatest').classList.contains('on') && !$('#cmSortDefault').classList.contains('on') && !$('#cmSortHot').classList.contains('on'), true);
+  chk('长评无聚合块', $$('.cm-full-module').length, 0);
+  chk('长评无展开按钮', $$('.cm-section-link').length, 0);
+  chk('长评平铺一级评论', $$('.cm-list > .paragraph-comment').length, 4465);
+  chk('长评滚到顶', $('#cmList').scrollTop, 0);
+  chk('长评隐藏AI卡', $$('.cm-ai-card').length, 0);
+  chk('长评楼中楼默认收起', $$('.cm-list > .paragraph-comment .cm-sub').every(function(s){ return s.style.display === 'none'; }), true);
+  chk('长评按钮文案为展开', $$('.cm-list > .paragraph-comment .sub-toggle').every(function(t){ return t.textContent.indexOf('展开') >= 0; }), true);
+  // 字数降序：data-len 写入排序键本身（与 sortComments commentLength 同口径，避免 fn 标记清洗带来的噪声）
+  var longLens = $$('.cm-list > .paragraph-comment').map(function(el){
+    return +(el.getAttribute('data-len') || 0);
+  });
+  chk('长评字数降序', longLens.every(function(v,i){ return i===0 || longLens[i-1] >= v; }), true);
+  chk('长评第一条字数>0', longLens[0] > 0, true);
+  chk('长评末尾<=第一条', longLens[longLens.length-1] <= longLens[0], true);
+  // 长评与最新顺序应不同（按字数 ≠ 按时间）：存住长评首条内容样本做对照
+  var longFirst = (($$('.cm-list > .paragraph-comment')[0].querySelector('.content')||{}).textContent || '').slice(0, 16);
+  $('#cmSortLatest').click();
+  var latestFirst = (($$('.cm-list > .paragraph-comment')[0].querySelector('.content')||{}).textContent || '').slice(0, 16);
+  chk('长评与最新顺序不同', longFirst !== latestFirst, true);
+  $('#cmSortLong').click();
+  chk('切回长评仍高亮', $('#cmSortLong').classList.contains('on'), true);
+
   // 切回默认恢复聚合视图与 AI 卡
   $('#cmSortDefault').click();
   chk('默认恢复聚合块', $$('.cm-full-module').length, 172);

@@ -800,6 +800,7 @@
           <span class="cm-tab on" data-sort="default" id="cmSortDefault">默认</span>
           <span class="cm-tab" data-sort="hot" id="cmSortHot">最热</span>
           <span class="cm-tab" data-sort="latest" id="cmSortLatest">最新</span>
+          <span class="cm-tab" data-sort="long" id="cmSortLong">长评</span>
         </span>
         <span class="cm-actions">
           <button class="cm-filter" id="cmFilterBtn" title="筛选评论" aria-label="筛选评论">
@@ -1174,6 +1175,10 @@ CHAPTER_TREE.forEach(renderFolder);
   function commentTags(c){ return (c.fixedTags || []).concat(c.contentTags || []); }
   function displayCount(n){ return n > 999 ? '999+' : String(n || 0); }
   function validSortValue(c){ return c.sortValue != null && +c.sortValue >= 0; }
+  /* 1 级评论正文字数（去空白），与 PRD §10.4.4 / §4.3 一致；供长评排序与测试断言共用。 */
+  function commentLength(c){
+    return String(c.body || '').replace(/\s+/g, '').length;
+  }
   function getTargetText(targetId){
     if(targetId === -1) return CHAPTER.title;
     var paras = getParagraphs();
@@ -1408,6 +1413,13 @@ CHAPTER_TREE.forEach(renderFolder);
         if(dt !== 0) return dt;
         return (a.rowIndex || 0) - (b.rowIndex || 0);
       });
+    } else if(currentCommentSort === 'long'){
+      // 长评：1 级评论正文字符数（去空白）从多到少；同字数按原始行号稳定排序。
+      sorted.sort(function(a,b){
+        var dl = commentLength(b) - commentLength(a);
+        if(dl !== 0) return dl;
+        return (a.rowIndex || 0) - (b.rowIndex || 0);
+      });
     } else {
       // default：有效 sortValue 越小越靠前；-1/空时按点赞数降序兜底，同点赞按原始行号稳定排序
       sorted.sort(function(a,b){
@@ -1464,7 +1476,7 @@ CHAPTER_TREE.forEach(renderFolder);
     var avColor = avatarColor(c.userGuid || name);
     var quoteHtml = quote ? '<div class="cm-quote">'+escapeHtml(quote)+'</div>' : '';
     var replyCount = (c.replies && c.replies.length) || 0;
-    // 最新模式（时间线）默认展开楼中楼，省去点击；按钮初始文案与状态同步
+    // 最新/长评（PRD §10.4.3 / §10.4.4）默认收起楼中楼，按钮文案「展开 n 条回复」；与单对象视图一致
     var subDisplay = defaultExpand && replyCount ? 'block' : 'none';
     var repBtn = replyCount
       ? '<span class="sub-toggle'+(subDisplay === 'block' ? ' on' : '')+'" data-n="'+replyCount+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg><b>'+(subDisplay === 'block' ? '收起 ' : '展开 ')+replyCount+' 条回复</b></span>'
@@ -1474,7 +1486,7 @@ CHAPTER_TREE.forEach(renderFolder);
         + c.replies.map(renderReplyItem).join('')
         + '</div>'
       : '';
-    return '<div class="cm-item '+(extraClass||'')+'">'
+    return '<div class="cm-item '+(extraClass||'')+'" data-len="'+commentLength(c)+'">'
       + quoteHtml
       + '<span class="av" style="background:'+avColor+'">'+escapeHtml(avatarInitial(name))+'</span>'
       + '<div class="body">'
@@ -1926,8 +1938,9 @@ CHAPTER_TREE.forEach(renderFolder);
       html += renderAiSummaryCard();
     }
 
-    if(currentCommentSort === 'latest'){
-      // 最新：不按评论对象聚合块；按 createdAt 从新到旧平铺；每条评论上方显示原文提示（PRD §10.4.3 + 用户补充）
+    if(currentCommentSort === 'latest' || currentCommentSort === 'long'){
+      // 最新/长评：不按评论对象聚合块；把命中的一级评论拍平成单条流，按 sortComments 排序
+      // （最新 = createdAt 倒序，长评 = 正文字数倒序；PRD §10.4.3 / §10.4.4）
       var flat = [];
       flat = flat.concat(visibleItemsOf(idx.chapterTarget));
       idx.targets.forEach(function(t){
@@ -1937,11 +1950,7 @@ CHAPTER_TREE.forEach(renderFolder);
         var t = idx.targetMap[key];
         if(t.unmatched) flat = flat.concat(visibleItemsOf(t));
       });
-      flat.sort(function(a,b){
-        var dt = String(commentTime(b)).localeCompare(String(commentTime(a)));
-        if(dt !== 0) return dt;
-        return (a.rowIndex || 0) - (b.rowIndex || 0);
-      });
+      flat = sortComments(flat);
       // 原文行复用默认聚合块的引用行样式（Figma 80-44095）：灰底圆角 + 计数气泡，
       // 支持 hover 定位与点击进单对象；连续同对象只在首条显示
       var lastTipId = null;
