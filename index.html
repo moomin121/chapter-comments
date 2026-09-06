@@ -452,6 +452,49 @@
   .cm-meta-like{display:inline-flex;align-items:center;gap:2px;}
   .cm-meta-like-count{font-family:var(--num);line-height:20px;}
   .cm-meta-more{display:inline-flex;align-items:center;}
+  /* 存为灵感便签按钮（Figma 80-43883 plus-textpart，PRD §17 入口） */
+  .cm-meta-note{display:inline-flex;align-items:center;cursor:pointer;}
+  .cm-meta-note svg{width:18px;height:18px;display:block;color:#808080;}
+  .cm-meta-note:hover svg{color:var(--ink-92);}
+  /* 自定义 tooltip 单例（原生 title 无法满足点击后立即切换文案，技术方案 §5.9.1） */
+  #cmTooltip{
+    position:fixed;left:0;top:0;z-index:2147483000;display:none;
+    padding:5px 8px;border-radius:6px;background:rgba(20,30,41,.92);color:#fff;
+    font-size:12px;line-height:18px;white-space:nowrap;pointer-events:none;
+    box-shadow:0 2px 8px rgba(0,0,0,.2);
+  }
+  /* 灵感便签（Figma 98-14975，PRD §17.2） */
+  .cm-note{
+    position:fixed;width:263px;height:227px;background:#FFF6BA;
+    border:1px solid rgba(20,30,41,.12);border-radius:8px;
+    box-shadow:0 6px 22px rgba(0,0,0,.24);
+    display:flex;flex-direction:column;overflow:hidden;
+    font-family:var(--font);
+  }
+  .cm-note-head{
+    position:relative;flex:0 0 36px;display:flex;align-items:center;
+    justify-content:space-between;padding:4px 8px;cursor:grab;user-select:none;
+  }
+  .cm-note-head:active{cursor:grabbing;}
+  .cm-note-new, .cm-note-close{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:28px;height:28px;border:0;border-radius:4px;background:transparent;
+    cursor:pointer;padding:0;
+  }
+  .cm-note-new:hover, .cm-note-close:hover{background:rgba(20,30,41,.08);}
+  .cm-note-new svg{width:28px;height:28px;display:block;color:#FF7A45;}
+  .cm-note-close svg{width:16px;height:16px;display:block;color:rgba(20,30,41,.64);}
+  .cm-note-drag{
+    position:absolute;left:50%;top:0;transform:translateX(-50%);
+    width:16px;height:16px;display:flex;align-items:center;justify-content:center;
+    color:rgba(20,30,41,.49);pointer-events:none;
+  }
+  .cm-note-drag svg{width:16px;height:16px;display:block;}
+  .cm-note-body{
+    flex:1;min-height:0;overflow-y:auto;padding:0 12px 8px;
+    font-size:14px;line-height:25px;color:rgba(20,30,41,.92);
+    word-break:break-word;user-select:text;
+  }
   .cm-more-replies{
     margin-top:8px;border:0;background:transparent;color:#808080;font-size:14px;line-height:22px;
     padding:0;cursor:pointer;font-weight:500;
@@ -1378,12 +1421,19 @@ CHAPTER_TREE.forEach(renderFolder);
     body = body.replace(/\[fn=\d+\]/g, '');
     return body.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
   }
-  /* 评论底部操作行（PRD §9 + 设计稿）：日期 + IP地址 + 评论 + 点赞（数字>0 显示，=0 仅图标）+ ··· */
+  /* 评论底部操作行（PRD §9.3 + Figma 80-43883）：日期 + IP地址 + 存为灵感便签 + 评论 + 点赞 + ··· */
   function commentMetaRow(c){
     var likes = commentLikes(c);
     return '<div class="meta">'
       + '<span class="cm-meta-left">'+fmtCommentMetaTime(commentTime(c))+' IP地址</span>'
       + '<span class="cm-meta-actions">'
+      +   '<span class="cm-meta-note" data-cid="'+escapeHtml(String(c.id || ''))+'" data-guid="'+escapeHtml(String(c.userGuid || ''))+'">'
+      +     '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">'
+      +       '<rect x="1.66663" y="3.33203" width="16.6667" height="13.3333" rx="2.5" stroke="currentColor" stroke-width="1.66667"/>'
+      +       '<path d="M5.83337 11.6654H9.16671" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round"/>'
+      +       '<path d="M5.83337 8.33203H14.1667" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round"/>'
+      +       '<path d="M11.25 6.66536V14.9987M8.75 6.66536H13.75C14.6705 6.66536 15.4167 7.41155 15.4167 8.33203V13.332C15.4167 14.2525 14.6705 14.9987 13.75 14.9987H8.75V8.33203C8.75 7.41155 9.49619 6.66536 10.4167 6.66536" stroke="currentColor" stroke-width="1.66667" stroke-linejoin="round"/>'
+      +     '</svg></span>'
       +   '<span class="cm-meta-comment" title="回复">'
       +     '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">'
       +       '<path d="M4.1665 3.33203C2.78579 3.33203 1.6665 4.45132 1.6665 5.83203V17.4987C1.6665 17.8143 1.84484 18.1029 2.12716 18.2441C2.40948 18.3852 2.74732 18.3548 2.99984 18.1654L5.6665 16.1654C5.955 15.949 6.30589 15.832 6.6665 15.832H15.8332C17.2139 15.832 18.3332 14.7127 18.3332 13.332V5.83203C18.3332 4.45132 17.2139 3.33203 15.8332 3.33203H4.1665ZM3.33317 5.83203C3.33317 5.37179 3.70627 4.9987 4.1665 4.9987H15.8332C16.2934 4.9987 16.6665 5.37179 16.6665 5.83203V13.332C16.6665 13.7923 16.2934 14.1654 15.8332 14.1654H6.6665C5.94527 14.1654 5.24349 14.3993 4.6665 14.832L3.33317 15.832V5.83203Z" fill="currentColor"/>'
@@ -1511,6 +1561,185 @@ CHAPTER_TREE.forEach(renderFolder);
         btn.classList.toggle('on', !open);
         btn.innerHTML = ico + '<b>' + (open ? '展开 ' : '收起 ') + n + ' 条回复</b>';
       });
+    });
+  }
+  /* ================= 灵感便签（PRD §17 + Figma 98-14975） ================= */
+  var noteZ = 99999;             // 当前最高 z-index（点击置顶递增）
+  var noteCount = 0;             // 便签创建序号（偏移叠放步进）
+  var savedNoteKeys = {};        // 评论 id → true（防重复创建，PRD §17.1.4）
+  var tooltipEl = null;          // 自定义 tooltip 单例（技术方案 §5.9.1）
+  var tooltipHideTimer = null;   // 「已保存」1.5s 自动消失定时器
+  var tooltipLock = false;       // 点击态：显示期间不响应 hover 隐藏
+  function ensureTooltip(){
+    if(tooltipEl) return tooltipEl;
+    tooltipEl = document.createElement('div');
+    tooltipEl.id = 'cmTooltip';
+    tooltipEl.setAttribute('role', 'tooltip');
+    document.body.appendChild(tooltipEl);
+    return tooltipEl;
+  }
+  function showTooltip(anchor, text){
+    var el = ensureTooltip();
+    el.textContent = text;
+    el.style.display = 'block';
+    var r = anchor.getBoundingClientRect();
+    var tw = el.offsetWidth, th = el.offsetHeight;
+    var left = Math.max(4, Math.min(window.innerWidth - tw - 4, r.left + r.width/2 - tw/2));
+    var top = r.top - th - 8;
+    if(top < 4) top = r.bottom + 8;   // 上方放不下时翻到下方
+    el.style.left = left + 'px';
+    el.style.top = top + 'px';
+  }
+  function hideTooltip(){
+    if(tooltipEl) tooltipEl.style.display = 'none';
+  }
+  var ICON_PLUS_CIRCLE = '<svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">'
+    + '<circle cx="14" cy="14" r="11" fill="#FF7A45"/>'
+    + '<path d="M14 8.75V19.25M8.75 14H19.25" stroke="#fff" stroke-width="2.16667" stroke-linecap="round"/>'
+    + '</svg>';
+  var ICON_CLOSE_L = '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">'
+    + '<path d="M3.33203 3.33203L12.6654 12.6654M12.6654 3.33203L3.33203 12.6654" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round"/>'
+    + '</svg>';
+  var ICON_DRAG2 = '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">'
+    + '<path d="M5 3L8 6L11 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
+    + '<path d="M5 13L8 10L11 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
+    + '</svg>';
+  /* 创建便签 DOM。contentHtml 为 null 时创建空白便签（plus-circle 新建，PRD §17.2） */
+  function createNoteDom(contentHtml){
+    var note = document.createElement('div');
+    note.className = 'cm-note';
+    var off = 16 * (noteCount % 10);          // 偏移叠放（PRD §17.3.2）
+    note.style.left = off + 'px';
+    note.style.top = off + 'px';
+    note.style.zIndex = ++noteZ;
+    note.innerHTML = '<div class="cm-note-head">'
+      + '<button class="cm-note-new" type="button" title="新建空白便签">'+ICON_PLUS_CIRCLE+'</button>'
+      + '<span class="cm-note-drag">'+ICON_DRAG2+'</span>'
+      + '<button class="cm-note-close" type="button" title="关闭便签">'+ICON_CLOSE_L+'</button>'
+      + '</div>'
+      + '<div class="cm-note-body">'+(contentHtml || '')+'</div>';
+    noteCount++;
+    bindNoteEvents(note);
+    document.body.appendChild(note);
+    return note;
+  }
+  function bindNoteEvents(note){
+    // 点击任意处置顶（PRD §17.3.3）
+    note.addEventListener('pointerdown', function(){
+      note.style.zIndex = ++noteZ;
+    });
+    // 关闭
+    note.querySelector('.cm-note-close').addEventListener('click', function(e){
+      e.stopPropagation();
+      note.remove();
+    });
+    // 新建空白便签：关闭当前 + 左上角叠放一个空便签（用户确认）
+    note.querySelector('.cm-note-new').addEventListener('click', function(e){
+      e.stopPropagation();
+      note.remove();
+      createNoteDom(null);
+    });
+    // 拖动：标题栏 pointerdown（排除按钮），技术方案 §5.9.4
+    var head = note.querySelector('.cm-note-head');
+    var drag = null;
+    head.addEventListener('pointerdown', function(e){
+      if(e.target.closest('.cm-note-new, .cm-note-close')) return;
+      drag = { x: e.clientX, y: e.clientY,
+               left: parseFloat(note.style.left) || 0,
+               top: parseFloat(note.style.top) || 0,
+               moved: 0 };
+      head.setPointerCapture && head.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    head.addEventListener('pointermove', function(e){
+      if(!drag) return;
+      var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      drag.moved = Math.max(drag.moved, Math.abs(dx) + Math.abs(dy));
+      var nl = drag.left + dx, nt = drag.top + dy;
+      // 限制不完全拖出视口
+      nl = Math.max(-223, Math.min(window.innerWidth - 40, nl));
+      nt = Math.max(0, Math.min(window.innerHeight - 40, nt));
+      note.style.left = nl + 'px';
+      note.style.top = nt + 'px';
+    });
+    function endDrag(){
+      if(drag && drag.moved > 4){
+        // 拖动后抑制标题栏 click 冒泡一次，避免误触按钮
+        var suppress = function(ev){ ev.stopPropagation(); };
+        head.addEventListener('click', suppress);
+        setTimeout(function(){
+          head.removeEventListener('click', suppress);
+          drag = null;
+        }, 0);
+      } else {
+        drag = null;
+      }
+    }
+    head.addEventListener('pointerup', endDrag);
+    head.addEventListener('pointercancel', endDrag);
+  }
+  /* 按 id 查找评论（含一级/回复/未匹配对象），用于便签正文 */
+  function findCommentById(cid){
+    var idx = ensureCommentIndex();
+    var pools = [idx.chapterTarget];
+    Object.keys(idx.targetMap).forEach(function(k){ pools.push(idx.targetMap[k]); });
+    var found = null;
+    pools.some(function(t){
+      return (t.items || []).some(function(c){
+        if(String(c.id) === cid){ found = c; return true; }
+        return (c.replies || []).some(function(r){
+          if(String(r.id) === cid){ found = r; return true; }
+          return false;
+        });
+      });
+    });
+    return found;
+  }
+  /* 点击 plus 按钮：保存 + 弹出便签（PRD §17.1.3） */
+  function openInspirationNote(btn){
+    var cid = btn.getAttribute('data-cid');
+    var guid = btn.getAttribute('data-guid') || '';
+    if(savedNoteKeys[cid]){
+      return; // 已保存：只提示，不重复创建
+    }
+    savedNoteKeys[cid] = true;
+    var found = findCommentById(cid);
+    var bodyHtml = found ? commentBodyHtml(found) : '';
+    var contentHtml = '用户'+escapeHtml(guid)+'在《没钱修什么仙》第1章 面试的评论<br>' + bodyHtml;
+    createNoteDom(contentHtml);
+  }
+  /* 灵感便签按钮事件委托（技术方案 §5.9.5）：click + hover tooltip */
+  function bindInspirationNoteButtons(){
+    var drawer = $('#cmDrawer');
+    if(!drawer || drawer.dataset.noteBound === '1') return;
+    drawer.dataset.noteBound = '1';
+    var hoverTimer = null;
+    drawer.addEventListener('mouseover', function(e){
+      var btn = e.target.closest('.cm-meta-note');
+      if(!btn || tooltipLock) return;
+      clearTimeout(hoverTimer);
+      hoverTimer = setTimeout(function(){
+        if(!tooltipLock) showTooltip(btn, '存为灵感便签');
+      }, 300);
+    });
+    drawer.addEventListener('mouseout', function(e){
+      var btn = e.target.closest('.cm-meta-note');
+      if(!btn || tooltipLock) return;
+      clearTimeout(hoverTimer);
+      hideTooltip();
+    });
+    drawer.addEventListener('click', function(e){
+      var btn = e.target.closest('.cm-meta-note');
+      if(!btn) return;
+      clearTimeout(hoverTimer);
+      tooltipLock = true;
+      showTooltip(btn, '已保存');
+      openInspirationNote(btn);
+      clearTimeout(tooltipHideTimer);
+      tooltipHideTimer = setTimeout(function(){
+        tooltipLock = false;
+        hideTooltip();
+      }, 1500);
     });
   }
   function returnToAllComments(){
@@ -1665,6 +1894,7 @@ CHAPTER_TREE.forEach(renderFolder);
     var back = $('.cm-quote-back', context || list);
     if(back) back.addEventListener('click', returnToAllComments);
     bindReplyToggles();
+    bindInspirationNoteButtons();   // 灵感便签（PRD §17，单对象视图同样可用）
   }
 
   // 5) 渲染全部评论（PRD §10）
@@ -1761,6 +1991,7 @@ CHAPTER_TREE.forEach(renderFolder);
     bindReplyToggles();
     bindTargetAnchors();
     bindAiSummaryExpand();
+    bindInspirationNoteButtons();   // 灵感便签（PRD §17）
   }
   /* AI 总结卡【展开全部/收起全文】切换按钮（Figma 92-13358） */
   function bindAiSummaryExpand(){

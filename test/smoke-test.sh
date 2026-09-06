@@ -147,6 +147,62 @@ JS=$(cat <<'JSEOF'
   chk('点赞无赞字', fc.querySelector('.cm-meta-like b'), null);
   chk('点赞数字在按钮内', (fc.querySelector('.cm-meta-like .cm-meta-like-count')||{parentElement:{className:''}}).parentElement.className.indexOf('cm-meta-like') >= 0, true);
   chk('评论底部含更多', !!fc.querySelector('.cm-meta-more svg'), true);
+  // --- §17 灵感便签：操作栏 plus-textpart 按钮 + tooltip + 便签（Figma 80-43883 / 98-14975）---
+  var noteBtn = fc.querySelector('.cm-meta-note');
+  chk('操作栏有便签按钮', !!noteBtn, true);
+  var actionsRow = fc.querySelector('.cm-meta-actions');
+  chk('便签按钮在评论按钮前', actionsRow.children[0].className.indexOf('cm-meta-note') >= 0 && actionsRow.children[1].className.indexOf('cm-meta-comment') >= 0, true);
+  chk('便签按钮有data-cid', noteBtn.hasAttribute('data-cid') && !!noteBtn.getAttribute('data-cid'), true);
+  // hover tooltip：300ms 后显示「存为灵感便签」
+  noteBtn.dispatchEvent(new MouseEvent('mouseover', {bubbles: true}));
+  await wait(400);
+  var tip = document.getElementById('cmTooltip');
+  chk('hover显示tooltip', tip && tip.style.display === 'block' && tip.textContent === '存为灵感便签', true);
+  noteBtn.dispatchEvent(new MouseEvent('mouseout', {bubbles: true}));
+  chk('移开隐藏tooltip', tip.style.display === 'none', true);
+  // 点击：tooltip「已保存」+ 创建便签
+  chk('初始无便签', $$('.cm-note').length, 0);
+  noteBtn.click();
+  chk('点击后tooltip已保存', tip.style.display === 'block' && tip.textContent === '已保存', true);
+  chk('点击后出现便签', $$('.cm-note').length, 1);
+  // 便签内容与样式
+  var noteEl = $('.cm-note');
+  var noteCs = getComputedStyle(noteEl);
+  var noteBody = noteEl.querySelector('.cm-note-body');
+  chk('便签内容含用户guid', noteBody.textContent.indexOf('用户' + noteBtn.getAttribute('data-guid') + '在《没钱修什么仙》第1章 面试的评论') >= 0, true);
+  chk('便签内容含正文', noteBody.textContent.length > noteBody.textContent.indexOf('评论') + 10, true);
+  chk('便签宽263', noteCs.width, '263px');
+  chk('便签高227', noteCs.height, '227px');
+  chk('便签黄底', noteCs.backgroundColor, 'rgb(255, 246, 186)');
+  chk('便签内容区滚动', getComputedStyle(noteBody).overflowY, 'auto');
+  chk('便签置顶z-index', parseInt(noteCs.zIndex) >= 99999, true);
+  chk('便签在左上角', parseFloat(noteEl.style.left) <= 16 && parseFloat(noteEl.style.top) <= 16, true);
+  // 重复点击：不重复创建
+  noteBtn.click();
+  chk('重复点击不重建', $$('.cm-note').length, 1);
+  // 第二个便签：偏移叠放
+  var noteBtn2 = $$('.cm-meta-note')[1];
+  noteBtn2.click();
+  var note2 = $$('.cm-note')[1];
+  chk('第二便签偏移叠放', parseFloat(note2.style.left) - parseFloat(noteEl.style.left) >= 16, true);
+  // 拖动：pointerdown/move/up 后位置改变
+  var head = noteEl.querySelector('.cm-note-head');
+  var before = {left: parseFloat(noteEl.style.left), top: parseFloat(noteEl.style.top)};
+  head.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true, clientX: 100, clientY: 100}));
+  head.dispatchEvent(new PointerEvent('pointermove', {bubbles: true, clientX: 180, clientY: 140}));
+  head.dispatchEvent(new PointerEvent('pointerup', {bubbles: true}));
+  var after = {left: parseFloat(noteEl.style.left), top: parseFloat(noteEl.style.top)};
+  chk('便签可拖动', after.left !== before.left || after.top !== before.top, true);
+  // 关闭便签
+  note2.querySelector('.cm-note-close').click();
+  chk('关闭便签移除', $$('.cm-note').length, 1);
+  // 新建空白便签：plus-circle 关闭当前 + 新建空便签
+  noteEl.querySelector('.cm-note-new').click();
+  var blankNote = $('.cm-note');
+  chk('新建空白便签', !!blankNote && blankNote.querySelector('.cm-note-body').textContent === '', true);
+  blankNote.querySelector('.cm-note-close').click();
+  await wait(1600);   // 等 tooltip「已保存」自动消失
+  chk('tooltip自动消失', tip.style.display === 'none', true);
   // 盟主徽章：guid 尾号 56 的用户在 nickname 后渲染盟主 SVG（PRD §9.2 MVP mock 数据）
   var badges = $$('.cm-user-badge');
   chk('有盟主徽章用户', badges.length >= 10, true);
