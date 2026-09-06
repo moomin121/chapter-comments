@@ -388,6 +388,13 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
   chk('悬停菜单absolute定位', getComputedStyle(tagsEl).position, 'absolute');
   // 末行标签在容器下方且在 max-height 240px 范围内可见
   chk('悬停末行标签未裁切', lastTag.getBoundingClientRect().bottom <= tagBox.bottom + 241, true);
+  // 抖动修复：鼠标移入 absolute 菜单（relatedTarget 在 cm-tags 子树内）不收起
+  var menuTag = $$('#cmTags .cm-tag')[5];
+  tagsEl.dispatchEvent(new MouseEvent('mouseleave', {bubbles:false, relatedTarget: menuTag}));
+  chk('鼠标移入菜单不收起', tagsEl.classList.contains('hover-open'), true);
+  // 真正离开（relatedTarget 在子树外）才收起
+  tagsEl.dispatchEvent(new MouseEvent('mouseleave', {bubbles:false, relatedTarget: document.body}));
+  chk('真正离开才收起', !tagsEl.classList.contains('hover-open'), true);
   $('#cmTags').dispatchEvent(new Event('mouseleave'));
   if(tagReal){
     tagReal.click();
