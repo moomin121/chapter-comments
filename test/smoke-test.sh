@@ -613,50 +613,39 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
   // 头像菜单：hover 头像触发浮动 popover
   var av = $$('.cm-item .av')[0];
   var guid = av.getAttribute('data-guid') || '';
-  var overEv = new MouseEvent('mouseover', {bubbles:true});
-  av.dispatchEvent(overEv);
+  av.dispatchEvent(new MouseEvent('mouseover', {bubbles:true}));
   await wait(50);
   var popover = $('#cmAvPopover');
   chk('头像popover打开', popover.getAttribute('data-open') === '1', true);
   chk('头像popover承载guid', popover.dataset.guid, guid);
   chk('头像菜单2项', popover.querySelectorAll('.cm-menu-item').length, 2);
-  chk('头像菜单第1项文案', popover.querySelectorAll('.cm-menu-item')[0].textContent, '查看此读者所有评论');
+  chk('头像菜单第1项文案', popover.querySelectorAll('.cm-menu-item')[0].textContent, '查看此读者全部评论');
   chk('头像菜单第2项文案', popover.querySelectorAll('.cm-menu-item')[1].textContent, '禁言');
   popover.querySelectorAll('.cm-menu-item')[1].click();
   await wait(50);
   chk('禁言菜单走toast', $('#cmToast').textContent, '开发中');
 
-  // 「查看此读者所有评论」→ 此读者视图
+  // 「查看此读者全部评论」MVP 阶段统一 toast「开发中」（不再进入读者视图）
   popover.querySelectorAll('.cm-menu-item')[0].click();
-  await wait(80);
-  chk('点击头像菜单进入usersec', $('#cmDrawer').classList.contains('usersec'), true);
-  chk('此读者视图移除parasec', $('#cmDrawer').classList.contains('parasec'), false);
-  chk('此读者视图隐藏标签栏', getComputedStyle($('.cm-tags-wrap')).display, 'none');
-  chk('此读者视图保留排序tab', !!$('#cmSort').offsetParent, true);
-  chk('此读者视图引用行文案', ($('.cm-quote-text').textContent || '').trim().indexOf(guid) >= 0 ? ($('.cm-quote-text').textContent || '').trim() : 'no-guid', ($('.cm-quote-text').textContent || '').trim());
-  chk('此读者视图context padding 8 16', getComputedStyle($('#cmContext')).padding, '8px 16px');
-  chk('此读者视图返回按钮pill样式', getComputedStyle($('.cm-quote-back')).borderRadius, '100px');
-  chk('此读者视图返回按钮brand边框', getComputedStyle($('.cm-quote-back')).borderTopColor, 'rgb(30, 113, 239)');
-  // 不再展示 section 标题
-  chk('此读者视图无section标题',
-    $$('.cm-drawer.usersec .cm-section-head').length, 0);
-  // 计数 = 1级条数 + 2级回复条数（DOM 端取数）
-  var sec1n = $$('.cm-drawer.usersec .cm-list > .paragraph-comment').length;
-  var sec2n = $$('.cm-drawer.usersec .cm-list > .cm-item:not(.paragraph-comment)').length;
-  chk('此读者视图评论计数', $('#cmCount').textContent, (sec1n + sec2n) + '条');
-  chk('此读者视图Section1有数据', sec1n > 0, true);
-  // 楼中楼默认收起（Section 1）
-  chk('此读者视图Section1楼中楼收起',
-    $$('.cm-drawer.usersec .cm-list > .paragraph-comment .cm-sub').every(function(s){ return s.style.display === 'none'; }), true);
-  // Section 2 用普通 reply 样式（无 my-replies-block 蓝色边块）
-  chk('此读者视图Section2无特殊格式块',
-    $$('.cm-drawer.usersec .cm-my-replies-block').length, 0);
-  // 返回全部评论
-  $('.cm-quote-back').click();
-  await wait(80);
-  chk('返回后usersec移除', $('#cmDrawer').classList.contains('usersec'), false);
-  chk('返回后恢复聚合视图', $$('.cm-full-module').length, 172);
-  chk('返回后恢复标签栏', getComputedStyle($('.cm-tags-wrap')).display !== 'none', true);
+  await wait(50);
+  chk('查看此读者全部评论走toast', $('#cmToast').textContent, '开发中');
+  chk('查看此读者全部评论未进usersec', $('#cmDrawer').classList.contains('usersec'), false);
+
+  // 头像菜单宽度固定 160（Figma 110-10381 设计宽度）
+  chk('头像菜单宽度160', getComputedStyle(popover).width, '160px');
+
+  // 输入框显示规则：默认全部评论视图隐藏；单段视图（parasec）显示
+  chk('默认全部视图input隐藏', getComputedStyle($('.cm-input')).display, 'none');
+  // 触发单段视图（点击段0引用）来验证 input 显示
+  var firstParaBubble = $('.para-bubble[data-idx="0"]');
+  if(firstParaBubble){
+    firstParaBubble.click();
+    await wait(80);
+    chk('单段视图input显示', getComputedStyle($('.cm-input')).display, 'flex');
+    $('.cm-quote-back').click();
+    await wait(80);
+    chk('返回全部视图input再隐藏', getComputedStyle($('.cm-input')).display, 'none');
+  }
 
   return out.join('\n');
 })()

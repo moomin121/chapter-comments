@@ -298,7 +298,7 @@
   .cm-menu-wrap:focus-within .cm-popover{opacity:1;visibility:visible;pointer-events:auto;}
   .cm-menu-wrap:hover .cm-popover{opacity:1;visibility:visible;}
   .cm-popover-floating{
-    position:fixed;top:0;left:0;margin:0;min-width:140px;
+    position:fixed;top:0;left:0;margin:0;width:160px;
     display:none;
   }
   .cm-popover-floating[data-open="1"]{display:block;opacity:1;visibility:visible;pointer-events:auto;}
@@ -345,7 +345,6 @@
   .cm-my-replies-block .cm-item{border-bottom:none;padding:6px 0;}
   .cm-drawer.parasec .cm-tags,
   .cm-drawer.parasec .cm-tags-wrap{display:none;}
-  .cm-drawer.parasec .cm-input{display:none;}
 
   .cm-tags{
     position:relative;display:flex;align-items:center;align-content:flex-start;gap:6px;flex-wrap:wrap;padding:8px 16px 4px;
@@ -645,9 +644,10 @@
   .cm-sub .cm-item .content .to{color:var(--brand);margin-right:4px;}
 
   .cm-input{
-    display:flex;align-items:center;gap:10px;padding:12px 14px;border-top:1px solid var(--line);
+    display:none;align-items:center;gap:10px;padding:12px 14px;border-top:1px solid var(--line);
     background:var(--panel);flex:0 0 auto;
   }
+  .cm-drawer.parasec .cm-input{display:flex;}
   .cm-input .av{
     flex:0 0 28px;width:28px;height:28px;border-radius:50%;background:var(--brand);
     display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:12px;
@@ -2372,7 +2372,7 @@ CHAPTER_TREE.forEach(renderFolder);
   function fillAvPopover(guid){
     var popover = $('#cmAvPopover');
     if(!popover) return;
-    popover.innerHTML = '<button class="cm-menu-item" data-action="user-all" type="button">查看此读者所有评论</button>'
+    popover.innerHTML = '<button class="cm-menu-item" data-action="user-all" type="button">查看此读者全部评论</button>'
       + '<button class="cm-menu-item" data-action="user-mute" type="button">禁言</button>';
     popover.dataset.guid = guid;
     avPopoverCurrentGuid = guid;
@@ -2398,14 +2398,9 @@ CHAPTER_TREE.forEach(renderFolder);
       hideAvPopover();
     }, 180);
   }
-  // 菜单点击路由：头像菜单的「查看此读者所有评论」是真动作，其他都 toast（PRD §18）
+  // 菜单点击路由：MVP 阶段全部 toast「开发中」（PRD §18）。
+  // 「查看此读者全部评论」路由已下线（原 renderUserComments 保留代码备用）。
   function handleMenuAction(action, ev){
-    if(action === 'user-all'){
-      hideAvPopover();
-      var guid = avPopoverCurrentGuid || ($('#cmAvPopover').dataset.guid || '');
-      if(guid) renderUserComments(guid);
-      return;
-    }
     showToast('开发中');
   }
 
