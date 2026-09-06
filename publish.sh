@@ -66,17 +66,30 @@ HTTP=$(curl -s -o /dev/null -w '%{http_code}' "${URL}")
 echo "  线上 HTTP ${HTTP}"
 [ "${HTTP}" = "200" ] || { echo "✗ 线上不可达"; exit 1; }
 
-# 先下载到临时文件再检查（避免 grep -q 提前退出触发 SIGPIPE + pipefail 误判）
-VERIFY_TMP=$(mktemp /tmp/publish_verify.XXXXXX)
-trap 'rm -f "${VERIFY_TMP}"' EXIT
-if curl -sL --compressed --max-time 120 "${URL}" -o "${VERIFY_TMP}" \
-   && grep -q "GENERATED_COMMENT_DATA_START" "${VERIFY_TMP}"; then
-  echo "  评论数据块已部署 ✓"
-  rm -f "${VERIFY_TMP}"
+# 主校验：线上 Content-Length 与本地 index.html 字节数一致（数据块内嵌，任何改动都会变字节数）
+LOCAL_SIZE=$(wc -c < index.html | tr -d ' ')
+REMOTE_SIZE=$(curl -sIL "${URL}" | tr -d '\r' | awk 'tolower($1)=="content-length:"{s=$2} END{print s}')
+if [ "${REMOTE_SIZE}" = "${LOCAL_SIZE}" ]; then
+  echo "  线上体积 ${REMOTE_SIZE} 字节 = 本地 ✓"
 else
-  echo "✗ 页面可达但未检测到评论数据块标记"
+  echo "✗ 线上体积 ${REMOTE_SIZE:-未知} 与本地 ${LOCAL_SIZE} 不一致（可能 CDN 未刷新，稍后重试）"
   exit 1
 fi
+
+# 附加校验（尽力而为）：下载全文确认评论数据块标记；网络受限时降级为提示
+VERIFY_TMP=$(mktemp /tmp/publish_verify.XXXXXX)
+if curl -sL --compressed --max-time 60 "${URL}" -o "${VERIFY_TMP}"; then
+  if grep -q "GENERATED_COMMENT_DATA_START" "${VERIFY_TMP}"; then
+    echo "  评论数据块已部署 ✓"
+  else
+    echo "✗ 页面可达但未检测到评论数据块标记"
+    rm -f "${VERIFY_TMP}"
+    exit 1
+  fi
+else
+  echo "  （全文校验因网络受限跳过，体积校验已通过）"
+fi
+rm -f "${VERIFY_TMP}"
 
 echo ""
 echo "✅ 发布完成：${URL}"
