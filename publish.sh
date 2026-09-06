@@ -66,8 +66,13 @@ HTTP=$(curl -s -o /dev/null -w '%{http_code}' "${URL}")
 echo "  线上 HTTP ${HTTP}"
 [ "${HTTP}" = "200" ] || { echo "✗ 线上不可达"; exit 1; }
 
-if curl -sL --compressed --max-time 120 "${URL}" | grep -q "GENERATED_COMMENT_DATA_START"; then
+# 先下载到临时文件再检查（避免 grep -q 提前退出触发 SIGPIPE + pipefail 误判）
+VERIFY_TMP=$(mktemp /tmp/publish_verify.XXXXXX)
+trap 'rm -f "${VERIFY_TMP}"' EXIT
+if curl -sL --compressed --max-time 120 "${URL}" -o "${VERIFY_TMP}" \
+   && grep -q "GENERATED_COMMENT_DATA_START" "${VERIFY_TMP}"; then
   echo "  评论数据块已部署 ✓"
+  rm -f "${VERIFY_TMP}"
 else
   echo "✗ 页面可达但未检测到评论数据块标记"
   exit 1
