@@ -149,6 +149,8 @@ JS=$(cat <<'JSEOF'
   chk('评论底部含IP地址', metaLeft.indexOf('IP地址') >= 0, true);
   chk('点赞无赞字', fc.querySelector('.cm-meta-like b'), null);
   chk('点赞数字在按钮内', (fc.querySelector('.cm-meta-like .cm-meta-like-count')||{parentElement:{className:''}}).parentElement.className.indexOf('cm-meta-like') >= 0, true);
+  // 点赞数颜色与点赞图标一致（Figma 80-43884：rgba(20,30,41,0.34)）
+  chk('点赞数颜色同图标', getComputedStyle(fc.querySelector('.cm-meta-like-count')).color, 'rgba(20, 30, 41, 0.34)');
   chk('评论底部含更多', !!fc.querySelector('.cm-meta-more svg'), true);
   // --- §17 灵感便签：操作栏 plus-textpart 按钮 + tooltip + 便签（Figma 80-43883 / 98-14975）---
   var noteBtn = fc.querySelector('.cm-meta-note');
