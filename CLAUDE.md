@@ -49,7 +49,7 @@ innerWidth - r.right   // 必须 === 0，不论抽屉开还是关
 ## 技术栈
 
 - **纯原生**：HTML + CSS + 原生 JS（无构建步骤、无依赖、无打包）
-- **字体**：正文/标题使用 `LXGW WenKai GB` 网络字体，保留系统楷体兜底
+- **字体**：正文/标题使用 `LXGW WenKai GB` 网络字体（CDN：`@free-fonts/lxgw-wenkai-gb@1.0.1` CSS，300/400/500 真实字重，按 unicode-range 分片按需加载），保留系统楷体兜底。⚠️ 不要改回手写 `@font-face` 指向 `lxgw-wenkai-webfont` 包根目录的 `.woff2` —— 该路径是 404，曾导致线上字体整体回退系统字体
 - **数据**：正文在 `var CHAPTER = {...}`；轻量评论元数据在 `// GENERATED_COMMENT_DATA_START/END` 之间；完整评论在 `comment-data.json`（脚本生成，勿手改）
 - **存储**：`localStorage.wb_comment_mode` 记忆评论开关（默认开启，可忽略）
 

@@ -79,6 +79,16 @@ JS=$(cat <<'JSEOF'
   chk('默认全部评论视图', !$('#cmDrawer').classList.contains('parasec'), true);
   chk('有效评论总数(732+6098)', $('#cmCount').textContent, '6830条');
 
+  // --- 字体：LXGW WenKai GB webfont 引入且真实可加载（修复线上 404 回退系统字体问题）---
+  chk('WenKai字体CSS已引入', !!document.querySelector('link[href*="lxgw-wenkai-gb"]'), true);
+  chk('标题字体族为WenKaiGB', getComputedStyle($('.chap-title')).fontFamily.indexOf('LXGW WenKai GB') >= 0, true);
+  try {
+    await document.fonts.load('20px "LXGW WenKai GB"', '修仙者说');
+    chk('WenKai字体真实加载', document.fonts.check('20px "LXGW WenKai GB"', '修'), true);
+  } catch(err) {
+    chk('WenKai字体真实加载', 'load-error:' + err, true);
+  }
+
   // --- §16-2 气泡：真实计数 / 0 不显示 / 标题胶囊 ---
   chk('段落数', $$('.para').length, 190);
   chk('有评段气泡数', $$('.para-bubble').length, 170);
