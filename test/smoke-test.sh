@@ -584,31 +584,58 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
   chk('更多菜单4项', $('#cmMoreWrap').querySelectorAll('.cm-menu-item').length, 4);
   chk('更多菜单第1项文案', $('#cmMoreWrap').querySelectorAll('.cm-menu-item')[0].textContent, '精选评论设置');
   chk('更多菜单第4项文案', $('#cmMoreWrap').querySelectorAll('.cm-menu-item')[3].textContent, '禁言名单');
-  // 菜单可点击性修复：hover 触发后 wrap 有 .open class、popover 可见且 pointer-events:auto
-  var filterWrap2 = $('#cmFilterWrap');
-  filterWrap2.dispatchEvent(new MouseEvent('mouseenter', {bubbles:true}));
+  // toolbar menus: click toggles .open; hover no longer opens (PRD v3 click interaction)
+  $('#cmFilterWrap').classList.remove('open');
+  $('#cmMoreWrap').classList.remove('open');
+  // hover does NOT open anymore
+  $('#cmFilterWrap').dispatchEvent(new MouseEvent('mouseenter', {bubbles:true}));
+  $('#cmMoreWrap').dispatchEvent(new MouseEvent('mouseenter', {bubbles:true}));
+  await wait(50);
+  chk('hover no-opens filter', $('#cmFilterWrap').classList.contains('open'), false);
+  chk('hover no-opens more', $('#cmMoreWrap').classList.contains('open'), false);
+  // click filter button -> opens
+  $('#cmFilterBtn').click();
   await wait(20);
-  chk('筛选wrap有open', filterWrap2.classList.contains('open'), true);
-  chk('筛选popover可见', getComputedStyle(filterWrap2.querySelector('.cm-popover')).visibility, 'visible');
-  chk('筛选popover可点击', getComputedStyle(filterWrap2.querySelector('.cm-popover')).pointerEvents, 'auto');
-  filterWrap2.querySelectorAll('.cm-menu-item')[0].click();
-  await wait(50);
-  chk('点击筛选菜单命中路由', $('#cmToast').textContent, '开发中');
-  var moreWrap2 = $('#cmMoreWrap');
-  moreWrap2.dispatchEvent(new MouseEvent('mouseenter', {bubbles:true}));
+  chk('click opens filter', $('#cmFilterWrap').classList.contains('open'), true);
+  chk('filter popover visible', getComputedStyle($('#cmFilterWrap').querySelector('.cm-popover')).visibility, 'visible');
+  chk('filter popover clickable', getComputedStyle($('#cmFilterWrap').querySelector('.cm-popover')).pointerEvents, 'auto');
+  // click outside -> closes
+  $('#cmList').click();
   await wait(20);
-  chk('更多wrap有open', moreWrap2.classList.contains('open'), true);
-  chk('更多popover可点击', getComputedStyle(moreWrap2.querySelector('.cm-popover')).pointerEvents, 'auto');
-  moreWrap2.querySelectorAll('.cm-menu-item')[2].click();
+  chk('outside-click closes filter', $('#cmFilterWrap').classList.contains('open'), false);
+  // click button toggle: open then click again closes
+  $('#cmFilterBtn').click();
+  await wait(20);
+  chk('filter reopens', $('#cmFilterWrap').classList.contains('open'), true);
+  $('#cmFilterBtn').click();
+  await wait(20);
+  chk('filter toggle closes', $('#cmFilterWrap').classList.contains('open'), false);
+  // click item -> toast + wrap closes
+  $('#cmFilterBtn').click();
+  await wait(20);
+  $('#cmFilterWrap').querySelectorAll('.cm-menu-item')[0].click();
   await wait(50);
-  chk('点击更多菜单命中路由', $('#cmToast').textContent, '开发中');
-  // toast：点击更多/筛选菜单项 → 「开发中」
-  $('#cmMoreWrap').querySelectorAll('.cm-menu-item')[0].click();
+  chk('filter item routed', $('#cmToast').textContent, '开发中');
+  chk('filter item closes wrap', $('#cmFilterWrap').classList.contains('open'), false);
+  // more button: same flow
+  $('#cmMoreBtn').click();
+  await wait(20);
+  chk('click opens more', $('#cmMoreWrap').classList.contains('open'), true);
+  chk('more popover clickable', getComputedStyle($('#cmMoreWrap').querySelector('.cm-popover')).pointerEvents, 'auto');
+  $('#cmMoreWrap').querySelectorAll('.cm-menu-item')[2].click();
   await wait(50);
-  chk('更多菜单点击触发toast', $('#cmToast').textContent, '开发中');
-  chk('toast显示态', $('#cmToast').getAttribute('data-open') === '1', true);
-  $('#cmFilterWrap').querySelectorAll('.cm-menu-item')[2].click();
-  chk('筛选菜单点击也触发toast', $('#cmToast').textContent, '开发中');
+  chk('more item routed', $('#cmToast').textContent, '开发中');
+  chk('more item closes wrap', $('#cmMoreWrap').classList.contains('open'), false);
+  // mutual exclusion
+  $('#cmFilterBtn').click();
+  await wait(20);
+  $('#cmMoreBtn').click();
+  await wait(20);
+  chk('open more closes filter', $('#cmFilterWrap').classList.contains('open'), false);
+  chk('more still open', $('#cmMoreWrap').classList.contains('open'), true);
+  // cleanup
+  $('#cmList').click();
+  await wait(20);
 
   // 头像菜单：hover 头像触发浮动 popover
   var av = $$('.cm-item .av')[0];

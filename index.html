@@ -282,10 +282,9 @@
   .cm-toolbar .cm-more:hover{background:var(--ink-04);color:var(--brand);}
   .cm-toolbar .cm-filter.on{background:var(--brand-weak);color:var(--brand);}
   .cm-toolbar .cm-filter svg{width:16px;height:16px;}
-  /* hover 菜单：toolbar 上的 trigger 包住按钮与 popover，无缝 hover（PRD §18）
-     popover 在 wrap 外侧下方 4px，鼠标穿越间隙时纯 CSS :hover 会掉线导致 popover 立刻隐藏且
-     pointer-events:none 让菜单项无法点击；改用 .open class + JS mouseenter/mouseleave 150ms
-     延迟，鼠标进入 wrap 或 popover 都保持打开，离开后再 150ms 才收起，给鼠标穿越间隙留出窗口。 */
+  /* toolbar 菜单：点击 trigger 切换 .open，popover 在 wrap 外侧下方 4px；点 wrap 外部关闭
+     （PRD §18 改版：原 hover 触发改为 click，避免鼠标穿越 4px 间隙导致闪烁/误触发）。
+     popover 显示完全靠 .open / :focus-within，不依赖 CSS :hover，保证 hover 不再打开菜单。 */
   .cm-menu-wrap{position:relative;display:inline-flex;align-items:center;}
   .cm-popover{
     position:absolute;top:100%;right:0;margin-top:4px;
@@ -296,7 +295,8 @@
   }
   .cm-menu-wrap.open .cm-popover,
   .cm-menu-wrap:focus-within .cm-popover{opacity:1;visibility:visible;pointer-events:auto;}
-  .cm-menu-wrap:hover .cm-popover{opacity:1;visibility:visible;}
+  /* open 态下按钮轻微视觉强调（背景轻微提亮） */
+  .cm-menu-wrap.open > button{background:rgba(20,30,41,0.04);}
   .cm-popover-floating{
     position:fixed;top:0;left:0;margin:0;width:160px;
     display:none;
@@ -2404,38 +2404,47 @@ CHAPTER_TREE.forEach(renderFolder);
     showToast('开发中');
   }
 
-  // toolbar 菜单的 hover gap 修复：wrap + popover 各自 mouseenter/mouseleave 触发同一个 .open
-  // class，离开 150ms 内回到 wrap 或 popover 即取消收起；避免 4px 间隙导致 CSS :hover 掉线。
-  function setupMenuWrapHover(wrap){
+  // toolbar 菜单：点击 trigger 切换 .open；点 wrap 外部关闭；与兄弟 wrap 互斥；
+  // 菜单项点击路由后自动关闭 wrap（复用 bindGlobalMenuEvents 里的全局 click）。
+  // （原 hover 触发已移除：hover 穿越 4px 间隙会闪烁 + 误触发）
+  function setupToolbarMenu(wrap, button){
     if(!wrap) return;
-    var timer = null;
-    function show(){
-      if(timer){ clearTimeout(timer); timer = null; }
+    function close(){ wrap.classList.remove('open'); }
+    function open(){
+      // 互斥：关闭其他已打开的 toolbar 菜单
+      var wraps = document.querySelectorAll('.cm-menu-wrap.open');
+      for(var i=0; i<wraps.length; i++){
+        if(wraps[i] !== wrap) wraps[i].classList.remove('open');
+      }
       wrap.classList.add('open');
     }
-    function scheduleHide(){
-      if(timer) clearTimeout(timer);
-      timer = setTimeout(function(){
-        timer = null;
-        wrap.classList.remove('open');
-      }, 150);
+    // 点击按钮 → 切换
+    if(button){
+      button.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        if(wrap.classList.contains('open')) close(); else open();
+      });
     }
-    wrap.addEventListener('mouseenter', show);
-    wrap.addEventListener('mouseleave', scheduleHide);
-    var popover = wrap.querySelector('.cm-popover');
-    if(popover){
-      popover.addEventListener('mouseenter', show);
-      popover.addEventListener('mouseleave', scheduleHide);
-    }
+    // wrap 内部点击不需要 stopPropagation：document handler 用 closest('.cm-menu-wrap')
+    // 判断已经在 wrap 内 → 直接 return；菜单项点击 → 进入 item 分支路由并关闭 wrap。
   }
-  setupMenuWrapHover($('#cmFilterWrap'));
-  setupMenuWrapHover($('#cmMoreWrap'));
+  setupToolbarMenu($('#cmFilterWrap'), $('#cmFilterBtn'));
+  setupToolbarMenu($('#cmMoreWrap'), $('#cmMoreBtn'));
 
-  // 事件委托：menu-item 点击 → 路由；avatar mouseover → 浮动 popover
+  // 事件委托：menu-item 点击 → 路由 + 关闭父 wrap；avatar mouseover → 浮动 popover
   function bindGlobalMenuEvents(){
     document.addEventListener('click', function(ev){
       var item = ev.target.closest && ev.target.closest('.cm-menu-item');
-      if(item) handleMenuAction(item.getAttribute('data-action'), ev);
+      if(item){
+        handleMenuAction(item.getAttribute('data-action'), ev);
+        // toolbar 菜单项点击后关闭对应 wrap（cmAvPopover 不是 .cm-menu-item 链路，无影响）
+        var w = item.closest('.cm-menu-wrap');
+        if(w) w.classList.remove('open');
+        return;
+      }
+      // 点 toolbar 菜单 wrap 外部（wrap 的 click 已 stopPropagation）→ 关闭所有 toolbar 菜单
+      if(ev.target.closest && ev.target.closest('.cm-menu-wrap')) return;
+      document.querySelectorAll('.cm-menu-wrap.open').forEach(function(w){ w.classList.remove('open'); });
     });
     document.addEventListener('mouseover', function(ev){
       var av = ev.target.closest && ev.target.closest('.cm-item .av, .cm-reply-item .av');
