@@ -427,6 +427,9 @@
   .cm-drawer.parasec .cm-item .av{flex:0 0 28px;width:28px;height:28px;font-size:5px;}
   .cm-drawer.parasec .cm-item .body{padding-top:1px;}
   .cm-drawer.parasec .cm-item .nm-row{height:24px;margin-bottom:4px;}
+  /* 用户身份徽章（盟主 SVG：39x24，紧贴 nickname 右侧，垂直居中） */
+  .cm-user-badge{display:inline-flex;align-items:center;height:18px;margin-left:6px;vertical-align:middle;}
+  .cm-user-badge svg{display:block;width:39px;height:18px;}
   .cm-drawer.parasec .cm-item .nm{font-size:14px;line-height:22px;color:#808080;font-weight:500;}
   .cm-drawer.parasec .cm-item .lv{height:16px;padding:0 5px;border-radius:4px;font-size:10px;line-height:16px;}
   .cm-drawer.parasec .cm-item .content{font-size:14px;line-height:20px;color:#191919;}
@@ -1042,6 +1045,9 @@ CHAPTER_TREE.forEach(renderFolder);
   var aiSummaryExpanded = false;
   // 进入单对象视图前的聚合视图滚动位置；返回全部评论时恢复
   var savedAllCommentsScrollTop = 0;
+  // 用户身份徽章 SVG（Figma 盟主样式）。CSV 无用户身份字段，MVP 阶段为 guid 尾号 56 的用户 fake 一个盟主徽章
+  // （PRD §9.2：身份徽章）。SVG 内联避免外部资源依赖。
+  var USER_BADGE_SVG = '<svg width="39" height="24" viewBox="0 0 39 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="盟主"><title>盟主</title><path d="M8 5H35.7781C37.5191 5 38.8945 6.47714 38.7704 8.21374L38.199 16.2137C38.0869 17.7837 36.7806 19 35.2066 19H8V5Z" fill="url(#paint0_linear_101_2278)"/><path d="M17.9729 15.1751L18.1903 12.791H25.6153L25.3979 15.1751H25.7759L25.6909 16.1073H17.4919L17.5769 15.1751H17.9729ZM24.0918 12.5221C24.2669 12.3787 24.3954 12.2204 24.4772 12.0471C24.559 11.8738 24.6173 11.6946 24.6522 11.5093H23.0412C22.966 11.9396 22.8572 12.2772 22.7148 12.5221H21.5448C21.6288 12.3907 21.7025 12.2413 21.7657 12.074C21.8295 11.9007 21.8819 11.7215 21.9227 11.5362C21.9636 11.351 21.9955 11.1658 22.0184 10.9805C22.0473 10.7953 22.0694 10.619 22.0846 10.4517L22.2971 8.12139H26.0681L25.7952 11.115C25.7597 11.5034 25.7085 11.8021 25.6414 12.0113C25.5804 12.2204 25.4988 12.3907 25.3968 12.5221H24.0918ZM21.3943 12.4952H18.1723L18.5687 8.14828H21.7907L21.3943 12.4952ZM21.1679 15.1751H22.1939L22.3263 13.7232H21.3003L21.1679 15.1751ZM19.0799 15.1751H20.0879L20.2203 13.7232H19.2123L19.0799 15.1751ZM23.4153 13.7232L23.2829 15.1751H24.2819L24.4143 13.7232H23.4153ZM20.4214 11.7155L20.5154 10.6848H19.4084L19.3144 11.7155H20.4214ZM19.4778 9.92292H20.5848L20.6747 8.93701H19.5677L19.4778 9.92292ZM23.2611 9.4927H24.8451L24.899 8.90116H23.315L23.2611 9.4927ZM23.1426 10.7923H24.7266L24.7797 10.2097H23.1957L23.1736 10.4517L23.1426 10.7923ZM30.3116 11.823L30.4881 9.88707H27.2661L27.3609 8.84738H30.4479C30.4305 8.70995 30.4043 8.56953 30.3693 8.42613C30.341 8.27675 30.3074 8.11841 30.2686 7.9511H31.7356C31.7717 8.08255 31.8066 8.22596 31.8404 8.38131C31.8748 8.53069 31.9086 8.68605 31.9419 8.84738H35.1459L35.0511 9.88707H31.8111L31.6346 11.823H34.6856L34.5916 12.8538H31.5406L31.3371 15.0855H34.7301L34.6369 16.1073H26.5459L26.6391 15.0855H30.0141L30.2176 12.8538H27.1756L27.2696 11.823H30.3116Z" fill="white"/><path d="M6.88887 4.64147C7.57643 4.24451 8.42353 4.24451 9.11109 4.64147L13.8171 7.35847C14.5046 7.75543 14.9282 8.48905 14.9282 9.28297V14.717C14.9282 15.5109 14.5046 16.2445 13.8171 16.6415L9.11109 19.3585C8.42353 19.7554 7.57643 19.7554 6.88887 19.3585L2.18289 16.6415C1.49533 16.2445 1.07178 15.5109 1.07178 14.717V9.28297C1.07178 8.48905 1.49533 7.75543 2.18289 7.35847L6.88887 4.64147Z" fill="url(#paint1_linear_101_2278)"/><path fill-rule="evenodd" clip-rule="evenodd" d="M12.9282 8.89807L8.2222 6.18107C8.08469 6.10168 7.91527 6.10168 7.77776 6.18107L3.07178 8.89807C2.93427 8.97746 2.84956 9.12419 2.84956 9.28297V14.717C2.84956 14.8758 2.93427 15.0225 3.07178 15.1019L7.77776 17.8189C7.91527 17.8983 8.08469 17.8983 8.2222 17.8189L12.9282 15.1019C13.0657 15.0225 13.1504 14.8758 13.1504 14.717V9.28297C13.1504 9.12419 13.0657 8.97746 12.9282 8.89807ZM9.11109 4.64147C8.42353 4.24451 7.57643 4.24451 6.88887 4.64147L2.18289 7.35847C1.49533 7.75543 1.07178 8.48905 1.07178 9.28297V14.717C1.07178 15.5109 1.49533 16.2445 2.18289 16.6415L6.88887 19.3585C7.57643 19.7554 8.42353 19.7554 9.11109 19.3585L13.8171 16.6415C14.5046 16.2445 14.9282 15.5109 14.9282 14.717V9.28297C14.9282 8.48905 14.5046 7.75543 13.8171 7.35847L9.11109 4.64147Z" fill="url(#paint2_linear_101_2278)"/><path fill-rule="evenodd" clip-rule="evenodd" d="M13.3726 8.12827L8.66665 5.41127C8.25411 5.17309 7.74585 5.17309 7.33331 5.41127L2.62733 8.12827C2.2148 8.36645 1.96067 8.80662 1.96067 9.28297V14.717C1.96067 15.1933 2.2148 15.6335 2.62733 15.8717L7.33331 18.5887C7.74585 18.8268 8.25411 18.8268 8.66665 18.5887L13.3726 15.8717C13.7852 15.6335 14.0393 15.1933 14.0393 14.717V9.28297C14.0393 8.80662 13.7852 8.36645 13.3726 8.12827ZM9.11109 4.64147C8.42353 4.24451 7.57643 4.24451 6.88887 4.64147L2.18289 7.35847C1.49533 7.75543 1.07178 8.48905 1.07178 9.28297V14.717C1.07178 15.5109 1.49533 16.2445 2.18289 16.6415L6.88887 19.3585C7.57643 19.7554 8.42353 19.7554 9.11109 19.3585L13.8171 16.6415C14.5046 16.2445 14.9282 15.5109 14.9282 14.717V9.28297C14.9282 8.48905 14.5046 7.75543 13.8171 7.35847L9.11109 4.64147Z" fill="url(#paint3_linear_101_2278)"/><path d="M7.63576 8.07629C7.81269 7.82353 8.18703 7.82353 8.36396 8.07629L10.9326 11.7457C11.0397 11.8987 11.0397 12.1024 10.9326 12.2555L8.36396 15.9249C8.18703 16.1776 7.81269 16.1776 7.63576 15.9249L5.06716 12.2555C4.96004 12.1024 4.96004 11.8987 5.06716 11.7457L7.63576 8.07629Z" fill="url(#paint4_linear_101_2278)"/><path d="M7.63576 8.07629C7.81269 7.82353 8.18703 7.82353 8.36396 8.07629L10.9326 11.7457C11.0397 11.8987 11.0397 12.1024 10.9326 12.2555L8.36396 15.9249C8.18703 16.1776 7.81269 16.1776 7.63576 15.9249L5.06716 12.2555C4.96004 12.1024 4.96004 11.8987 5.06716 11.7457L7.63576 8.07629Z" fill="url(#paint5_linear_101_2278)"/><defs><linearGradient id="paint0_linear_101_2278" x1="6" y1="19" x2="45.9441" y2="19" gradientUnits="userSpaceOnUse"><stop stop-color="#FF7A49"/><stop offset="0.557896" stop-color="#FF743F"/><stop offset="1" stop-color="#FFAF37"/></linearGradient><linearGradient id="paint1_linear_101_2278" x1="1" y1="4.34" x2="15" y2="19.66" gradientUnits="userSpaceOnUse"><stop stop-color="#FF8D61"/><stop offset="1" stop-color="#F97745"/></linearGradient><linearGradient id="paint2_linear_101_2278" x1="1" y1="4.34" x2="15" y2="19.66" gradientUnits="userSpaceOnUse"><stop stop-color="#FFB291"/><stop offset="1" stop-color="#FFEFB7"/></linearGradient><linearGradient id="paint3_linear_101_2278" x1="1" y1="0.5" x2="15" y2="20" gradientUnits="userSpaceOnUse"><stop stop-color="#FFF6D5"/><stop offset="1" stop-color="#FFA27A"/></linearGradient><linearGradient id="paint4_linear_101_2278" x1="4" y1="7.56" x2="12" y2="16.45" gradientUnits="userSpaceOnUse"><stop stop-color="#FFB291"/><stop offset="1" stop-color="#FFEFB7"/></linearGradient><linearGradient id="paint5_linear_101_2278" x1="4.88" y1="12" x2="11.11" y2="12" gradientUnits="userSpaceOnUse"><stop stop-color="#FFA772" stop-opacity="0"/><stop offset="0.498047" stop-color="#FFA772" stop-opacity="0"/><stop offset="0.498884" stop-color="#FFA772"/><stop offset="1" stop-color="#FFA772" stop-opacity="0"/></linearGradient></defs></svg>';
   var COMMENT_TAGS = [{name:'全部', count:0, kind:'all'}];
   // 标签展示遵循截图中的 Codex 版本；筛选仍使用 COMMENT_DATA 中的原始标签名。
   var COMMENT_TAG_DISPLAY = {
@@ -1404,7 +1410,7 @@ CHAPTER_TREE.forEach(renderFolder);
     return '<div class="cm-item">'
       + '<span class="av" style="background:'+avC+'">'+escapeHtml(avatarInitial(name))+'</span>'
       + '<div class="body">'
-      +   '<div class="nm-row"><span class="nm">'+escapeHtml(name)+'</span></div>'
+      +   '<div class="nm-row"><span class="nm">'+escapeHtml(name)+'</span>'+(String(r.userGuid||'').endsWith('56')?'<span class="cm-user-badge">'+USER_BADGE_SVG+'</span>':'')+'</div>'
       +   '<div class="content">'+commentBodyHtml(r)+'</div>'
       +   commentMetaRow(r)
       + '</div></div>';
@@ -1428,7 +1434,7 @@ CHAPTER_TREE.forEach(renderFolder);
       + quoteHtml
       + '<span class="av" style="background:'+avColor+'">'+escapeHtml(avatarInitial(name))+'</span>'
       + '<div class="body">'
-      +   '<div class="nm-row"><span class="nm">'+escapeHtml(name)+'</span></div>'
+      +   '<div class="nm-row"><span class="nm">'+escapeHtml(name)+'</span>'+(String(c.userGuid||'').endsWith('56')?'<span class="cm-user-badge">'+USER_BADGE_SVG+'</span>':'')+'</div>'
       +   '<div class="content">'+commentBodyHtml(c)+'</div>'
       +   commentMetaRow(c)
       +   repBtn
@@ -1932,7 +1938,6 @@ CHAPTER_TREE.forEach(renderFolder);
     init();
   }
 })();
-</script>
 </script>
 </body>
 </html>

@@ -142,6 +142,11 @@ JS=$(cat <<'JSEOF'
   chk('点赞无赞字', fc.querySelector('.cm-meta-like b'), null);
   chk('点赞数字在按钮内', (fc.querySelector('.cm-meta-like .cm-meta-like-count')||{parentElement:{className:''}}).parentElement.className.indexOf('cm-meta-like') >= 0, true);
   chk('评论底部含更多', !!fc.querySelector('.cm-meta-more svg'), true);
+  // 盟主徽章：guid 尾号 56 的用户在 nickname 后渲染盟主 SVG（PRD §9.2 MVP mock 数据）
+  var badges = $$('.cm-user-badge');
+  chk('有盟主徽章用户', badges.length >= 10, true);
+  chk('盟主徽章含svg', badges[0].querySelector('svg[aria-label="盟主"]') !== null, true);
+  chk('盟主徽章尺寸', getComputedStyle(badges[0].querySelector('svg')).width, '39px');
   chk('更多为Figma三点', fc.querySelector('.cm-meta-more svg').getAttribute('viewBox'), '0 0 20 20');
   chk('评论按钮为Figma评论', !!fc.querySelector('.cm-meta-comment svg path'), true);
   chk('点赞按钮为Figma拇指', !!fc.querySelector('.cm-meta-like svg path'), true);
