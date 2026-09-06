@@ -298,7 +298,7 @@
   .cm-menu-wrap:focus-within .cm-popover{opacity:1;visibility:visible;pointer-events:auto;}
   .cm-menu-wrap:hover .cm-popover{opacity:1;visibility:visible;}
   .cm-popover-floating{
-    position:fixed;top:0;left:0;margin:0;min-width:160px;
+    position:fixed;top:0;left:0;margin:0;min-width:140px;
     display:none;
   }
   .cm-popover-floating[data-open="1"]{display:block;opacity:1;visibility:visible;pointer-events:auto;}
@@ -724,8 +724,8 @@
     <div class="win-dots"><i class="r"></i><i class="y"></i><i class="g"></i></div>
     <div class="tabs">
       <div class="tab"><span class="ti">台</span><span class="tx">工作台</span></div>
-      <div class="tab active doc"><span class="ti">书</span><span class="tx">诡秘之主</span><span class="close">×</span></div>
-      <div class="tab doc"><span class="ti">书</span><span class="tx">诡秘之主小说</span><span class="close">×</span></div>
+      <div class="tab active doc"><span class="ti">书</span><span class="tx">没钱修什么仙</span><span class="close">×</span></div>
+      <div class="tab doc"><span class="ti">书</span><span class="tx">没钱修什么仙小说</span><span class="close">×</span></div>
     </div>
     <div class="titlebar-right"><span id="cloudSave">已保存到云端</span></div>
     <div class="win-ctrl"><span>—</span><span>▢</span><span class="close-w">×</span></div>
@@ -2260,9 +2260,9 @@ CHAPTER_TREE.forEach(renderFolder);
   }
 
   // 此读者所有评论视图（PRD §19 / Figma 110-9333）：
-  //   - 顶部 frame (Figma 110-9372)：8px 16px padding + 「用户昵称的所有评论」+ 返回全部评论 pill；
-  //   - Section 1：此读者的 1 级评论，每条带评论对象引用行 + 楼中楼默认收起；
-  //   - Section 2：此读者的 2 级回复，按父评论聚合，每组展示「引用 + 父评论 + 此读者的回复」。
+  //   - 顶部 frame (Figma 110-9372)：8px 16px padding + 「用户 <guid> 的所有评论」+ 返回全部评论 pill；
+  //   - 1 级评论列表：每条前置引用行 + 楼中楼收起；
+  //   - 2 级回复：按父评论聚合，每组展示「引用 + 父评论 + 此读者的回复」(用普通 reply 样式)。
   function renderUserComments(guid){
     var list = $('#cmList');
     var context = $('#cmContext');
@@ -2273,13 +2273,13 @@ CHAPTER_TREE.forEach(renderFolder);
     currentParagraphIdx = null;
     var allComments = COMMENT_DATA.comments || [];
 
-    // Section 1 数据：此读者作为 1 级评论作者的全部评论
+    // 1 级评论
     var own1 = allComments.filter(function(c){
       return String(c.userGuid||'') === String(guid);
     });
     own1 = sortComments(own1);
 
-    // Section 2 数据：此读者作为 2 级回复作者，按父评论聚合
+    // 2 级回复按父评论聚合
     var own2ByParent = {};
     allComments.forEach(function(c){
       if(!c.replies) return;
@@ -2301,10 +2301,10 @@ CHAPTER_TREE.forEach(renderFolder);
     var totalCount = own1.length + replyTotal;
 
     setCommentHeader('评论', totalCount + '条');
-    // Figma 110-9372 引用 frame
+    // Figma 110-9372 引用 frame：用真实 guid 替换「用户昵称」占位
     var pTag = '<div class="cm-section-module single">'
       + '<div class="cm-quote">'
-      +   '<span class="cm-quote-text">用户昵称的所有评论</span>'
+      +   '<span class="cm-quote-text">用户 '+escapeHtml(guid)+' 的所有评论</span>'
       +   '<button class="cm-quote-back" type="button">'
       +     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 10l-4 4 4 4"/><path d="M5 14h9a5 5 0 0 0 0-10h-2"/></svg>'
       +     '返回全部评论'
@@ -2313,43 +2313,36 @@ CHAPTER_TREE.forEach(renderFolder);
     context.innerHTML = pTag;
 
     var idx = ensureCommentIndex();
-    function quoteFor(targetId, totalCount){
+    function quoteFor(targetId){
       var t = idx.targetMap[String(targetId)];
-      var cnt = t ? t.totalCount : totalCount;
+      var cnt = t ? t.totalCount : 0;
       return renderFullReference(targetId, getTargetText(targetId), cnt);
     }
 
-    // Section 1：1 级评论（楼中楼默认收起，避免与 Section 2 内容混淆）
-    var s1 = '<div class="cm-section-head">此读者的 1 级评论（' + own1.length + '）</div>';
-    s1 += own1.length
+    // 1 级评论（楼中楼收起）
+    var s1 = own1.length
       ? own1.map(function(c, i){
-          return quoteFor(c.targetId, c.totalCount) + renderParagraphCommentItem(c, i, false);
+          return quoteFor(c.targetId) + renderParagraphCommentItem(c, i, false);
         }).join('')
       : '<div class="cm-empty">该读者暂无 1 级评论</div>';
 
-    // Section 2：2 级回复（按父评论聚合：引用 + 父评论 + 此读者的回复）
-    var s2 = '<div class="cm-section-head">此读者的 2 级回复（' + replyTotal + '）</div>';
-    if(own2List.length){
-      s2 += own2List.map(function(item){
-        var c = item.parent;
-        var name = commentUser(c);
-        var avColor = avatarColor(c.userGuid || name);
-        var parentBlock = '<div class="cm-item" data-len="'+commentLength(c)+'">'
-          + '<span class="av" data-guid="'+escapeHtml(String(c.userGuid||''))+'" style="background:'+avColor+'">'+escapeHtml(avatarInitial(name))+'</span>'
-          + '<div class="body">'
-          +   '<div class="nm-row"><span class="nm">'+escapeHtml(name)+'</span>'+(String(c.userGuid||'').endsWith('56')?'<span class="cm-user-badge">'+USER_BADGE_SVG+'</span>':'')+'</div>'
-          +   '<div class="content">'+commentBodyHtml(c)+'</div>'
-          +   commentMetaRow(c)
-          + '</div></div>';
-        var repliesBlock = '<div class="cm-my-replies-block">'
-          + '<div class="cm-my-replies-label">此读者的回复</div>'
-          + item.replies.map(function(r){ return renderReplyItem(r); }).join('')
-          + '</div>';
-        return quoteFor(c.targetId, 0) + parentBlock + repliesBlock;
-      }).join('');
-    } else {
-      s2 += '<div class="cm-empty">该读者暂无 2 级回复</div>';
-    }
+    // 2 级回复（按父评论聚合）
+    var s2 = own2List.length
+      ? own2List.map(function(item){
+          var c = item.parent;
+          var name = commentUser(c);
+          var avColor = avatarColor(c.userGuid || name);
+          var parentBlock = '<div class="cm-item" data-len="'+commentLength(c)+'">'
+            + '<span class="av" data-guid="'+escapeHtml(String(c.userGuid||''))+'" style="background:'+avColor+'">'+escapeHtml(avatarInitial(name))+'</span>'
+            + '<div class="body">'
+            +   '<div class="nm-row"><span class="nm">'+escapeHtml(name)+'</span>'+(String(c.userGuid||'').endsWith('56')?'<span class="cm-user-badge">'+USER_BADGE_SVG+'</span>':'')+'</div>'
+            +   '<div class="content">'+commentBodyHtml(c)+'</div>'
+            +   commentMetaRow(c)
+            + '</div></div>';
+          var repliesBlock = item.replies.map(function(r){ return renderReplyItem(r); }).join('');
+          return quoteFor(c.targetId) + parentBlock + repliesBlock;
+        }).join('')
+      : '<div class="cm-empty">该读者暂无 2 级回复</div>';
 
     list.innerHTML = s1 + s2 + '<div class="cm-empty">-到底了-</div>';
     var back = $('.cm-quote-back', context);

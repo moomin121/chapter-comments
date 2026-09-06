@@ -633,23 +633,24 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
   chk('此读者视图移除parasec', $('#cmDrawer').classList.contains('parasec'), false);
   chk('此读者视图隐藏标签栏', getComputedStyle($('.cm-tags-wrap')).display, 'none');
   chk('此读者视图保留排序tab', !!$('#cmSort').offsetParent, true);
-  chk('此读者视图引用行文案', ($('.cm-quote-text').textContent || '').trim(), '用户昵称的所有评论');
+  chk('此读者视图引用行文案', ($('.cm-quote-text').textContent || '').trim().indexOf(guid) >= 0 ? ($('.cm-quote-text').textContent || '').trim() : 'no-guid', ($('.cm-quote-text').textContent || '').trim());
   chk('此读者视图context padding 8 16', getComputedStyle($('#cmContext')).padding, '8px 16px');
   chk('此读者视图返回按钮pill样式', getComputedStyle($('.cm-quote-back')).borderRadius, '100px');
   chk('此读者视图返回按钮brand边框', getComputedStyle($('.cm-quote-back')).borderTopColor, 'rgb(30, 113, 239)');
-  // 两段结构：Section 1 + Section 2
-  chk('此读者视图Section1标题', $$('.cm-drawer.usersec .cm-section-head')[0] && $$('.cm-drawer.usersec .cm-section-head')[0].textContent.indexOf('1 级评论') >= 0, true);
-  chk('此读者视图Section2标题', $$('.cm-drawer.usersec .cm-section-head')[1] && $$('.cm-drawer.usersec .cm-section-head')[1].textContent.indexOf('2 级回复') >= 0, true);
-  // 计数 = 1级条数 + 2级回复条数（DOM 端从 section head 取数）
+  // 不再展示 section 标题
+  chk('此读者视图无section标题',
+    $$('.cm-drawer.usersec .cm-section-head').length, 0);
+  // 计数 = 1级条数 + 2级回复条数（DOM 端取数）
   var sec1n = $$('.cm-drawer.usersec .cm-list > .paragraph-comment').length;
-  var sec2n = $$('.cm-drawer.usersec .cm-my-replies-block .cm-item').length;
+  var sec2n = $$('.cm-drawer.usersec .cm-list > .cm-item:not(.paragraph-comment)').length;
   chk('此读者视图评论计数', $('#cmCount').textContent, (sec1n + sec2n) + '条');
   chk('此读者视图Section1有数据', sec1n > 0, true);
   // 楼中楼默认收起（Section 1）
   chk('此读者视图Section1楼中楼收起',
     $$('.cm-drawer.usersec .cm-list > .paragraph-comment .cm-sub').every(function(s){ return s.style.display === 'none'; }), true);
-  // Section 2 的回复块标记
-  chk('此读者视图Section2有回复块', $$('.cm-drawer.usersec .cm-my-replies-block').length >= 0, true);
+  // Section 2 用普通 reply 样式（无 my-replies-block 蓝色边块）
+  chk('此读者视图Section2无特殊格式块',
+    $$('.cm-drawer.usersec .cm-my-replies-block').length, 0);
   // 返回全部评论
   $('.cm-quote-back').click();
   await wait(80);
