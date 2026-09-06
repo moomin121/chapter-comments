@@ -512,7 +512,7 @@
     -webkit-box-orient:vertical;overflow:hidden;
   }
   .cm-item .body{flex:1;min-width:0;}
-  .cm-item .nm-row{display:flex;align-items:center;gap:4px;margin-bottom:4px;}
+  .cm-item .nm-row{display:flex;align-items:center;gap:0;margin-bottom:4px;}
   .cm-item .nm{font-size:13px;color:var(--ink-92);font-weight:500;}
   .cm-item .lv{font-size:10.5px;color:#fff;background:#FF7A45;padding:1px 6px;border-radius:4px;font-weight:500;}
   .cm-item .lv.lv-1{background:#5C8AFF;}
@@ -1455,10 +1455,14 @@ CHAPTER_TREE.forEach(renderFolder);
       + '<p>高互动段落集中在开篇面试压力、绝育/变性入学条件、魂修特长生进万魂幡、贫困生器官抵押贷款、睡眠压榨、张羽和母亲的债务线。对作者来说，这些都是读者已经记住的卖点和传播点。</p>'
       + '<p>情绪结构偏正面：大量评论是笑、绷不住、对味、震撼、抽象；明确差评/弃读占比很低。少量争议主要围绕“现实影射是否过度”“宗门垄断/政府军队设定是否合理”“七十万债务是否够压迫”等设定逻辑。</p>'
       + '<p>读者在评论区主动二创能力很强，尤其会把原文句式改写成作者、学校、网贷、万魂幡口号。这类评论适合加精，因为它们能反过来强化作品梗点。</p>';
-    // 默认收起：正文固定 3 行（Figma 88-9492）；展开全部后自然高度且按钮消失（Figma 97-14607）
-    var toggle = aiSummaryExpanded ? '' : '<button class="cm-ai-expand" type="button" title="展开全部内容">展开全部'
+    // AI 总结卡：默认收起显示【展开全部 ⌄】，展开后显示【收起全文 ⌃】，样式同 Figma 92-13358
+    var expandLabel = aiSummaryExpanded ? '收起全文' : '展开全部';
+    var chevronD = aiSummaryExpanded
+      ? 'M1.06595 7.25736C0.755577 6.93384 0.755577 6.40931 1.06595 6.08579L4.15686 2.86396C4.62242 2.37868 5.37725 2.37868 5.84281 2.86396L8.93372 6.08579C9.2441 6.40931 9.2441 6.93384 8.93372 7.25736C8.62335 7.58088 8.12013 7.58088 7.80976 7.25736L4.99984 4.32843L2.18992 7.25736C1.87954 7.58088 1.37633 7.58088 1.06595 7.25736Z'
+      : 'M1.06595 2.74264C0.755577 3.06616 0.755577 3.59069 1.06595 3.91421L4.15686 7.13604C4.62242 7.62132 5.37725 7.62132 5.84281 7.13604L8.93372 3.91421C9.2441 3.59069 9.2441 3.06616 8.93372 2.74264C8.62335 2.41912 8.12013 2.41912 7.80976 2.74264L4.99984 5.67157L2.18992 2.74264C1.87954 2.41912 1.37633 2.41912 1.06595 2.74264Z';
+    var toggle = '<button class="cm-ai-expand" type="button" title="'+expandLabel+'">'+expandLabel
       + '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">'
-      + '<path d="M1.06595 2.74264C0.755577 3.06616 0.755577 3.59069 1.06595 3.91421L4.15686 7.13604C4.62242 7.62132 5.37725 7.62132 5.84281 7.13604L8.93372 3.91421C9.2441 3.59069 9.2441 3.06616 8.93372 2.74264C8.62335 2.41912 8.12013 2.41912 7.80976 2.74264L4.99984 5.67157L2.18992 2.74264C1.87954 2.41912 1.37633 2.41912 1.06595 2.74264Z" fill="#141E29" fill-opacity="0.34"/>'
+      + '<path d="'+chevronD+'" fill="#141E29" fill-opacity="0.34"/>'
       + '</svg></button>';
     return '<section class="cm-ai-card">'
       + '<div class="cm-ai-head">'
@@ -1758,12 +1762,12 @@ CHAPTER_TREE.forEach(renderFolder);
     bindTargetAnchors();
     bindAiSummaryExpand();
   }
-  /* AI 总结卡【展开全部】：点击后展开完整内容，按钮消失（Figma 97-14607 展开态无收起按钮） */
+  /* AI 总结卡【展开全部/收起全文】切换按钮（Figma 92-13358） */
   function bindAiSummaryExpand(){
     var btn = $('.cm-ai-expand');
     if(!btn) return;
     btn.addEventListener('click', function(){
-      aiSummaryExpanded = true;
+      aiSummaryExpanded = !aiSummaryExpanded;
       renderAllComments();
     });
   }

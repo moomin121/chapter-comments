@@ -98,8 +98,13 @@ JS=$(cat <<'JSEOF'
   chk('展开按钮字重500', expandCs.fontWeight, '500');
   $('.cm-ai-expand').click();
   chk('AI卡展开后无裁切', !!$('.cm-ai-body.clamped'), false);
-  chk('AI卡展开后无按钮', !!$('.cm-ai-expand'), false);
+  // 展开后底部显示【收起全文】按钮（用户补充：与展开按钮同样式）
+  chk('AI卡展开后有按钮', !!$('.cm-ai-expand'), true);
+  chk('AI卡展开后按钮为收起', $('.cm-ai-expand').textContent.trim().indexOf('收起') >= 0, true);
   chk('AI卡展开高度超3行', $('.cm-ai-body').getBoundingClientRect().height > 60, true);
+  // 点击收起按钮可恢复
+  $('.cm-ai-expand').click();
+  chk('AI卡收起后按钮为展开', $('.cm-ai-expand').textContent.trim().indexOf('展开') >= 0, true);
   chk('聚合块总数(170段+1章评+1未匹配)', $$('.cm-full-module').length, 172);
   var modules = $$('.cm-full-module');
   chk('章节标题评论存在', !!$('.cm-full-module[data-target-id="-1"]'), true);
@@ -150,8 +155,8 @@ JS=$(cat <<'JSEOF'
   // 昵称-徽章间距 4px（Figma 105-9087 UserInfo/Primary gap=4px，由 nm-row flex gap 承担）
   var badgeRow = badges[0].closest('.nm-row');
   var nmEl = badgeRow.querySelector('.nm');
-  chk('昵称徽章间距4px', getComputedStyle(badgeRow).gap, '4px');
-  chk('昵称徽章实际间距', Math.round(badges[0].getBoundingClientRect().left - nmEl.getBoundingClientRect().right), 4);
+  chk('昵称徽章间距0px', getComputedStyle(badgeRow).gap, '0px');
+  chk('昵称徽章实际间距', Math.round(badges[0].getBoundingClientRect().left - nmEl.getBoundingClientRect().right), 0);
   // 昵称宽度 hug（Figma 105-9089：TEXT sizing horizontal=hug，无 max-width 约束）
   chk('昵称宽度hug', getComputedStyle(nmEl).maxWidth, 'none');
   chk('更多为Figma三点', fc.querySelector('.cm-meta-more svg').getAttribute('viewBox'), '0 0 20 20');
