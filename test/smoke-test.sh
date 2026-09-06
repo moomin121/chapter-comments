@@ -223,6 +223,12 @@ JS=$(cat <<'JSEOF'
   // 关闭便签
   note2.querySelector('.cm-note-close').click();
   chk('关闭便签移除', $$('.cm-note').length, 1);
+  // 便签内容可编辑（PRD §17.2.6）：contenteditable + 点击聚焦 + 可修改
+  chk('便签内容区可编辑', noteEl.querySelector('.cm-note-body').getAttribute('contenteditable'), 'true');
+  noteEl.querySelector('.cm-note-body').focus();
+  chk('点击正文聚焦编辑', document.activeElement === noteEl.querySelector('.cm-note-body'), true);
+  noteEl.querySelector('.cm-note-body').textContent = '编辑后的内容';
+  chk('编辑内容生效', noteEl.querySelector('.cm-note-body').textContent, '编辑后的内容');
   await wait(1600);   // 等 tooltip「已保存」自动消失
   chk('tooltip自动消失', tip.style.display === 'none', true);
   // 盟主徽章：guid 尾号 56 的用户在 nickname 后渲染盟主 SVG（PRD §9.2 MVP mock 数据）

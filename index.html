@@ -475,8 +475,9 @@
   }
   .cm-note-head{
     position:relative;flex:0 0 36px;display:flex;align-items:center;
-    justify-content:flex-end;padding:4px 8px;
+    justify-content:flex-end;padding:4px 8px;cursor:grab;
   }
+  .cm-note-head:active{cursor:grabbing;}
   .cm-note-new, .cm-note-close{
     display:inline-flex;align-items:center;justify-content:center;
     width:28px;height:28px;border:0;border-radius:4px;background:transparent;
@@ -494,8 +495,9 @@
   .cm-note-body{
     flex:1;min-height:0;overflow-y:auto;padding:0 12px 8px;
     font-size:14px;line-height:25px;color:rgba(20,30,41,.92);
-    word-break:break-word;user-select:text;
+    word-break:break-word;user-select:text;cursor:text;
   }
+  .cm-note-body:focus{outline:none;background:rgba(255,255,255,.35);}
   .cm-more-replies{
     margin-top:8px;border:0;background:transparent;color:#808080;font-size:14px;line-height:22px;
     padding:0;cursor:pointer;font-weight:500;
@@ -1600,7 +1602,8 @@ CHAPTER_TREE.forEach(renderFolder);
     + '<path d="M5 3L8 6L11 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
     + '<path d="M5 13L8 10L11 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
     + '</svg>';
-  /* 创建便签 DOM。MVP 演示版标题栏只有右上角关闭按钮（PRD §17.2） */
+  /* 创建便签 DOM。MVP 演示版标题栏只有右上角关闭按钮（PRD §17.2）；
+     内容区 contenteditable 支持直接编辑（PRD §17.2.6） */
   function createNoteDom(contentHtml){
     var note = document.createElement('div');
     note.className = 'cm-note';
@@ -1611,27 +1614,30 @@ CHAPTER_TREE.forEach(renderFolder);
     note.innerHTML = '<div class="cm-note-head">'
       + '<button class="cm-note-close" type="button" title="关闭便签">'+ICON_CLOSE_L+'</button>'
       + '</div>'
-      + '<div class="cm-note-body">'+(contentHtml || '')+'</div>';
+      + '<div class="cm-note-body" contenteditable="true" spellcheck="false">'+(contentHtml || '')+'</div>';
     noteCount++;
     bindNoteEvents(note);
     document.body.appendChild(note);
     return note;
   }
   function bindNoteEvents(note){
-    // 点击便签任意位置（排除关闭按钮）→ 置顶 + 拖动（PRD §17.3.3 / §17.4）
-    var drag = null;
-    note.addEventListener('pointerdown', function(e){
-      // 关闭按钮：单独处理（不冒泡到拖动）；其它按钮（未来扩展）也排除
-      if(e.target.closest('.cm-note-close')) return;
+    // 点击便签任意位置 → 置顶（PRD §17.3.3）；不 preventDefault 保证内容区可编辑定位光标
+    note.addEventListener('pointerdown', function(){
       note.style.zIndex = ++noteZ;
+    });
+    // 拖动：从标题栏发起（内容区留给编辑，PRD §17.4）
+    var head = note.querySelector('.cm-note-head');
+    var drag = null;
+    head.addEventListener('pointerdown', function(e){
+      if(e.target.closest('.cm-note-close')) return;
       drag = { x: e.clientX, y: e.clientY,
                left: parseFloat(note.style.left) || 0,
                top: parseFloat(note.style.top) || 0,
                moved: 0 };
-      note.setPointerCapture && note.setPointerCapture(e.pointerId);
+      head.setPointerCapture && head.setPointerCapture(e.pointerId);
       e.preventDefault();
     });
-    note.addEventListener('pointermove', function(e){
+    head.addEventListener('pointermove', function(e){
       if(!drag) return;
       var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
       drag.moved = Math.max(drag.moved, Math.abs(dx) + Math.abs(dy));
@@ -1642,22 +1648,22 @@ CHAPTER_TREE.forEach(renderFolder);
       note.style.left = nl + 'px';
       note.style.top = nt + 'px';
     });
-    function endDrag(e){
+    function endDrag(){
       if(drag && drag.moved > 4){
-        // 拖动后抑制 click 冒泡，避免误触按钮
+        // 拖动后抑制标题栏 click 冒泡，避免误触按钮
         var suppress = function(ev){ ev.stopPropagation(); };
-        note.addEventListener('click', suppress);
+        head.addEventListener('click', suppress);
         setTimeout(function(){
-          note.removeEventListener('click', suppress);
+          head.removeEventListener('click', suppress);
           drag = null;
         }, 0);
       } else {
         drag = null;
       }
     }
-    note.addEventListener('pointerup', endDrag);
-    note.addEventListener('pointercancel', endDrag);
-    // 关闭按钮（右上角）
+    head.addEventListener('pointerup', endDrag);
+    head.addEventListener('pointercancel', endDrag);
+    // 关闭按钮
     note.querySelector('.cm-note-close').addEventListener('click', function(e){
       e.stopPropagation();
       note.remove();
