@@ -472,9 +472,8 @@
   }
   .cm-note-head{
     position:relative;flex:0 0 36px;display:flex;align-items:center;
-    justify-content:space-between;padding:4px 8px;cursor:grab;user-select:none;
+    justify-content:flex-end;padding:4px 8px;
   }
-  .cm-note-head:active{cursor:grabbing;}
   .cm-note-new, .cm-note-close{
     display:inline-flex;align-items:center;justify-content:center;
     width:28px;height:28px;border:0;border-radius:4px;background:transparent;
@@ -1589,7 +1588,7 @@ CHAPTER_TREE.forEach(renderFolder);
     + '<path d="M5 3L8 6L11 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
     + '<path d="M5 13L8 10L11 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
     + '</svg>';
-  /* 创建便签 DOM。MVP 演示版标题栏只有 drag 手柄 + close 按钮（PRD §17.2） */
+  /* 创建便签 DOM。MVP 演示版标题栏只有右上角关闭按钮（PRD §17.2） */
   function createNoteDom(contentHtml){
     var note = document.createElement('div');
     note.className = 'cm-note';
@@ -1598,7 +1597,6 @@ CHAPTER_TREE.forEach(renderFolder);
     note.style.top = off + 'px';
     note.style.zIndex = ++noteZ;
     note.innerHTML = '<div class="cm-note-head">'
-      + '<span class="cm-note-drag">'+ICON_DRAG2+'</span>'
       + '<button class="cm-note-close" type="button" title="关闭便签">'+ICON_CLOSE_L+'</button>'
       + '</div>'
       + '<div class="cm-note-body">'+(contentHtml || '')+'</div>';
@@ -1608,28 +1606,20 @@ CHAPTER_TREE.forEach(renderFolder);
     return note;
   }
   function bindNoteEvents(note){
-    // 点击任意处置顶（PRD §17.3.3）
-    note.addEventListener('pointerdown', function(){
-      note.style.zIndex = ++noteZ;
-    });
-    // 关闭按钮
-    note.querySelector('.cm-note-close').addEventListener('click', function(e){
-      e.stopPropagation();
-      note.remove();
-    });
-    // 拖动：标题栏 pointerdown（排除关闭按钮），技术方案 §5.9.4
-    var head = note.querySelector('.cm-note-head');
+    // 点击便签任意位置（排除关闭按钮）→ 置顶 + 拖动（PRD §17.3.3 / §17.4）
     var drag = null;
-    head.addEventListener('pointerdown', function(e){
+    note.addEventListener('pointerdown', function(e){
+      // 关闭按钮：单独处理（不冒泡到拖动）；其它按钮（未来扩展）也排除
       if(e.target.closest('.cm-note-close')) return;
+      note.style.zIndex = ++noteZ;
       drag = { x: e.clientX, y: e.clientY,
                left: parseFloat(note.style.left) || 0,
                top: parseFloat(note.style.top) || 0,
                moved: 0 };
-      head.setPointerCapture && head.setPointerCapture(e.pointerId);
+      note.setPointerCapture && note.setPointerCapture(e.pointerId);
       e.preventDefault();
     });
-    head.addEventListener('pointermove', function(e){
+    note.addEventListener('pointermove', function(e){
       if(!drag) return;
       var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
       drag.moved = Math.max(drag.moved, Math.abs(dx) + Math.abs(dy));
@@ -1640,21 +1630,26 @@ CHAPTER_TREE.forEach(renderFolder);
       note.style.left = nl + 'px';
       note.style.top = nt + 'px';
     });
-    function endDrag(){
+    function endDrag(e){
       if(drag && drag.moved > 4){
-        // 拖动后抑制标题栏 click 冒泡一次，避免误触按钮
+        // 拖动后抑制 click 冒泡，避免误触按钮
         var suppress = function(ev){ ev.stopPropagation(); };
-        head.addEventListener('click', suppress);
+        note.addEventListener('click', suppress);
         setTimeout(function(){
-          head.removeEventListener('click', suppress);
+          note.removeEventListener('click', suppress);
           drag = null;
         }, 0);
       } else {
         drag = null;
       }
     }
-    head.addEventListener('pointerup', endDrag);
-    head.addEventListener('pointercancel', endDrag);
+    note.addEventListener('pointerup', endDrag);
+    note.addEventListener('pointercancel', endDrag);
+    // 关闭按钮（右上角）
+    note.querySelector('.cm-note-close').addEventListener('click', function(e){
+      e.stopPropagation();
+      note.remove();
+    });
   }
   /* 按 id 查找评论（含一级/回复/未匹配对象），用于便签正文 */
   function findCommentById(cid){
@@ -1673,7 +1668,8 @@ CHAPTER_TREE.forEach(renderFolder);
     });
     return found;
   }
-  /* 点击 plus 按钮：保存 + 弹出便签（PRD §17.1.3） */
+  /* 点击 plus 按钮：保存 + 弹出便签（PRD §17.1.3）
+     内容渲染顺序（PRD §17.2.4）：正文在前 + 空行 + ——用户{guid}在…的评论 */
   function openInspirationNote(btn){
     var cid = btn.getAttribute('data-cid');
     var guid = btn.getAttribute('data-guid') || '';
@@ -1683,8 +1679,8 @@ CHAPTER_TREE.forEach(renderFolder);
     savedNoteKeys[cid] = true;
     var found = findCommentById(cid);
     var bodyHtml = found ? commentBodyHtml(found) : '';
-    var contentHtml = '用户'+escapeHtml(guid)+'在《没钱修什么仙》第1章 面试的评论<br>' + bodyHtml;
-    createNoteDom(contentHtml);
+    var signature = '<br><br>——用户'+escapeHtml(guid)+'在《没钱修什么仙》第1章 面试的评论';
+    createNoteDom(bodyHtml + signature);
   }
   /* 灵感便签按钮事件委托（技术方案 §5.9.5）：click + hover tooltip */
   function bindInspirationNoteButtons(){

@@ -168,12 +168,18 @@ JS=$(cat <<'JSEOF'
   noteBtn.click();
   chk('点击后tooltip已保存', tip.style.display === 'block' && tip.textContent === '已保存', true);
   chk('点击后出现便签', $$('.cm-note').length, 1);
-  // 便签内容与样式
+  // 便签内容与样式（PRD §17.2.4：正文在前 + 空行 + ——用户{guid}在…的评论）
   var noteEl = $('.cm-note');
   var noteCs = getComputedStyle(noteEl);
   var noteBody = noteEl.querySelector('.cm-note-body');
-  chk('便签内容含用户guid', noteBody.textContent.indexOf('用户' + noteBtn.getAttribute('data-guid') + '在《没钱修什么仙》第1章 面试的评论') >= 0, true);
-  chk('便签内容含正文', noteBody.textContent.length > noteBody.textContent.indexOf('评论') + 10, true);
+  var bodyText = noteBody.textContent;
+  var guid = noteBtn.getAttribute('data-guid');
+  var sigIdx = bodyText.indexOf('——用户' + guid);
+  chk('便签内容含破折号用户签名', sigIdx >= 0, true);
+  // 正文（评论前 30 字）出现在签名之前
+  var body30 = (fc.querySelector('.content').textContent || '').slice(0, 30);
+  var bodyIdx = bodyText.indexOf(body30);
+  chk('正文在签名之前', bodyIdx >= 0 && bodyIdx < sigIdx, true);
   chk('便签宽263', noteCs.width, '263px');
   chk('便签高227', noteCs.height, '227px');
   chk('便签黄底', noteCs.backgroundColor, 'rgb(255, 246, 186)');
@@ -198,8 +204,9 @@ JS=$(cat <<'JSEOF'
   chk('便签可拖动', after.left !== before.left || after.top !== before.top, true);
   // 便签标题栏只有 drag + close（MVP 演示版，去掉 plus-circle 新建按钮，PRD §17.2）
   chk('便签无新建按钮', !!noteEl.querySelector('.cm-note-new'), false);
-  chk('便签有拖动手柄', !!noteEl.querySelector('.cm-note-drag'), true);
+  chk('便签无拖动手柄', !!noteEl.querySelector('.cm-note-drag'), false);
   chk('便签有关闭按钮', !!noteEl.querySelector('.cm-note-close'), true);
+  chk('关闭按钮在右上角', getComputedStyle(noteEl.querySelector('.cm-note-head')).justifyContent, 'flex-end');
   // 操作栏图标（Figma 107-9285 下载的真实 SVG：16×16、fill #141E29 + fill-opacity 0.34）
   chk('操作栏图标尺寸16px', getComputedStyle($('.cm-meta-actions svg')).width, '16px');
   chk('操作栏图标fill色', $('.cm-meta-note svg path').getAttribute('fill'), '#141E29');
