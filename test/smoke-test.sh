@@ -82,9 +82,13 @@ JS=$(cat <<'JSEOF'
   // --- 字体：LXGW WenKai GB webfont 引入且真实可加载（修复线上 404 回退系统字体问题）---
   chk('WenKai字体CSS已引入', !!document.querySelector('link[href*="lxgw-wenkai-gb"]'), true);
   chk('标题字体族为WenKaiGB', getComputedStyle($('.chap-title')).fontFamily.indexOf('LXGW WenKai GB') >= 0, true);
+  chk('标题字重500', getComputedStyle($('.chap-title')).fontWeight, '500');
+  chk('正文字体族为WenKaiGB', getComputedStyle($('.para')).fontFamily.indexOf('LXGW WenKai GB') >= 0, true);
+  chk('正文字重500', getComputedStyle($('.para')).fontWeight, '500');
   try {
     await document.fonts.load('20px "LXGW WenKai GB"', '修仙者说');
-    chk('WenKai字体真实加载', document.fonts.check('20px "LXGW WenKai GB"', '修'), true);
+    await document.fonts.load('500 20px "LXGW WenKai GB"', '修仙者说');
+    chk('WenKai字体真实加载', document.fonts.check('20px "LXGW WenKai GB"', '修') && document.fonts.check('500 20px "LXGW WenKai GB"', '修'), true);
   } catch(err) {
     chk('WenKai字体真实加载', 'load-error:' + err, true);
   }
