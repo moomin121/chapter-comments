@@ -427,8 +427,8 @@
   .cm-drawer.parasec .cm-item .av{flex:0 0 28px;width:28px;height:28px;font-size:5px;}
   .cm-drawer.parasec .cm-item .body{padding-top:1px;}
   .cm-drawer.parasec .cm-item .nm-row{height:24px;margin-bottom:4px;}
-  /* 用户身份徽章（盟主 SVG：39x24，紧贴 nickname 右侧，垂直居中） */
-  .cm-user-badge{display:inline-flex;align-items:center;height:18px;margin-left:4px;vertical-align:middle;}
+  /* 用户身份徽章（盟主 SVG：39x24，与 nickname 间距由 nm-row 的 gap:4px 提供，Figma 105-9087） */
+  .cm-user-badge{display:inline-flex;align-items:center;height:18px;vertical-align:middle;}
   .cm-user-badge svg{display:block;width:39px;height:18px;}
   .cm-drawer.parasec .cm-item .nm{font-size:14px;line-height:22px;color:#808080;font-weight:500;}
   .cm-drawer.parasec .cm-item .lv{height:16px;padding:0 5px;border-radius:4px;font-size:10px;line-height:16px;}
@@ -512,7 +512,7 @@
     -webkit-box-orient:vertical;overflow:hidden;
   }
   .cm-item .body{flex:1;min-width:0;}
-  .cm-item .nm-row{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+  .cm-item .nm-row{display:flex;align-items:center;gap:4px;margin-bottom:4px;}
   .cm-item .nm{font-size:13px;color:var(--ink-92);font-weight:500;}
   .cm-item .lv{font-size:10.5px;color:#fff;background:#FF7A45;padding:1px 6px;border-radius:4px;font-weight:500;}
   .cm-item .lv.lv-1{background:#5C8AFF;}

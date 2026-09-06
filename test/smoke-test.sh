@@ -147,6 +147,13 @@ JS=$(cat <<'JSEOF'
   chk('有盟主徽章用户', badges.length >= 10, true);
   chk('盟主徽章含svg', badges[0].querySelector('svg[aria-label="盟主"]') !== null, true);
   chk('盟主徽章尺寸', getComputedStyle(badges[0].querySelector('svg')).width, '39px');
+  // 昵称-徽章间距 4px（Figma 105-9087 UserInfo/Primary gap=4px，由 nm-row flex gap 承担）
+  var badgeRow = badges[0].closest('.nm-row');
+  var nmEl = badgeRow.querySelector('.nm');
+  chk('昵称徽章间距4px', getComputedStyle(badgeRow).gap, '4px');
+  chk('昵称徽章实际间距', Math.round(badges[0].getBoundingClientRect().left - nmEl.getBoundingClientRect().right), 4);
+  // 昵称宽度 hug（Figma 105-9089：TEXT sizing horizontal=hug，无 max-width 约束）
+  chk('昵称宽度hug', getComputedStyle(nmEl).maxWidth, 'none');
   chk('更多为Figma三点', fc.querySelector('.cm-meta-more svg').getAttribute('viewBox'), '0 0 20 20');
   chk('评论按钮为Figma评论', !!fc.querySelector('.cm-meta-comment svg path'), true);
   chk('点赞按钮为Figma拇指', !!fc.querySelector('.cm-meta-like svg path'), true);
