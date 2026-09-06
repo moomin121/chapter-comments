@@ -324,15 +324,25 @@
   .cm-drawer.parasec .cm-toolbar .cm-back{display:none;}
   .cm-drawer.parasec .cm-toolbar .cm-sort{gap:8px;}
   /* 此读者视图（PRD §19 + Figma 110-9333 / 110-9372）：保留排序 tab；隐藏标签栏；顶部 frame
-     包裹 8px 16px padding；引用行样式同 parasec 单对象视图（8px 16px 灰底圆角）。 */
+     包裹 8px 16px padding；引用行样式同 parasec 单对象视图（8px 16px 灰底圆角）。
+     「返回全部评论」按钮按 Figma 110-9372 capsule option：1px brand 边框 + 100px 圆角。 */
   .cm-drawer.usersec .cm-tags-wrap{display:none;}
-  .cm-drawer.usersec .cm-context{padding:8px 16px;}
+  .cm-drawer.usersec .cm-context{display:block;padding:8px 16px;}
   .cm-drawer.usersec .cm-section-module.single{padding:0;border-bottom:none;}
   .cm-drawer.usersec .cm-section-module.single .cm-quote{
     display:flex;-webkit-line-clamp:initial;align-items:center;gap:10px;padding:8px 16px;
     border-radius:4px;background:var(--ink-04);
     font-size:12px;line-height:20px;white-space:nowrap;color:var(--ink-64);
   }
+  .cm-drawer.usersec .cm-quote-back{
+    border:1px solid var(--brand);background:#fff;border-radius:100px;
+    padding:2px 10px;height:22px;
+  }
+  .cm-drawer.usersec .cm-section-head{padding:12px 16px 4px;font-size:13px;color:var(--ink-92);font-weight:600;}
+  /* 此读者的回复块（Section 2）：浅色边区分 */
+  .cm-my-replies-block{margin:0 16px 12px;padding:8px 12px;background:rgba(30,113,239,0.04);border-left:2px solid var(--brand);border-radius:4px;}
+  .cm-my-replies-label{font-size:11px;color:var(--brand);font-weight:600;margin-bottom:6px;}
+  .cm-my-replies-block .cm-item{border-bottom:none;padding:6px 0;}
   .cm-drawer.parasec .cm-tags,
   .cm-drawer.parasec .cm-tags-wrap{display:none;}
   .cm-drawer.parasec .cm-input{display:none;}
@@ -2224,9 +2234,9 @@ CHAPTER_TREE.forEach(renderFolder);
         setCommentSort(tab.getAttribute('data-sort'));
       });
     });
-    $('#cmFilterBtn').addEventListener('click', function(){
-      this.classList.toggle('on');
-    });
+    // 筛选 / 更多按钮不响应 click toggle：菜单走 hover 触发（PRD §18），无 selected 状态。
+    var fb = $('#cmFilterBtn');
+    if(fb) fb.addEventListener('click', function(ev){ ev.preventDefault(); });
 
     $('#cmBack').addEventListener('click', function(){
       returnToAllComments();
@@ -2250,9 +2260,9 @@ CHAPTER_TREE.forEach(renderFolder);
   }
 
   // 此读者所有评论视图（PRD §19 / Figma 110-9333）：
-  //   1. 顶部 frame (Figma 110-9372) 由 CSS `.cm-drawer.usersec .cm-context{padding:8px 16px}` 实现；
-  //   2. 每条评论都补「评论对象」行（renderFullReference），不只是首个；
-  //   3. 楼中楼默认展开（renderParagraphCommentItem(c, i, true)）。
+  //   - 顶部 frame (Figma 110-9372)：8px 16px padding + 「用户昵称的所有评论」+ 返回全部评论 pill；
+  //   - Section 1：此读者的 1 级评论，每条带评论对象引用行 + 楼中楼默认收起；
+  //   - Section 2：此读者的 2 级回复，按父评论聚合，每组展示「引用 + 父评论 + 此读者的回复」。
   function renderUserComments(guid){
     var list = $('#cmList');
     var context = $('#cmContext');
@@ -2261,12 +2271,37 @@ CHAPTER_TREE.forEach(renderFolder);
     drawer.classList.add('usersec');
     currentUserGuid = guid;
     currentParagraphIdx = null;
-    var items = (COMMENT_DATA.comments || []).filter(function(c){
+    var allComments = COMMENT_DATA.comments || [];
+
+    // Section 1 数据：此读者作为 1 级评论作者的全部评论
+    var own1 = allComments.filter(function(c){
       return String(c.userGuid||'') === String(guid);
     });
-    items = sortComments(items);
-    setCommentHeader('评论', items.length+'条');
-    // Figma 110-9372 引用 frame：顶部固定展示「用户昵称的所有评论」+ 返回全部评论
+    own1 = sortComments(own1);
+
+    // Section 2 数据：此读者作为 2 级回复作者，按父评论聚合
+    var own2ByParent = {};
+    allComments.forEach(function(c){
+      if(!c.replies) return;
+      var mine = (c.replies || []).filter(function(r){
+        return String(r.userGuid||'') === String(guid);
+      });
+      if(mine.length){
+        var key = String(c.id != null ? c.id : (c.targetId+'-'+c.rowIndex));
+        own2ByParent[key] = {parent: c, replies: mine};
+      }
+    });
+    var own2List = Object.keys(own2ByParent).map(function(k){ return own2ByParent[k]; });
+    own2List.sort(function(a,b){
+      var d = (a.parent.targetId||0) - (b.parent.targetId||0);
+      if(d !== 0) return d;
+      return (a.parent.rowIndex||0) - (b.parent.rowIndex||0);
+    });
+    var replyTotal = own2List.reduce(function(s, x){ return s + x.replies.length; }, 0);
+    var totalCount = own1.length + replyTotal;
+
+    setCommentHeader('评论', totalCount + '条');
+    // Figma 110-9372 引用 frame
     var pTag = '<div class="cm-section-module single">'
       + '<div class="cm-quote">'
       +   '<span class="cm-quote-text">用户昵称的所有评论</span>'
@@ -2276,21 +2311,52 @@ CHAPTER_TREE.forEach(renderFolder);
       +   '</button>'
       + '</div></div>';
     context.innerHTML = pTag;
-    // 列表：每条评论前置评论对象行（按 targetId 命中 totalCount），楼中楼默认展开
+
     var idx = ensureCommentIndex();
-    list.innerHTML = items.length
-      ? items.map(function(c, i){
-          var t = idx.targetMap[String(c.targetId)];
-          var totalCount = t ? t.totalCount : 0;
-          var ref = renderFullReference(c.targetId, c.targetText || getTargetText(c.targetId), totalCount);
-          return ref + renderParagraphCommentItem(c, i, true);
-        }).join('') + '<div class="cm-empty">-到底了-</div>'
-      : '<div class="cm-empty">该读者暂无评论</div>';
+    function quoteFor(targetId, totalCount){
+      var t = idx.targetMap[String(targetId)];
+      var cnt = t ? t.totalCount : totalCount;
+      return renderFullReference(targetId, getTargetText(targetId), cnt);
+    }
+
+    // Section 1：1 级评论（楼中楼默认收起，避免与 Section 2 内容混淆）
+    var s1 = '<div class="cm-section-head">此读者的 1 级评论（' + own1.length + '）</div>';
+    s1 += own1.length
+      ? own1.map(function(c, i){
+          return quoteFor(c.targetId, c.totalCount) + renderParagraphCommentItem(c, i, false);
+        }).join('')
+      : '<div class="cm-empty">该读者暂无 1 级评论</div>';
+
+    // Section 2：2 级回复（按父评论聚合：引用 + 父评论 + 此读者的回复）
+    var s2 = '<div class="cm-section-head">此读者的 2 级回复（' + replyTotal + '）</div>';
+    if(own2List.length){
+      s2 += own2List.map(function(item){
+        var c = item.parent;
+        var name = commentUser(c);
+        var avColor = avatarColor(c.userGuid || name);
+        var parentBlock = '<div class="cm-item" data-len="'+commentLength(c)+'">'
+          + '<span class="av" data-guid="'+escapeHtml(String(c.userGuid||''))+'" style="background:'+avColor+'">'+escapeHtml(avatarInitial(name))+'</span>'
+          + '<div class="body">'
+          +   '<div class="nm-row"><span class="nm">'+escapeHtml(name)+'</span>'+(String(c.userGuid||'').endsWith('56')?'<span class="cm-user-badge">'+USER_BADGE_SVG+'</span>':'')+'</div>'
+          +   '<div class="content">'+commentBodyHtml(c)+'</div>'
+          +   commentMetaRow(c)
+          + '</div></div>';
+        var repliesBlock = '<div class="cm-my-replies-block">'
+          + '<div class="cm-my-replies-label">此读者的回复</div>'
+          + item.replies.map(function(r){ return renderReplyItem(r); }).join('')
+          + '</div>';
+        return quoteFor(c.targetId, 0) + parentBlock + repliesBlock;
+      }).join('');
+    } else {
+      s2 += '<div class="cm-empty">该读者暂无 2 级回复</div>';
+    }
+
+    list.innerHTML = s1 + s2 + '<div class="cm-empty">-到底了-</div>';
     var back = $('.cm-quote-back', context);
     if(back) back.addEventListener('click', returnToAllComments);
     bindReplyToggles();
     bindInspirationNoteButtons();
-    bindTargetAnchors();   // 每条评论上的引用行也要支持 hover 定位 + 点击进单对象
+    bindTargetAnchors();
   }
 
   // PRD §18 全局 toast：菜单点击统一占位「开发中」
