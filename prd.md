@@ -448,10 +448,13 @@ CSV 样例中 `自定义排序` 全为 `-1`，因此当前样例的默认展示�
 入口：§18 hover 头像菜单 → 点击「查看此读者所有评论」。
 
 1. 视图标题复用「评论」+ 一级评论数（按 `userGuid` 过滤后）。
-2. 引用行文案固定为「用户昵称的所有评论」+「← 返回全部评论」（Figma 110-9333 引用原型），样式与单对象视图一致。
-3. 排序 tab 保留（默认 / 最热 / 最新 / 长评），默认 tab 高亮进入；视图模式下排序作用于该读者的全部一级评论（与全部评论视图的语义一致）。
-4. 视图状态下 `#cmDrawer` 使用新 class `usersec`（与 `parasec` 互斥）；标签栏（`.cm-tags-wrap`）隐藏。
-5. 「← 返回全部评论」回到默认聚合视图，清空 `currentUserGuid`、移除 `usersec` class。
+2. 顶部 frame（Figma 110-9372）：`.cm-context` 加 8px 16px padding 包裹层，内含引用行「用户昵称的所有评论」+「← 返回全部评论」按钮，样式同单对象视图引用组件（8px 16px 灰底圆角）。
+3. 列表结构（按 Figma 110-9333 list area，每条 CommentList/PC 实例化）：评论对象 → 1 级评论 → 楼中楼默认展开。
+   - 每条评论**都**补一个「评论对象」引用行（`renderFullReference`），不只是首个；hover 定位 + 点击进单对象视图复用 `bindTargetAnchors`。
+   - 楼中楼默认 `display:block`，按钮文案「收起 n 条回复」。
+4. 排序 tab 保留（默认 / 最热 / 最新 / 长评），默认 tab 高亮进入；视图模式下排序作用于该读者的全部一级评论（与全部评论视图的语义一致）。
+5. 视图状态下 `#cmDrawer` 使用新 class `usersec`（与 `parasec` 互斥）；标签栏（`.cm-tags-wrap`）隐藏。
+6. 「← 返回全部评论」回到默认聚合视图，清空 `currentUserGuid`、移除 `usersec` class。
 
 ### 9.1 用户身份徽章（PRD §9.1）
 
