@@ -246,6 +246,9 @@ JS=$(cat <<'JSEOF'
   $('.para-bubble[data-idx="17"]').click();
   chk('单对象视图列表自动滚到顶', $('#cmList').scrollTop, 0);
   chk('单对象视图态', $('#cmDrawer').classList.contains('parasec'), true);
+  // 单对象视图：cm-tags 与 wrapper 都不显示（避免空 34px min-height 撑出空白）
+  chk('单对象视图标签区隐藏', getComputedStyle($('#cmTags')).display, 'none');
+  chk('单对象视图标签wrapper隐藏', getComputedStyle(document.querySelector('.cm-tags-wrap')).display, 'none');
   chk('段17计数(一级+回复)', $('#cmCount').textContent, '257条');
   chk('段17全部一级评论', $$('.cm-list > .paragraph-comment').length, 193);
   // 零赞评论只显示图标、不显示数字（Figma：数字=0 仅图标）
