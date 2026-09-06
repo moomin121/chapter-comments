@@ -42,20 +42,20 @@ else
 fi
 
 echo "── 4/4 等待 Pages 构建并验证 ──"
-# 记录推送前最新一次构建 id，等待出现更新的构建且状态为 built
-PREV_BUILD=$(gh api "repos/${REPO}/pages/builds" --jq '.[0].id' 2>/dev/null || echo 0)
+# 等待最新一次构建：commit 对应当前 HEAD 且状态为 built
+HEAD_SHA=$(git rev-parse HEAD)
 
 echo -n "  构建: "
 for i in $(seq 1 30); do
-  STATUS_JSON=$(gh api "repos/${REPO}/pages/builds" --jq '.[0]' 2>/dev/null) || true
-  BUILD_ID=$(echo "${STATUS_JSON}" | jq -r '.id // 0')
-  STATUS=$(echo "${STATUS_JSON}" | jq -r '.status // ""')
-  if [ "${BUILD_ID}" != "${PREV_BUILD}" ] && [ "${STATUS}" = "built" ]; then
+  LATEST=$(gh api "repos/${REPO}/pages/builds/latest" 2>/dev/null) || LATEST='{}'
+  BUILD_SHA=$(echo "${LATEST}" | jq -r '.commit // ""')
+  STATUS=$(echo "${LATEST}" | jq -r '.status // ""')
+  if [ "${BUILD_SHA}" = "${HEAD_SHA}" ] && [ "${STATUS}" = "built" ]; then
     echo "built ✓"
     break
   fi
   if [ "$i" -eq 30 ]; then
-    echo "超时（最后状态: ${STATUS:-未知}）。可稍后手动访问 ${URL} 确认。"
+    echo "超时（最后状态: ${STATUS:-未知}, commit: ${BUILD_SHA:-未知}）。可稍后手动访问 ${URL} 确认。"
     exit 1
   fi
   echo -n "."
