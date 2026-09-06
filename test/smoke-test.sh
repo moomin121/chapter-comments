@@ -101,6 +101,7 @@ JS=$(cat <<'JSEOF'
   // 展开后底部显示【收起全文】按钮（用户补充：与展开按钮同样式）
   chk('AI卡展开后有按钮', !!$('.cm-ai-expand'), true);
   chk('AI卡展开后按钮为收起', $('.cm-ai-expand').textContent.trim().indexOf('收起') >= 0, true);
+  chk('AI卡展开按钮文案精确', $('.cm-ai-expand').textContent.trim().indexOf('收起全文') < 0, true);
   chk('AI卡展开高度超3行', $('.cm-ai-body').getBoundingClientRect().height > 60, true);
   // 点击收起按钮可恢复 + 列表回到顶部（AI 卡是首项，回顶即可看到）
   $('.cm-list').scrollTop = 50;
