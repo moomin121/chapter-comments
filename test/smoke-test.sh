@@ -472,6 +472,38 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
   chk('默认恢复AI卡', $$('.cm-ai-card').length, 1);
   chk('默认tab高亮', $('#cmSortDefault').classList.contains('on'), true);
 
+  // --- §16-8 热度三档配色（PRD §8.4）：正文气泡与侧栏 ref-bubble 共用阈值 ---
+  chk('章评气泡(630)红档', $('#chapBubble').classList.contains('lv-red'), true);
+  chk('章评气泡红色', getComputedStyle($('#chapBubble')).color, 'rgb(255, 59, 79)');
+  var pb0 = $('.para-bubble[data-idx="0"]');   // 105 条
+  var pb2 = $('.para-bubble[data-idx="2"]');   // 98 条
+  var pb1 = $('.para-bubble[data-idx="1"]');   // 21 条
+  chk('段0(105)红档', pb0.classList.contains('lv-red'), true);
+  chk('段2(98)琥珀档', pb2.classList.contains('lv-amber'), true);
+  chk('段1(21)灰档', pb1.classList.contains('lv-mute'), true);
+  chk('段0正文气泡红色', getComputedStyle(pb0).color, 'rgb(255, 59, 79)');
+  chk('段2正文气泡琥珀色', getComputedStyle(pb2).color, 'rgb(200, 122, 22)');
+  chk('段1正文气泡灰色', getComputedStyle(pb1).color, 'rgb(111, 115, 122)');
+  // 侧栏引用行计数气泡同档（默认聚合视图下）
+  var rb0 = $('.cm-ref-bubble[data-target-id="0"]');
+  var rb2 = $('.cm-ref-bubble[data-target-id="2"]');
+  var rb1 = $('.cm-ref-bubble[data-target-id="1"]');
+  chk('侧栏对象0红档', rb0.classList.contains('lv-red'), true);
+  chk('侧栏对象2琥珀档', rb2.classList.contains('lv-amber'), true);
+  chk('侧栏对象1灰档', rb1.classList.contains('lv-mute'), true);
+  chk('侧栏对象0红色', getComputedStyle(rb0).color, 'rgb(255, 59, 79)');
+  chk('侧栏对象0红描边', getComputedStyle(rb0).borderColor, 'rgb(255, 59, 79)');
+  chk('侧栏对象2琥珀描边', getComputedStyle(rb2).borderColor, 'rgb(200, 122, 22)');
+  // 双端档位一致性：同一 targetId 在正文与侧栏档位相同
+  var sameTier = [0,1,2].every(function(i){
+    var p = $('.para-bubble[data-idx="'+i+'"]');
+    var r = $('.cm-ref-bubble[data-target-id="'+i+'"]');
+    var pc = (p.className.match(/lv-\S+/)||[''])[0];
+    var rc = (r.className.match(/lv-\S+/)||[''])[0];
+    return pc === rc && pc;
+  });
+  chk('双端热度档位一致', sameTier, true);
+
   // --- §16-8 hover 评论对象：滚动定位 + 临时高亮（hover intent：150ms 观察窗后触发） ---
   var ref0 = $('.cm-reference[data-target-id="0"]');
   ref0.dispatchEvent(new MouseEvent('mouseenter', {clientX: 10, clientY: 10}));

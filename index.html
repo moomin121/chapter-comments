@@ -189,10 +189,8 @@
   }
   body.comment-mode .chap-bubble{display:inline-flex;}
   .chap-bubble:hover{background:#fff;box-shadow:0 2px 5px rgba(255,59,79,.18);}
-  .chap-bubble.lv-red,
-  .chap-bubble.lv-orange-red,
-  .chap-bubble.lv-orange{color:#ff3b4f;background:rgba(255,255,255,.7);}
-  .chap-bubble.lv-amber,
+  .chap-bubble.lv-red{color:#ff3b4f;background:rgba(255,255,255,.7);}
+  .chap-bubble.lv-amber{color:#C87A16;background:rgba(255,255,255,.7);}
   .chap-bubble.lv-mute{color:#6f737a;background:rgba(255,255,255,.58);}
 
   .chap-info{display:flex;align-items:center;gap:4px;font-size:12px;line-height:16px;color:var(--ink-49);margin-bottom:32px;white-space:nowrap;}
@@ -237,11 +235,9 @@
     user-select:none;font-family:var(--num);font-variant-numeric:tabular-nums;vertical-align:baseline;}
   body.comment-mode .para-bubble{display:inline-flex;}
   .para-bubble:hover{background:#fff;box-shadow:0 2px 5px rgba(255,59,79,.18);}
-  /* 热度分级：10 条及以上红色强调，个位数采用参考图里的灰色描边。 */
-  .para-bubble.lv-red,
-  .para-bubble.lv-orange-red,
-  .para-bubble.lv-orange{color:#ff3b4f;background:rgba(255,255,255,.7);}
-  .para-bubble.lv-amber,
+  /* 热度分级（PRD §8.4 三档红系渐进）：<30 灰、30–99 琥珀、≥100 品牌红；描边 border 用 currentColor 自动跟随。 */
+  .para-bubble.lv-red{color:#ff3b4f;background:rgba(255,255,255,.7);}
+  .para-bubble.lv-amber{color:#C87A16;background:rgba(255,255,255,.7);}
   .para-bubble.lv-mute{color:#6f737a;background:rgba(255,255,255,.58);}
 
   /* 评论抽屉（默认折叠）；展开为评论主区域。
@@ -411,6 +407,8 @@
     color:#6f737a;background:rgba(255,255,255,.58);font-family:var(--num);font-size:11px;
     line-height:16px;font-weight:600;cursor:pointer;transition:background .15s,color .15s,border-color .15s;
   }
+  .cm-ref-bubble.lv-amber{color:#C87A16;border-color:#C87A16;}
+  .cm-ref-bubble.lv-red{color:#ff3b4f;border-color:#ff3b4f;}
   .cm-ref-bubble:hover{background:var(--brand);border-color:var(--brand);color:#fff;}
   .cm-drawer.parasec .cm-list{padding:8px 16px;}
   .cm-drawer.parasec .cm-section-module.single{padding:0;border-bottom:none;}
@@ -1141,11 +1139,10 @@ CHAPTER_TREE.forEach(renderFolder);
       return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
     });
   }
+  /* 热度分级（PRD §8.4 三档红系渐进）：<30 灰、30–99 琥珀、≥100 品牌红。 */
   function heatClass(n){
-    if(n>=80) return 'lv-red';
-    if(n>=30) return 'lv-orange-red';
-    if(n>=10) return 'lv-orange';
-    if(n>=3)  return 'lv-amber';
+    if(n>=100) return 'lv-red';
+    if(n>=30)  return 'lv-amber';
     return 'lv-mute';
   }
   function avatarInitial(name){
@@ -1526,7 +1523,7 @@ CHAPTER_TREE.forEach(renderFolder);
   function renderFullReference(targetId, text, totalCount){
     return '<div class="cm-reference" data-target-id="'+targetId+'" title="点击查看该对象全部评论">'
       + '<span class="cm-quote-text">原文：'+escapeHtml(text)+'</span>'
-      + '<span class="cm-ref-bubble" data-target-id="'+targetId+'" title="共 '+totalCount+' 条评论 · 点击查看该对象全部评论">'+displayCount(totalCount)+'</span>'
+      + '<span class="cm-ref-bubble '+heatClass(totalCount)+'" data-target-id="'+targetId+'" title="共 '+totalCount+' 条评论 · 点击查看该对象全部评论">'+displayCount(totalCount)+'</span>'
       + '</div>';
   }
   function renderFullCommentModule(targetId, comments, totalCount){
@@ -2018,7 +2015,7 @@ CHAPTER_TREE.forEach(renderFolder);
     return '<section class="cm-full-module cm-unmatched-module">'
       + '<div class="cm-reference" title="评论对象无法匹配正文">'
       +   '<span class="cm-quote-text">原文（未匹配 · 对象'+target.targetId+'）：'+escapeHtml(target.targetText || '')+'</span>'
-      +   '<span class="cm-ref-bubble">'+displayCount(target.totalCount)+'</span>'
+      +   '<span class="cm-ref-bubble '+heatClass(target.totalCount)+'">'+displayCount(target.totalCount)+'</span>'
       + '</div>'
       + top.map(function(c, index){ return renderFullCommentItem(c, index); }).join('')
       + more
