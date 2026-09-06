@@ -291,6 +291,39 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
   chk('返回后恢复原滚动位置', $('#cmList').scrollTop, 200);
   chk('返回后计数', $('#cmCount').textContent, '6830条');
 
+  // --- §16-19 三入口滚动位置保存与恢复（PRD §12.7：列表 + 正文双滚动） ---
+  var editorScroll = document.querySelector('.editor-scroll');
+  // 入口 1：正文气泡
+  $('#cmList').scrollTop = 150; editorScroll.scrollTop = 60;
+  await wait(60);
+  var expE1 = editorScroll.scrollTop;
+  document.querySelector('#paraList .para-bubble').click();
+  await wait(120);
+  $('.cm-quote-back').click();
+  await wait(120);
+  chk('气泡入口列表恢复', $('#cmList').scrollTop, 150);
+  chk('气泡入口正文恢复', editorScroll.scrollTop, expE1);
+  // 入口 2：侧栏引用行
+  $('#cmList').scrollTop = 250; editorScroll.scrollTop = 120;
+  await wait(60);
+  var expE2 = editorScroll.scrollTop;
+  $('.cm-reference[data-target-id="0"]').click();
+  await wait(120);
+  $('.cm-quote-back').click();
+  await wait(120);
+  chk('引用行入口列表恢复', $('#cmList').scrollTop, 250);
+  chk('引用行入口正文恢复', editorScroll.scrollTop, expE2);
+  // 入口 3：查看 n 条评论按钮
+  $('#cmList').scrollTop = 350; editorScroll.scrollTop = 180;
+  await wait(60);
+  var expE3 = editorScroll.scrollTop;
+  $('.cm-section-link:not([disabled])').click();
+  await wait(120);
+  $('.cm-quote-back').click();
+  await wait(120);
+  chk('查看按钮入口列表恢复', $('#cmList').scrollTop, 350);
+  chk('查看按钮入口正文恢复', editorScroll.scrollTop, expE3);
+
   // --- §16-10/11 标签真实筛选 ---
   var tagReal = $$('.cm-tag').filter(function(t){ return t.getAttribute('data-tag') === '这不就是现实/网贷还债太真实'; })[0];
   chk('真实内容标签存在', !!tagReal, true);
