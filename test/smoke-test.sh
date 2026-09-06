@@ -634,12 +634,21 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
   chk('此读者视图隐藏标签栏', getComputedStyle($('.cm-tags-wrap')).display, 'none');
   chk('此读者视图保留排序tab', !!$('#cmSort').offsetParent, true);
   chk('此读者视图引用行文案', ($('.cm-quote-text').textContent || '').trim(), '用户昵称的所有评论');
+  chk('此读者视图context padding 8 16', getComputedStyle($('#cmContext')).padding, '8px 16px');
   var userTotal = $$('.cm-list > .paragraph-comment').length;
   chk('此读者视图评论计数', $('#cmCount').textContent, userTotal + '条');
   chk('此读者视图无聚合块', $$('.cm-full-module').length, 0);
   chk('此读者视图列表非空', $$('.cm-list > .paragraph-comment').length > 0, true);
-  chk('此读者视图楼中楼默认收起',
-    $$('.cm-list > .paragraph-comment .cm-sub').every(function(s){ return s.style.display === 'none'; }), true);
+  // 每条评论都补评论对象（renderFullReference → .cm-reference）
+  chk('此读者视图每条评论有评论对象',
+    $$('.cm-list > .paragraph-comment').length > 0
+      && $$('.cm-list > .cm-reference').length >= $$('.cm-list > .paragraph-comment').length, true);
+  // 楼中楼默认展开
+  chk('此读者视图楼中楼默认展开',
+    $$('.cm-list > .paragraph-comment .cm-sub').every(function(s){ return s.style.display === 'block'; }), true);
+  // 楼中楼按钮文案「收起 n 条回复」
+  chk('此读者视图楼中楼按钮为收起',
+    $$('.cm-list > .paragraph-comment .sub-toggle').every(function(t){ return t.textContent.indexOf('收起') >= 0; }), true);
   // 返回全部评论
   $('.cm-quote-back').click();
   await wait(80);

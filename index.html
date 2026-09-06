@@ -323,8 +323,16 @@
   .cm-drawer.parasec .cm-toolbar{gap:8px;}
   .cm-drawer.parasec .cm-toolbar .cm-back{display:none;}
   .cm-drawer.parasec .cm-toolbar .cm-sort{gap:8px;}
-  /* 此读者视图（PRD §19 + Figma 110-9333）：保留排序 tab；隐藏标签栏；引用行文案改为「用户昵称的所有评论」 */
+  /* 此读者视图（PRD §19 + Figma 110-9333 / 110-9372）：保留排序 tab；隐藏标签栏；顶部 frame
+     包裹 8px 16px padding；引用行样式同 parasec 单对象视图（8px 16px 灰底圆角）。 */
   .cm-drawer.usersec .cm-tags-wrap{display:none;}
+  .cm-drawer.usersec .cm-context{padding:8px 16px;}
+  .cm-drawer.usersec .cm-section-module.single{padding:0;border-bottom:none;}
+  .cm-drawer.usersec .cm-section-module.single .cm-quote{
+    display:flex;-webkit-line-clamp:initial;align-items:center;gap:10px;padding:8px 16px;
+    border-radius:4px;background:var(--ink-04);
+    font-size:12px;line-height:20px;white-space:nowrap;color:var(--ink-64);
+  }
   .cm-drawer.parasec .cm-tags,
   .cm-drawer.parasec .cm-tags-wrap{display:none;}
   .cm-drawer.parasec .cm-input{display:none;}
@@ -2241,8 +2249,10 @@ CHAPTER_TREE.forEach(renderFolder);
     }
   }
 
-  // 此读者所有评论视图（PRD §19 / Figma 110-9333）：按 userGuid 过滤当前章节全部一级评论，
-  // 默认排序展示，引用行文案「用户昵称的所有评论」+ 返回全部评论 按钮。
+  // 此读者所有评论视图（PRD §19 / Figma 110-9333）：
+  //   1. 顶部 frame (Figma 110-9372) 由 CSS `.cm-drawer.usersec .cm-context{padding:8px 16px}` 实现；
+  //   2. 每条评论都补「评论对象」行（renderFullReference），不只是首个；
+  //   3. 楼中楼默认展开（renderParagraphCommentItem(c, i, true)）。
   function renderUserComments(guid){
     var list = $('#cmList');
     var context = $('#cmContext');
@@ -2256,6 +2266,7 @@ CHAPTER_TREE.forEach(renderFolder);
     });
     items = sortComments(items);
     setCommentHeader('评论', items.length+'条');
+    // Figma 110-9372 引用 frame：顶部固定展示「用户昵称的所有评论」+ 返回全部评论
     var pTag = '<div class="cm-section-module single">'
       + '<div class="cm-quote">'
       +   '<span class="cm-quote-text">用户昵称的所有评论</span>'
@@ -2265,13 +2276,21 @@ CHAPTER_TREE.forEach(renderFolder);
       +   '</button>'
       + '</div></div>';
     context.innerHTML = pTag;
+    // 列表：每条评论前置评论对象行（按 targetId 命中 totalCount），楼中楼默认展开
+    var idx = ensureCommentIndex();
     list.innerHTML = items.length
-      ? items.map(function(c, i){ return renderParagraphCommentItem(c, i); }).join('') + '<div class="cm-empty">-到底了-</div>'
+      ? items.map(function(c, i){
+          var t = idx.targetMap[String(c.targetId)];
+          var totalCount = t ? t.totalCount : 0;
+          var ref = renderFullReference(c.targetId, c.targetText || getTargetText(c.targetId), totalCount);
+          return ref + renderParagraphCommentItem(c, i, true);
+        }).join('') + '<div class="cm-empty">-到底了-</div>'
       : '<div class="cm-empty">该读者暂无评论</div>';
     var back = $('.cm-quote-back', context);
     if(back) back.addEventListener('click', returnToAllComments);
     bindReplyToggles();
     bindInspirationNoteButtons();
+    bindTargetAnchors();   // 每条评论上的引用行也要支持 hover 定位 + 点击进单对象
   }
 
   // PRD §18 全局 toast：菜单点击统一占位「开发中」
