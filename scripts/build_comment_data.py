@@ -8,6 +8,7 @@ import csv
 import json
 import re
 from collections import Counter
+from copy import deepcopy
 from pathlib import Path
 
 
@@ -39,7 +40,11 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--csv", type=Path, default=DEFAULT_CSV)
     parser.add_argument("--index", type=Path, default=Path("index.html"))
+    parser.add_argument("--data-json", type=Path, default=Path("comment-data.json"))
     parser.add_argument("--update-index", action="store_true")
+    parser.add_argument("--update-json", action="store_true")
+    parser.add_argument("--update-all", action="store_true")
+    parser.add_argument("--print-json", action="store_true")
     return parser.parse_args()
 
 
@@ -201,9 +206,60 @@ def build_payload(csv_path: Path) -> dict:
 
 
 def js_block(payload: dict) -> str:
-    text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+    meta = {
+        "source": payload["source"],
+        "targetTotalCounts": payload["targetTotalCounts"],
+        "tagCounts": payload["tagCounts"],
+    }
+    text = json.dumps(meta, ensure_ascii=False, separators=(",", ":"))
     text = text.replace("</", "<\\/").replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
-    return f"{START}\n  var COMMENT_DATA = {text};\n{END}"
+    return (
+        f"{START}\n"
+        f"  var COMMENT_DATA_URL = 'comment-data.json';\n"
+        f"  var COMMENT_DATA = {text};\n"
+        f"  COMMENT_DATA.comments = [];\n"
+        f"{END}"
+    )
+
+
+def compact_payload(payload: dict) -> dict:
+    """Return the external payload without fields the UI can derive locally."""
+    data = deepcopy(payload)
+
+    def compact_comment(comment: dict) -> None:
+        for key in (
+            "id",
+            "targetText",
+            "targetType",
+            "parentId",
+            "topCommentId",
+            "level",
+            "nickname",
+            "avatarUrl",
+            "userBadge",
+        ):
+            comment.pop(key, None)
+        if comment.get("sortValue") == -1:
+            comment.pop("sortValue", None)
+        if comment.get("likeCount") == 0:
+            comment.pop("likeCount", None)
+        if not comment.get("fixedTags"):
+            comment.pop("fixedTags", None)
+        if not comment.get("contentTags"):
+            comment.pop("contentTags", None)
+        for reply in comment.get("replies") or []:
+            compact_comment(reply)
+        if not comment.get("replies"):
+            comment.pop("replies", None)
+
+    for comment in data["comments"]:
+        compact_comment(comment)
+    return data
+
+
+def json_payload(payload: dict) -> str:
+    text = json.dumps(compact_payload(payload), ensure_ascii=False, separators=(",", ":"))
+    return text.replace("</", "<\\/")
 
 
 def update_index(index_path: Path, block: str) -> None:
@@ -216,12 +272,23 @@ def update_index(index_path: Path, block: str) -> None:
     index_path.write_text(next_content, encoding="utf-8")
 
 
+def update_data_json(data_path: Path, payload: dict) -> None:
+    data_path.write_text(json_payload(payload), encoding="utf-8")
+
+
 def main() -> None:
     args = parse_args()
     payload = build_payload(args.csv)
     block = js_block(payload)
-    if args.update_index:
+    if args.update_all:
         update_index(args.index, block)
+        update_data_json(args.data_json, payload)
+    elif args.update_index:
+        update_index(args.index, block)
+    elif args.update_json:
+        update_data_json(args.data_json, payload)
+    elif args.print_json:
+        print(json_payload(payload))
     else:
         print(block)
     stats = payload["source"]

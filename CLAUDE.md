@@ -4,7 +4,7 @@
 
 ## 项目一句话总结
 
-单文件网页 `index.html`，起点风格的小说章节阅读页 + 段评气泡 + 评论抽屉。HTML + CSS + JS 全部内联（含真实评论数据块约 3.8MB）。190 段章节正文 + 170 个段评气泡（真实 CSV 聚合，4465 条一级评论 + 3028 条回复）。
+轻量静态网页 `index.html`，起点风格的小说章节阅读页 + 段评气泡 + 评论抽屉。HTML + CSS + JS 保持无构建入口，完整评论数据拆到 `comment-data.json` 异步加载。190 段章节正文 + 170 个段评气泡（真实 CSV 聚合，4465 条一级评论 + 3028 条回复）。
 
 ---
 
@@ -40,32 +40,33 @@ innerWidth - r.right   // 必须 === 0，不论抽屉开还是关
 
 需求原话：「评论数字要对」。
 
-数字现在来自真实 CSV（`谁让他修仙的第1章评论_作者视角打标.csv`），由 `ensureCommentIndex()` 按评论对象（标题/段落）聚合"一级+回复"得出。改数据只能改 CSV 后重跑 `build_comment_data.py --update-index`，**不要手改页面里的数字**，也不要为了"让每段都有气泡"编数字。
+数字现在来自真实 CSV（`谁让他修仙的第1章评论_作者视角打标.csv`），由 `ensureCommentIndex()` 按评论对象（标题/段落）聚合"一级+回复"得出。首屏气泡数量先读 `index.html` 里的轻量 `targetTotalCounts`，完整评论到达后再用 `comment-data.json` 重建索引。改数据只能改 CSV 后重跑 `build_comment_data.py --update-all`，**不要手改页面里的数字**，也不要为了"让每段都有气泡"编数字。
 
-### 3. 不要拆分为多文件
+### 3. 不要引入构建系统
 
-单文件是刻意的，为了 Codex / WorkBuddy 用 diff 协作。见「不要做的修改」。
+当前刻意保持静态 HTML 架构，只有评论数据外置为 `comment-data.json`。见「不要做的修改」。
 
 ## 技术栈
 
 - **纯原生**：HTML + CSS + 原生 JS（无构建步骤、无依赖、无打包）
-- **字体**：LXGW WenKai（jsdelivr CDN `<link rel="preconnect">` + `@font-face`）
-- **数据**：正文在 `var CHAPTER = {...}`；评论在 `// GENERATED_COMMENT_DATA_START/END` 之间（脚本生成，勿手改）
+- **字体**：系统楷体优先（不依赖字体 CDN 阻塞首屏）
+- **数据**：正文在 `var CHAPTER = {...}`；轻量评论元数据在 `// GENERATED_COMMENT_DATA_START/END` 之间；完整评论在 `comment-data.json`（脚本生成，勿手改）
 - **存储**：`localStorage.wb_comment_mode` 记忆评论开关（默认开启，可忽略）
 
 ## 文件边界
 
 ```
-chapter-comments/index.html                  # 唯一源文件（JS 渲染层约 1700 行 + 内联数据块）
-chapter-comments/scripts/build_comment_data.py  # CSV → COMMENT_DATA 预处理脚本
-chapter-comments/test/smoke-test.sh          # 冒烟测试 v2（60 项，pre-commit 强制跑）
+chapter-comments/index.html                  # 静态入口（HTML + CSS + JS + 轻量元数据）
+chapter-comments/comment-data.json           # 异步加载的完整评论数据（脚本生成）
+chapter-comments/scripts/build_comment_data.py  # CSV → 元数据块 + comment-data.json 预处理脚本
+chapter-comments/test/smoke-test.sh          # 冒烟测试 v2（271 项，pre-commit 强制跑）
 chapter-comments/prd.md                      # 产品需求（数据契约/验收标准）
 chapter-comments/doc/技术方案.md              # 技术方案（路线/排序策略/测试方案）
 chapter-comments/CLAUDE.md                   # 本文件
 chapter-comments/README.md                   # 人类开发文档
 ```
 
-**不要试图拆分 index.html**：单文件设计便于 diff 和热重载，协作时请保持原样。
+**不要引入构建项目**：保持原生静态架构；性能优化优先通过数据瘦身、异步加载和按需渲染完成。
 
 ## 关键代码定位（用注释关键字搜索）
 
@@ -93,12 +94,13 @@ var CHAPTER = {
   meta: {work, author, words, publishedAt, visibility},
   paragraphs: ['段1', '段2', ...]  // 190 段
 };
-// GENERATED_COMMENT_DATA_START ... END 之间的 var COMMENT_DATA（由脚本生成，勿手改）
+// GENERATED_COMMENT_DATA_START ... END 之间的 COMMENT_DATA 轻量元数据（由脚本生成，勿手改）
+// 完整评论数据在 comment-data.json（由脚本生成，勿手改）
 ```
 
 **评论数据已接入真实 CSV**（2026-09-04）：
 - 来源：`/Users/moomin/Documents/ChatGPT/New project/outputs/who_made_him_cultivate_ch1_comments/谁让他修仙的第1章评论_作者视角打标.csv`
-- 重建：`python3 scripts/build_comment_data.py --update-index`（dry-run 校验：去掉 `--update-index`）
+- 重建：`python3 scripts/build_comment_data.py --update-all`（dry-run 校验：去掉 `--update-all`）
 - 规模：7493 行 → 4465 条一级评论 + 3028 条回复（其中 663 条孤儿回复不展示）、172 个有评段、章评 621 条
 - `SECTION_COUNTS / SECTION_POOL / COMMENT_TAGS` 等演示数据已删除；气泡计数由 `ensureCommentIndex()` 按评论对象聚合得出
 - CSV 更新后必须重跑 build 脚本并同步更新 `test/smoke-test.sh` 的数据锚点
@@ -108,8 +110,8 @@ var CHAPTER = {
 ## 不要做的修改
 
 1. **不要改 `function $(s)` 的实现** — 是大量脚本的全局工具函数，改名会牵动 50+ 处调用
-2. **不要把内联 CSS 拆出去** — 保持单文件，便于 Codex/WorkBuddy 用 diff 协作
-3. **不要引入新依赖**（jQuery、Vue、Tailwind 等）— 当前是纯原生架构，加依赖会把单文件变成构建项目
+2. **不要把内联 CSS/JS 拆成构建项目** — 当前是纯原生静态架构；评论数据外置是性能需要
+3. **不要引入新依赖**（jQuery、Vue、Tailwind 等）— 当前是纯原生架构，加依赖会把静态页变成构建项目
 
 ## 加新功能时的模式
 
@@ -172,15 +174,15 @@ cd chapter-comments
 
 `test/smoke-test.sh` v2（2026-09-04 重写）分两段：
 
-**A. 数据预处理段**（无浏览器）：跑 build 脚本校验统计（4465 一级 / 2365 挂载回复 / 663 孤儿 / 172 有评段）+ 校验 index.html 内联数据块与 CSV 最新构建一致（防止改了 CSV 忘记 --update-index）。
+**A. 数据预处理段**（无浏览器）：跑 build 脚本校验统计（4465 一级 / 2365 挂载回复 / 663 孤儿 / 172 有评段）+ 校验 `index.html` 轻量元数据块和 `comment-data.json` 与 CSV 最新构建一致（防止改了 CSV 忘记 `--update-all`）。
 
-**B. 页面渲染段**（agent-browser）：60 项断言覆盖 PRD §16 十二条验收：
+**B. 页面渲染段**（agent-browser）：271 项断言覆盖 PRD §16 十二条验收：
 
 | 类别 | 断言 |
 |---|---|
 | 默认态 | 抽屉展开 / 全部评论视图 / 有效评论总数 6830 |
 | 气泡 | 190 段 / 170 气泡 / 标题胶囊 621 / 段评总数 6209 |
-| 聚合视图 | AI 卡置顶 / 173 块 / 章评最后 / 未匹配兜底 / 每段前 3 条 + 查看入口 |
+| 聚合视图 | AI 卡置顶 / 172 块 / 章评在首段之前 / 未匹配兜底 / 每段前 3 条 + 查看入口 |
 | 单对象视图 | 全部一级评论 / 高亮 / 返回按钮 / 楼中楼展开收起 |
 | 标签筛选 | 真实标签"这不就是现实/网贷还债太真实"过滤生效 / 全部还原 |
 | 定位 | hover 临时高亮 + 不改筛选状态 / 点击进单对象视图 |
@@ -188,7 +190,7 @@ cd chapter-comments
 
 **加新功能时同步往这个脚本里加断言**，别只手动点两下就说完成。
 
-**数据锚点提醒**：CSV 更新后，先 `--update-index`，再同步改 smoke-test 里 `170 / 173 / 6830 / 5条 / 111条` 等锚点数字。
+**数据锚点提醒**：CSV 更新后，先 `--update-all`，再同步改 smoke-test 里 `170 / 172 / 6830 / 257条 / 732条` 等锚点数字。
 
 ### 手工探针（调试用）
 
@@ -225,7 +227,7 @@ agent-browser eval "document.querySelectorAll('.para').length"
 - [x] 章评主楼 + 楼中楼展开/收起
 - [x] 右侧图标栏永久贴最右（flex order 修正）
 - [x] git 仓库初始化，首次提交 `df3d5ac`
-- [x] **真实评论数据接入**（2026-09-04）：CSV 7493 行经 `scripts/build_comment_data.py` 烤入 `COMMENT_DATA`，替换全部 SECTION_POOL/SECTION_COUNTS/COMMENT_TAGS 演示数据；气泡/计数全部按评论对象聚合
+- [x] **真实评论数据接入**（2026-09-04）：CSV 7493 行经 `scripts/build_comment_data.py` 生成评论数据，替换全部 SECTION_POOL/SECTION_COUNTS/COMMENT_TAGS 演示数据；气泡/计数全部按评论对象聚合
 - [x] **全部评论视图按段聚合**（PRD §10）：AI 总结卡置顶 → 按段顺序聚合块（前 3 条 + 查看本段入口）→ 章评块最后 → 未匹配对象兜底
 - [x] **单对象视图全部一级评论**（PRD §12）：气泡/评论对象/查看入口点击进入，不再截断 2 条；返回全部评论按钮
 - [x] **标签真实筛选**（PRD §11.3）：点击标签过滤一级评论并按对象聚合重渲染；"全部"还原
@@ -240,6 +242,7 @@ agent-browser eval "document.querySelectorAll('.para').length"
 - [x] **评论对象气泡点击触发单对象视图**（2026-09-05）：.cm-ref-bubble 加 data-target-id + cursor pointer + hover 高亮 + 直接绑定 click
 - [x] **评论底部操作按 Figma 设计稿实现**（2026-09-05）：日期 + IP 地址 + 评论图标 + 点赞"赞"字 + 点赞数 + ···（commentMetaRow helper 复用）
 - [x] 冒烟测试 v3（60 项，新增 11 项覆盖以上 6 个修正点）
+- [x] **首屏性能优化**（2026-09-07）：`index.html` 从 3.88MB 降到约 163KB；完整评论拆到 `comment-data.json` 异步加载；移除字体 CDN 阻塞；冒烟测试扩展到 271 项
 
 未做 / 待定：
 

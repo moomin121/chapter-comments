@@ -7,10 +7,10 @@
 #
 # 流程：
 #   1. git add -A（.workbuddy/ 等由 .gitignore 排除）
-#   2. 若有改动 → commit（pre-commit 钩子自动跑 262 项冒烟测试，失败即中止，不会发布）
+#   2. 若有改动 → commit（pre-commit 钩子自动跑 271 项冒烟测试，失败即中止，不会发布）
 #   3. push origin master
 #   4. 轮询 GitHub Pages 构建状态至 built（通常 1-2 分钟）
-#   5. curl 验证线上 200 且评论数据块已部署
+#   5. curl 验证线上 200，且页面入口和评论数据文件已部署
 #
 # 线上：https://moomin121.github.io/chapter-comments/
 # 仓库：https://github.com/moomin121/chapter-comments
@@ -66,23 +66,32 @@ HTTP=$(curl -s -o /dev/null -w '%{http_code}' "${URL}")
 echo "  线上 HTTP ${HTTP}"
 [ "${HTTP}" = "200" ] || { echo "✗ 线上不可达"; exit 1; }
 
-# 主校验：线上 Content-Length 与本地 index.html 字节数一致（数据块内嵌，任何改动都会变字节数）
+# 主校验：线上 Content-Length 与本地 index.html / comment-data.json 字节数一致
 LOCAL_SIZE=$(wc -c < index.html | tr -d ' ')
 REMOTE_SIZE=$(curl -sIL "${URL}" | tr -d '\r' | awk 'tolower($1)=="content-length:"{s=$2} END{print s}')
 if [ "${REMOTE_SIZE}" = "${LOCAL_SIZE}" ]; then
-  echo "  线上体积 ${REMOTE_SIZE} 字节 = 本地 ✓"
+  echo "  index.html 体积 ${REMOTE_SIZE} 字节 = 本地 ✓"
 else
-  echo "✗ 线上体积 ${REMOTE_SIZE:-未知} 与本地 ${LOCAL_SIZE} 不一致（可能 CDN 未刷新，稍后重试）"
+  echo "✗ 线上 index.html 体积 ${REMOTE_SIZE:-未知} 与本地 ${LOCAL_SIZE} 不一致（可能 CDN 未刷新，稍后重试）"
   exit 1
 fi
 
-# 附加校验（尽力而为）：下载全文确认评论数据块标记；网络受限时降级为提示
+LOCAL_DATA_SIZE=$(wc -c < comment-data.json | tr -d ' ')
+REMOTE_DATA_SIZE=$(curl -sIL "${URL}comment-data.json" | tr -d '\r' | awk 'tolower($1)=="content-length:"{s=$2} END{print s}')
+if [ "${REMOTE_DATA_SIZE}" = "${LOCAL_DATA_SIZE}" ]; then
+  echo "  comment-data.json 体积 ${REMOTE_DATA_SIZE} 字节 = 本地 ✓"
+else
+  echo "✗ 线上 comment-data.json 体积 ${REMOTE_DATA_SIZE:-未知} 与本地 ${LOCAL_DATA_SIZE} 不一致（可能 CDN 未刷新，稍后重试）"
+  exit 1
+fi
+
+# 附加校验（尽力而为）：下载全文确认轻量数据块与外部评论文件；网络受限时降级为提示
 VERIFY_TMP=$(mktemp /tmp/publish_verify.XXXXXX)
 if curl -sL --compressed --max-time 60 "${URL}" -o "${VERIFY_TMP}"; then
   if grep -q "GENERATED_COMMENT_DATA_START" "${VERIFY_TMP}"; then
-    echo "  评论数据块已部署 ✓"
+    echo "  页面元数据块已部署 ✓"
   else
-    echo "✗ 页面可达但未检测到评论数据块标记"
+    echo "✗ 页面可达但未检测到页面元数据块标记"
     rm -f "${VERIFY_TMP}"
     exit 1
   fi
@@ -90,6 +99,20 @@ else
   echo "  （全文校验因网络受限跳过，体积校验已通过）"
 fi
 rm -f "${VERIFY_TMP}"
+
+VERIFY_DATA_TMP=$(mktemp /tmp/publish_data_verify.XXXXXX)
+if curl -sL --compressed --max-time 60 "${URL}comment-data.json" -o "${VERIFY_DATA_TMP}"; then
+  if grep -q '"comments":' "${VERIFY_DATA_TMP}"; then
+    echo "  评论数据文件已部署 ✓"
+  else
+    echo "✗ comment-data.json 可达但未检测到 comments 数据"
+    rm -f "${VERIFY_DATA_TMP}"
+    exit 1
+  fi
+else
+  echo "  （评论数据全文校验因网络受限跳过，体积校验已通过）"
+fi
+rm -f "${VERIFY_DATA_TMP}"
 
 echo ""
 echo "✅ 发布完成：${URL}"

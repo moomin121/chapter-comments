@@ -3,7 +3,7 @@
 起点风格的小说章节阅读页 + 段评气泡 + 评论抽屉。基于 Figma 稿 + qidian.com 章节页实现。
 
 > **在线体验**：https://moomin121.github.io/chapter-comments/
-> 全部评论数据内嵌在页面里（零二次加载），打开即可流畅筛选、排序、查看 6830 条评论。
+> 首屏 HTML 已轻量化，评论数据异步加载；打开后先显示章节正文和段评气泡，再补齐 6830 条评论。
 
 ## 这是什么
 
@@ -16,16 +16,17 @@
 
 ```
 chapter-comments/
-├── index.html        # 单文件应用：HTML + CSS + JS + 全部评论数据内联（3.7MB）
+├── index.html        # 静态应用入口：HTML + CSS + JS + 轻量评论元数据
+├── comment-data.json # 异步加载的完整评论数据（已去重/瘦身）
 ├── publish.sh        # 一键发布：冒烟测试 → commit → push → 验证 Pages
 ├── README.md         # 本文件
 ├── CLAUDE.md         # 给 Codex / Claude 看的项目约定
-├── scripts/          # build_comment_data.py：CSV → 内联数据块
-├── test/             # smoke-test.sh：262 项浏览器断言冒烟测试
+├── scripts/          # build_comment_data.py：CSV → 元数据块 + comment-data.json
+├── test/             # smoke-test.sh：271 项浏览器断言冒烟测试
 └── screenshots/      # 渲染效果截图（可选）
 ```
 
-单文件设计的好处：方便协作开发时直接 diff `index.html`；坏处：行号会随编辑而变，所以定位问题时用 grep + 注释关键字更稳。
+页面入口保持轻量，完整评论数据放在 `comment-data.json` 中异步加载。这样 GitHub Pages 上首屏不再被 3MB+ 的内联 JSON 阻塞，弱网下也能先看到正文。
 
 ## 怎么运行
 
@@ -102,7 +103,7 @@ open http://127.0.0.1:8211/index.html
 - `paragraphs`：190 段正文（来自起点章节页 OCR）
 - `SECTION_COUNTS`：190 段对应的段评数（与 `paragraphs` 严格一一对应）
 
-**改数据**：直接编辑 `var CHAPTER = {...}` 和 `var SECTION_COUNTS = [...]`。两个数组长度必须一致，否则 `renderReader` 里的循环会溢出。
+**改评论数据**：优先更新 CSV，然后运行 `python3 scripts/build_comment_data.py --update-all`，它会同时刷新 `index.html` 里的轻量元数据块和 `comment-data.json`。
 
 ## 关键 DOM id
 

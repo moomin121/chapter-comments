@@ -26,10 +26,10 @@ else
   echo "build: $BUILD_OUT"
   echo "$BUILD_OUT" | grep -q "4465 main, 2365 replies, 171 paragraph targets, 663 orphan replies" \
     || { echo "FAIL: 数据预处理统计不符"; exit 1; }
-  # 生成的数据块必须已在 index.html 里（比较生成区与落盘区一致）
-  python3 - "$DIR/scripts/build_comment_data.py" "$DIR/index.html" <<'PYEOF'
-import re, subprocess, sys, pathlib
-script = pathlib.Path(sys.argv[1]); index = pathlib.Path(sys.argv[2])
+  # 生成的数据块必须已在 index.html / comment-data.json 里（比较生成区与落盘区一致）
+  python3 - "$DIR/scripts/build_comment_data.py" "$DIR/index.html" "$DIR/comment-data.json" <<'PYEOF'
+import json, re, subprocess, sys, pathlib
+script = pathlib.Path(sys.argv[1]); index = pathlib.Path(sys.argv[2]); data_json = pathlib.Path(sys.argv[3])
 out = subprocess.run(["python3", str(script)], capture_output=True, text=True).stdout
 block = re.search(r"// GENERATED_COMMENT_DATA_START.*?// GENERATED_COMMENT_DATA_END", out, re.S)
 cur = re.search(r"// GENERATED_COMMENT_DATA_START.*?// GENERATED_COMMENT_DATA_END",
@@ -37,7 +37,13 @@ cur = re.search(r"// GENERATED_COMMENT_DATA_START.*?// GENERATED_COMMENT_DATA_EN
 if not block or not cur:
     sys.exit("FAIL: 找不到生成数据块")
 if block.group(0) != cur.group(0):
-    sys.exit("FAIL: index.html 内联数据块与 CSV 最新构建不一致，请跑 build_comment_data.py --update-index")
+    sys.exit("FAIL: index.html 轻量元数据块与 CSV 最新构建不一致，请跑 build_comment_data.py --update-all")
+expected_json = subprocess.run(
+    ["python3", str(script), "--print-json"],
+    capture_output=True, text=True, check=True
+).stdout.splitlines()[0]
+if json.loads(expected_json) != json.loads(data_json.read_text(encoding="utf-8")):
+    sys.exit("FAIL: comment-data.json 与 CSV 最新构建不一致，请跑 build_comment_data.py --update-all")
 PYEOF
   [ $? -eq 0 ] || exit 1
 fi
