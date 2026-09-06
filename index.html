@@ -4,10 +4,17 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>章节评论 · 作家助手</title>
-<!-- LXGW WenKai GB 网络字体（正文/标题手写楷体，贴合 Figma；@free-fonts 包按 unicode-range 分片按需加载，300/400/500 真实字重） -->
-<link rel="preconnect" href="https://cdn.jsdelivr.net" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@free-fonts/lxgw-wenkai-gb@1.0.1/lxgw-wenkai-gb.css" />
+<!-- LXGW WenKai GB 本地子集字体（231KB，仅含正文/标题用到的 1049 字符，Medium 字重）：
+     单文件 + font-display:block + preload，字体到达前隐藏文字、到达后直接以文楷渲染，
+     杜绝 CDN 分片方案"系统字体与文楷反复切换"的闪烁问题 -->
+<link rel="preload" href="fonts/lxgw-wenkai-gb-500.woff2" as="font" type="font/woff2" crossorigin />
 <style>
+  @font-face{
+    font-family:"LXGW WenKai GB";
+    src:url("fonts/lxgw-wenkai-gb-500.woff2") format("woff2");
+    font-weight:500;font-style:normal;
+    font-display:block; /* 零闪烁：未加载完成前不显示回退字体 */
+  }
   :root{
     --brand:#1E71EF;           /* Figma 主蓝 */
     --brand-strong:#0562F0;    /* 作家助手品牌主色 */

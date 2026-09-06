@@ -49,7 +49,7 @@ innerWidth - r.right   // 必须 === 0，不论抽屉开还是关
 ## 技术栈
 
 - **纯原生**：HTML + CSS + 原生 JS（无构建步骤、无依赖、无打包）
-- **字体**：正文/标题使用 `LXGW WenKai GB` 网络字体（CDN：`@free-fonts/lxgw-wenkai-gb@1.0.1` CSS，300/400/500 真实字重，按 unicode-range 分片按需加载），保留系统楷体兜底。⚠️ 不要改回手写 `@font-face` 指向 `lxgw-wenkai-webfont` 包根目录的 `.woff2` —— 该路径是 404，曾导致线上字体整体回退系统字体
+- **字体**：正文/标题使用 `LXGW WenKai GB` 500 字重，**本地子集** `fonts/lxgw-wenkai-gb-500.woff2`（231KB，仅含正文用到的 1049 字符 + ASCII + 常用标点），`font-display:block` + preload 零闪烁。⚠️ 两条教训：(1) 不要手写 `@font-face` 指向 `lxgw-wenkai-webfont` 包根目录的 `.woff2`——404；(2) 不要用 CDN 的 unicode-range 分片 CSS——每段文字命中多个分片、陆续到达，正文会"系统字体⇄文楷"反复闪烁。正文文字有新增时需重新子集化（pyftsubset --text-file）
 - **数据**：正文在 `var CHAPTER = {...}`；轻量评论元数据在 `// GENERATED_COMMENT_DATA_START/END` 之间；完整评论在 `comment-data.json`（脚本生成，勿手改）
 - **存储**：`localStorage.wb_comment_mode` 记忆评论开关（默认开启，可忽略）
 

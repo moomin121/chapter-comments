@@ -79,16 +79,16 @@ JS=$(cat <<'JSEOF'
   chk('默认全部评论视图', !$('#cmDrawer').classList.contains('parasec'), true);
   chk('有效评论总数(732+6098)', $('#cmCount').textContent, '6830条');
 
-  // --- 字体：LXGW WenKai GB webfont 引入且真实可加载（修复线上 404 回退系统字体问题）---
-  chk('WenKai字体CSS已引入', !!document.querySelector('link[href*="lxgw-wenkai-gb"]'), true);
+  // --- 字体：LXGW WenKai GB 本地子集（fonts/lxgw-wenkai-gb-500.woff2，font-display:block 零闪烁）---
+  chk('WenKai字体已预载', !!document.querySelector('link[href*="lxgw-wenkai-gb"]'), true);
+  chk('无CDN字体依赖', !document.querySelector('link[href*="cdn.jsdelivr.net"]'), true);
   chk('标题字体族为WenKaiGB', getComputedStyle($('.chap-title')).fontFamily.indexOf('LXGW WenKai GB') >= 0, true);
   chk('标题字重500', getComputedStyle($('.chap-title')).fontWeight, '500');
   chk('正文字体族为WenKaiGB', getComputedStyle($('.para')).fontFamily.indexOf('LXGW WenKai GB') >= 0, true);
   chk('正文字重500', getComputedStyle($('.para')).fontWeight, '500');
   try {
-    await document.fonts.load('20px "LXGW WenKai GB"', '修仙者说');
     await document.fonts.load('500 20px "LXGW WenKai GB"', '修仙者说');
-    chk('WenKai字体真实加载', document.fonts.check('20px "LXGW WenKai GB"', '修') && document.fonts.check('500 20px "LXGW WenKai GB"', '修'), true);
+    chk('WenKai字体真实加载', document.fonts.check('500 20px "LXGW WenKai GB"', '修'), true);
   } catch(err) {
     chk('WenKai字体真实加载', 'load-error:' + err, true);
   }
