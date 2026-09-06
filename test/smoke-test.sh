@@ -373,16 +373,21 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
     $('#cmList').scrollTop = 0;
     $('#cmList').dispatchEvent(new Event('scroll'));
   }
-  // 列表滚动后标签会收起；悬停应按内容完整展开，不能固定 194px 裁切末行。
+  // 列表滚动后标签会收起；悬停应按内容完整展开（覆盖式，不撑开容器布局高度）
   $('#cmList').scrollTop = 80;
   $('#cmList').dispatchEvent(new Event('scroll'));
-  $('#cmTags').dispatchEvent(new Event('mouseenter'));
-  var tagBox = $('#cmTags').getBoundingClientRect();
+  $('#cmTags').dispatchEvent(new MouseEvent('mouseenter', {bubbles:true}));
+  var tagsEl = $('#cmTags');
+  var tagBox = tagsEl.getBoundingClientRect();
   var tagLabels = $$('#cmTags .cm-tag-label');
   var lastTag = tagLabels[tagLabels.length - 1];
-  chk('悬停标签区完整展开', $('#cmTags').classList.contains('hover-open'), true);
-  chk('悬停标签区高度充足', $('#cmTags').getBoundingClientRect().height > 34, true);
-  chk('悬停末行标签未裁切', lastTag.getBoundingClientRect().bottom <= tagBox.bottom + 1, true);
+  chk('悬停标签区完整展开', tagsEl.classList.contains('hover-open'), true);
+  // 覆盖式：cm-tags 容器自身高度仍 34px，不撑开布局（不挤压评论列表）
+  chk('悬停不撑开容器', Math.round(tagBox.height), 34);
+  // 覆盖菜单 absolute 定位：在 cm-tags 容器下方，top:100%
+  chk('悬停菜单absolute定位', getComputedStyle(tagsEl).position, 'absolute');
+  // 末行标签在容器下方且在 max-height 240px 范围内可见
+  chk('悬停末行标签未裁切', lastTag.getBoundingClientRect().bottom <= tagBox.bottom + 241, true);
   $('#cmTags').dispatchEvent(new Event('mouseleave'));
   if(tagReal){
     tagReal.click();

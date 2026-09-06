@@ -317,17 +317,14 @@
   /* 尾部滚动余量：最后一行标签要贴顶显示需要滚过 bottom padding，
      scrollHeight 不足以滚到位时上方会露半行；加 spacer 扩展可滚动范围 */
   .cm-tags.collapsed::after{content:'';display:block;width:100%;height:12px;}
-  /* 收起后悬停：按全部标签的实际换行高度展开，不能用固定高度裁掉末行。 */
+  /* 收起后悬停 / hover-open：覆盖式展开菜单在评论列表上方，不改变 cm-tags 容器布局高度
+     (position:absolute 脱离 flex 流；top:100% 相对 cm-tags 折叠态底缘下移) */
   .cm-tags.collapsed:hover,
   .cm-tags.collapsed.hover-open{
-    height:auto;min-height:34px;max-height:none;padding-top:6px;padding-bottom:6px;
-    overflow:visible;z-index:5;
-  }
-  .cm-tags.collapsed:hover::before,
-  .cm-tags.collapsed.hover-open::before{
-    content:"";position:absolute;left:0;right:0;top:0;bottom:0;height:auto;
+    position:absolute;left:0;right:0;top:100%;height:auto;min-height:34px;max-height:240px;
+    padding:8px 16px;overflow-y:auto;z-index:5;
     background:var(--panel);border-bottom:1px solid var(--line);
-    box-shadow:0 6px 12px rgba(20,30,41,.04);z-index:0;
+    box-shadow:0 6px 16px rgba(20,30,41,.08);
   }
   .cm-tags.collapsed:hover .cm-tag,
   .cm-tags.collapsed.hover-open .cm-tag{position:relative;z-index:1;}
