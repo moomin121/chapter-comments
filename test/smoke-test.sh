@@ -196,14 +196,16 @@ JS=$(cat <<'JSEOF'
   head.dispatchEvent(new PointerEvent('pointerup', {bubbles: true}));
   var after = {left: parseFloat(noteEl.style.left), top: parseFloat(noteEl.style.top)};
   chk('便签可拖动', after.left !== before.left || after.top !== before.top, true);
+  // 便签标题栏只有 drag + close（MVP 演示版，去掉 plus-circle 新建按钮，PRD §17.2）
+  chk('便签无新建按钮', !!noteEl.querySelector('.cm-note-new'), false);
+  chk('便签有拖动手柄', !!noteEl.querySelector('.cm-note-drag'), true);
+  chk('便签有关闭按钮', !!noteEl.querySelector('.cm-note-close'), true);
+  // 操作栏图标尺寸与颜色（Figma 80-43884：16×16、#808080）
+  chk('操作栏图标尺寸16px', getComputedStyle($('.cm-meta-actions svg')).width, '16px');
+  chk('操作栏图标颜色', getComputedStyle($('.cm-meta-note svg')).color, 'rgb(128, 128, 128)');
   // 关闭便签
   note2.querySelector('.cm-note-close').click();
   chk('关闭便签移除', $$('.cm-note').length, 1);
-  // 新建空白便签：plus-circle 关闭当前 + 新建空便签
-  noteEl.querySelector('.cm-note-new').click();
-  var blankNote = $('.cm-note');
-  chk('新建空白便签', !!blankNote && blankNote.querySelector('.cm-note-body').textContent === '', true);
-  blankNote.querySelector('.cm-note-close').click();
   await wait(1600);   // 等 tooltip「已保存」自动消失
   chk('tooltip自动消失', tip.style.display === 'none', true);
   // 盟主徽章：guid 尾号 56 的用户在 nickname 后渲染盟主 SVG（PRD §9.2 MVP mock 数据）

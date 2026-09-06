@@ -448,14 +448,13 @@
   .full-comment .meta{justify-content:space-between;}
   .cm-meta-left{white-space:nowrap;}
   .cm-meta-actions{margin-left:auto;display:inline-flex;align-items:center;gap:12px;color:#808080;}
-  .cm-meta-actions svg{width:18px;height:18px;display:block;}
+  .cm-meta-actions svg{width:16px;height:16px;display:block;}
   .cm-meta-like{display:inline-flex;align-items:center;gap:2px;}
   .cm-meta-like-count{font-family:var(--num);line-height:20px;}
   .cm-meta-more{display:inline-flex;align-items:center;}
-  /* 存为灵感便签按钮（Figma 80-43883 plus-textpart，PRD §17 入口） */
-  .cm-meta-note{display:inline-flex;align-items:center;cursor:pointer;}
-  .cm-meta-note svg{width:18px;height:18px;display:block;color:#808080;}
-  .cm-meta-note:hover svg{color:var(--ink-92);}
+  /* 存为灵感便签按钮（Figma 80-43884 plus-textpart 16×16，PRD §17 入口） */
+  .cm-meta-note{display:inline-flex;align-items:center;cursor:pointer;color:#808080;}
+  .cm-meta-note svg{width:16px;height:16px;display:block;color:#808080;}
   /* 自定义 tooltip 单例（原生 title 无法满足点击后立即切换文案，技术方案 §5.9.1） */
   #cmTooltip{
     position:fixed;left:0;top:0;z-index:2147483000;display:none;
@@ -531,7 +530,6 @@
     flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;color:#ADADAD;
   }
   .cm-item.full-comment .cm-meta-actions{flex:0 0 auto;gap:12px;color:#808080;}
-  .cm-item.full-comment .cm-meta-actions svg{width:20px;height:20px;}
   .cm-item.full-comment .cm-reply-item .av,
   .cm-drawer.parasec .cm-item .cm-reply-item .av{flex:0 0 24px;width:24px;height:24px;font-size:4px;}
 
@@ -1604,7 +1602,7 @@ CHAPTER_TREE.forEach(renderFolder);
     + '<path d="M5 3L8 6L11 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
     + '<path d="M5 13L8 10L11 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
     + '</svg>';
-  /* 创建便签 DOM。contentHtml 为 null 时创建空白便签（plus-circle 新建，PRD §17.2） */
+  /* 创建便签 DOM。MVP 演示版标题栏只有 drag 手柄 + close 按钮（PRD §17.2） */
   function createNoteDom(contentHtml){
     var note = document.createElement('div');
     note.className = 'cm-note';
@@ -1613,7 +1611,6 @@ CHAPTER_TREE.forEach(renderFolder);
     note.style.top = off + 'px';
     note.style.zIndex = ++noteZ;
     note.innerHTML = '<div class="cm-note-head">'
-      + '<button class="cm-note-new" type="button" title="新建空白便签">'+ICON_PLUS_CIRCLE+'</button>'
       + '<span class="cm-note-drag">'+ICON_DRAG2+'</span>'
       + '<button class="cm-note-close" type="button" title="关闭便签">'+ICON_CLOSE_L+'</button>'
       + '</div>'
@@ -1628,22 +1625,16 @@ CHAPTER_TREE.forEach(renderFolder);
     note.addEventListener('pointerdown', function(){
       note.style.zIndex = ++noteZ;
     });
-    // 关闭
+    // 关闭按钮
     note.querySelector('.cm-note-close').addEventListener('click', function(e){
       e.stopPropagation();
       note.remove();
     });
-    // 新建空白便签：关闭当前 + 左上角叠放一个空便签（用户确认）
-    note.querySelector('.cm-note-new').addEventListener('click', function(e){
-      e.stopPropagation();
-      note.remove();
-      createNoteDom(null);
-    });
-    // 拖动：标题栏 pointerdown（排除按钮），技术方案 §5.9.4
+    // 拖动：标题栏 pointerdown（排除关闭按钮），技术方案 §5.9.4
     var head = note.querySelector('.cm-note-head');
     var drag = null;
     head.addEventListener('pointerdown', function(e){
-      if(e.target.closest('.cm-note-new, .cm-note-close')) return;
+      if(e.target.closest('.cm-note-close')) return;
       drag = { x: e.clientX, y: e.clientY,
                left: parseFloat(note.style.left) || 0,
                top: parseFloat(note.style.top) || 0,
