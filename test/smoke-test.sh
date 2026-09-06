@@ -122,6 +122,13 @@ JS=$(cat <<'JSEOF'
     return link && !link.closest('.cm-unmatched-module');
   });
   chk('超过3条的段有查看入口', overThree.length > 100, true);
+  // 查看 N 条评论按钮与 AI 卡【展开全部】按钮对齐（PRD §9.3 + Figma 92-13358）
+  var linkBtn = overThree[0].querySelector('.cm-section-link');
+  chk('查看按钮颜色', getComputedStyle(linkBtn).color, 'rgba(20, 30, 41, 0.64)');
+  chk('查看按钮字号12', getComputedStyle(linkBtn).fontSize, '12px');
+  chk('查看按钮字重500', getComputedStyle(linkBtn).fontWeight, '500');
+  chk('查看按钮行高18', getComputedStyle(linkBtn).lineHeight, '18px');
+  chk('查看按钮有chevron-down svg', !!linkBtn.querySelector('svg[viewBox="0 0 10 10"]'), true);
   // 章评与段评入口文案统一为"查看 n 条评论"
   var linkTexts = $$('.cm-full-module:not(.cm-unmatched-module) .cm-section-link').map(function(b){ return b.textContent; });
   chk('章评入口无"本章"', linkTexts.every(function(t){ return t.indexOf('本章') < 0; }), true);
