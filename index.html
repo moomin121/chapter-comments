@@ -4,7 +4,19 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>章节评论 · 作家助手</title>
+<!-- LXGW WenKai 网络字体（正文/标题手写楷体，贴合 Figma） -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
 <style>
+  @font-face{
+    font-family:"LXGW WenKai GB";
+    src:url("https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-regular.woff2") format("woff2");
+    font-weight:400;font-display:swap;
+  }
+  @font-face{
+    font-family:"LXGW WenKai GB";
+    src:url("https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-bold.woff2") format("woff2");
+    font-weight:700;font-display:swap;
+  }
   :root{
     --brand:#1E71EF;           /* Figma 主蓝 */
     --brand-strong:#0562F0;    /* 作家助手品牌主色 */
@@ -23,7 +35,7 @@
     --tabbar:#E4E9EF;
     --shadow:0 1px 3px rgba(20,30,60,.06),0 8px 24px rgba(20,30,60,.05);
     --font:"PingFang SC","Microsoft YaHei","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    --wenkai:"Kaiti SC","STKaiti","KaiTi","LXGW WenKai GB","楷体",serif;
+    --wenkai:"LXGW WenKai GB","Kaiti SC","STKaiti","楷体",serif;
     --num:"Yuewen Font","DIN Alternate","PingFang SC",monospace;
   }
   *{box-sizing:border-box;-webkit-font-smoothing:antialiased;}

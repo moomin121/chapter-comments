@@ -49,7 +49,7 @@ innerWidth - r.right   // 必须 === 0，不论抽屉开还是关
 ## 技术栈
 
 - **纯原生**：HTML + CSS + 原生 JS（无构建步骤、无依赖、无打包）
-- **字体**：系统楷体优先（不依赖字体 CDN 阻塞首屏）
+- **字体**：正文/标题使用 `LXGW WenKai GB` 网络字体，保留系统楷体兜底
 - **数据**：正文在 `var CHAPTER = {...}`；轻量评论元数据在 `// GENERATED_COMMENT_DATA_START/END` 之间；完整评论在 `comment-data.json`（脚本生成，勿手改）
 - **存储**：`localStorage.wb_comment_mode` 记忆评论开关（默认开启，可忽略）
 
@@ -242,7 +242,7 @@ agent-browser eval "document.querySelectorAll('.para').length"
 - [x] **评论对象气泡点击触发单对象视图**（2026-09-05）：.cm-ref-bubble 加 data-target-id + cursor pointer + hover 高亮 + 直接绑定 click
 - [x] **评论底部操作按 Figma 设计稿实现**（2026-09-05）：日期 + IP 地址 + 评论图标 + 点赞"赞"字 + 点赞数 + ···（commentMetaRow helper 复用）
 - [x] 冒烟测试 v3（60 项，新增 11 项覆盖以上 6 个修正点）
-- [x] **首屏性能优化**（2026-09-07）：`index.html` 从 3.88MB 降到约 163KB；完整评论拆到 `comment-data.json` 异步加载；移除字体 CDN 阻塞；冒烟测试扩展到 271 项
+- [x] **首屏性能优化**（2026-09-07）：`index.html` 从 3.88MB 降到约 163KB；完整评论拆到 `comment-data.json` 异步加载；保留原 LXGW WenKai 字体观感；冒烟测试扩展到 271 项
 
 未做 / 待定：
 
