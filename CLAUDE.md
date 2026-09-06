@@ -249,4 +249,4 @@ agent-browser eval "document.querySelectorAll('.para').length"
 - [ ] `#cmFilterBtn` 筛选按钮只有 toggle 视觉，未接真实筛选器 dropdown
 - [ ] AI 总结卡内容是硬编码文案（PRD 未要求动态生成）
 - [ ] 段评 tab（renderParagraphsOverview）还是旧布局，冒烟测试未覆盖；如需对齐 Figma 可后续迭代
-- [ ] 部署链路未接（gh-pages 子目录 / Vercel / CloudStudio 待定）
+- [x] 部署链路已接（2026-09-06）：GitHub Pages 服务 master 根目录，线上 https://moomin121.github.io/chapter-comments/ ，仓库 https://github.com/moomin121/chapter-comments ；本地验证后 `./publish.sh` 一键发布（冒烟测试 → commit → push → 轮询 Pages 构建完成 → curl 验证）
