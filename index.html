@@ -598,6 +598,11 @@
   .cm-item .av{
     flex:0 0 32px;width:32px;height:32px;border-radius:50%;
     display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:13px;
+    position:relative;overflow:hidden;
+  }
+  /* 随机用户头像：盖在色块之上，图片未就绪/加载失败时露出下方色块+名字末字 */
+  .cm-item .av .av-img{
+    position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;
   }
   .cm-item .av.cm-avatar{
     border:.5px solid rgba(0,0,0,.08);background:#ffd8df;color:#ff7d8a;
@@ -1255,6 +1260,22 @@ CHAPTER_TREE.forEach(renderFolder);
     var h=0; for(var i=0;i<seed.length;i++) h = (h*31 + seed.charCodeAt(i)) & 0xfffffff;
     return colors[h % colors.length];
   }
+  /* 随机用户头像：本地 64 张 DiceBear micah 扁平插画（avatars/aNN.webp，共 91KB）。
+     按 guid 哈希稳定分配——同一读者每次打开都是同一张头像，换设备也不会变。
+     背景色仍由 avatarColor 决定，图片加载失败时自然回退到"色块 + 名字末字"。 */
+  var AVATAR_COUNT = 64;
+  function avatarImg(seed){
+    var h=0; for(var i=0;i<seed.length;i++) h = (h*31 + seed.charCodeAt(i)) & 0xfffffff;
+    var n = (h % AVATAR_COUNT) + 1;
+    return 'avatars/a' + (n<10?'0':'') + n + '.webp';
+  }
+  function avatarHtml(guid, name){
+    var seed = String(guid || name || 'U');
+    return '<span class="av" data-guid="'+escapeHtml(seed)+'" style="background:'+avatarColor(seed)+'">'
+      + escapeHtml(avatarInitial(name))
+      + '<img class="av-img" src="'+avatarImg(seed)+'" alt="" loading="lazy" decoding="async" />'
+      + '</span>';
+  }
   function fmtTime(t){
     // 仅显示 MM-DD HH:mm，去掉年
     var m = String(t).match(/(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/);
@@ -1734,9 +1755,8 @@ CHAPTER_TREE.forEach(renderFolder);
   }
   function renderReplyItem(r){
     var name = commentUser(r);
-    var avC = avatarColor(r.userGuid || name);
     return '<div class="cm-item">'
-      + '<span class="av" data-guid="'+escapeHtml(String(r.userGuid||''))+'" style="background:'+avC+'">'+escapeHtml(avatarInitial(name))+'</span>'
+      + avatarHtml(r.userGuid, name)
       + '<div class="body">'
       +   '<div class="nm-row"><span class="nm">'+escapeHtml(name)+'</span>'+(String(r.userGuid||'').endsWith('56')?'<span class="cm-user-badge">'+USER_BADGE_SVG+'</span>':'')+'</div>'
       +   '<div class="content">'+commentBodyHtml(r)+'</div>'
@@ -1745,7 +1765,6 @@ CHAPTER_TREE.forEach(renderFolder);
   }
   function renderCommentItem(c, quote, extraClass, defaultExpand){
     var name = commentUser(c);
-    var avColor = avatarColor(c.userGuid || name);
     var quoteHtml = quote ? '<div class="cm-quote">'+escapeHtml(quote)+'</div>' : '';
     var replyCount = (c.replies && c.replies.length) || 0;
     // 最新/长评（PRD §10.4.3 / §10.4.4）默认收起楼中楼，按钮文案「展开 n 条回复」；与单对象视图一致
@@ -1760,7 +1779,7 @@ CHAPTER_TREE.forEach(renderFolder);
       : '';
     return '<div class="cm-item '+(extraClass||'')+'" data-len="'+commentLength(c)+'">'
       + quoteHtml
-      + '<span class="av" data-guid="'+escapeHtml(String(c.userGuid||''))+'" style="background:'+avColor+'">'+escapeHtml(avatarInitial(name))+'</span>'
+      + avatarHtml(c.userGuid, name)
       + '<div class="body">'
       +   '<div class="nm-row"><span class="nm">'+escapeHtml(name)+'</span>'+(String(c.userGuid||'').endsWith('56')?'<span class="cm-user-badge">'+USER_BADGE_SVG+'</span>':'')+'</div>'
       +   '<div class="content">'+commentBodyHtml(c)+'</div>'
@@ -2557,9 +2576,8 @@ CHAPTER_TREE.forEach(renderFolder);
       ? own2List.map(function(item){
           var c = item.parent;
           var name = commentUser(c);
-          var avColor = avatarColor(c.userGuid || name);
           var parentBlock = '<div class="cm-item" data-len="'+commentLength(c)+'">'
-            + '<span class="av" data-guid="'+escapeHtml(String(c.userGuid||''))+'" style="background:'+avColor+'">'+escapeHtml(avatarInitial(name))+'</span>'
+            + avatarHtml(c.userGuid, name)
             + '<div class="body">'
             +   '<div class="nm-row"><span class="nm">'+escapeHtml(name)+'</span>'+(String(c.userGuid||'').endsWith('56')?'<span class="cm-user-badge">'+USER_BADGE_SVG+'</span>':'')+'</div>'
             +   '<div class="content">'+commentBodyHtml(c)+'</div>'

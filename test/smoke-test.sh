@@ -161,6 +161,19 @@ JS=$(cat <<'JSEOF'
   // --- §16-7 评论卡片：对象/头像/昵称/正文/回复入口 ---
   var fc = $('.cm-full-module .full-comment');
   chk('评论有头像', !!fc.querySelector('.av'), true);
+  // 随机用户头像：本地 avatars/aNN.webp，按 guid 哈希稳定分配（同一读者始终同一张）
+  var avImgs = $$('.cm-item .av .av-img');
+  chk('头像已挂图片', avImgs.length > 50, true);
+  chk('头像图路径合法', avImgs.every(function(im){ return /^avatars\/a(0[1-9]|[1-5][0-9]|6[0-4])\.webp$/.test(im.getAttribute('src')); }), true);
+  chk('头像图真实加载', Array.prototype.filter.call(document.images, function(im){ return /avatars\//.test(im.src) && im.complete && im.naturalWidth > 0; }).length > 10, true);
+  chk('头像有兜底首字', $$('.cm-item .av').every(function(el){ return el.childNodes.length > 1 || el.textContent.length > 0; }), true);
+  var guidsSame = $$('.cm-item .av').slice(0, 60).map(function(el){ return el.getAttribute('data-guid') + '=>' + (el.querySelector('.av-img')||{}).getAttribute && el.querySelector('.av-img').getAttribute('src'); });
+  chk('同guid头像稳定', (function(){
+    var m = {};
+    for(var i=0;i<guidsSame.length;i++){ var p = guidsSame[i].split('=>'); if(!p[0]) continue; if(m[p[0]] && m[p[0]]!==p[1]) return false; m[p[0]] = p[1]; }
+    return true;
+  })(), true);
+  chk('头像圆形裁切', getComputedStyle($('.cm-item .av')).borderRadius, '50%');
   chk('评论有昵称', fc.querySelector('.nm').textContent.length > 0, true);
   chk('评论有正文', fc.querySelector('.content').textContent.length > 0, true);
   chk('评论正文字号14', getComputedStyle(fc.querySelector('.content')).fontSize, '14px');
