@@ -716,6 +716,40 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
     chk('返回全部视图input再隐藏', getComputedStyle($('.cm-input')).display, 'none');
   }
 
+  // --- 多章节切换：目录点击 → 整章替换正文/评论/AI 卡（玄鉴仙族_相累）---
+  var ch2Item = $('.lp-item[data-cid="ch2"]');
+  chk('目录有玄鉴仙族章节', !!ch2Item, true);
+  if(ch2Item){
+    ch2Item.click();
+    await wait(600);   // 等章节正文渲染 + comment-data-ch2.json 异步加载
+    chk('切换后标题更新', $('#chapTitle').textContent, '第一千五百八十七章 相累');
+    chk('切换后发布时间更新', $('#chapPublishedAt').textContent, '2026-09-05 20:20');
+    chk('切换后总条数', $('#cmCount').textContent, '1288条');
+    chk('切换后段评总数0', $('#chapSecTotal').textContent, '0');
+    chk('切换后章评气泡999+', $('#chapBubble').textContent, '999+');
+    chk('切换后段落重渲染', $$('.para').length, 69);
+    chk('切换后无正文气泡', $$('.para-bubble').length, 0);
+    chk('切换后AI卡是ch2小结', ($('.cm-ai-body')||{textContent:''}).textContent.indexOf('争议章') >= 0, true);
+    chk('切换后目录高亮迁移', $('.lp-item.active').getAttribute('data-cid'), 'ch2');
+    chk('ch2聚合块仅章评', $$('.cm-full-module').length, 1);
+    chk('ch2章评模块计数999+', ($('.cm-full-module .cm-ref-bubble')||{textContent:''}).textContent, '999+');
+    // 最热/最新/长评在 ch2 下同样可用（无楼中楼、无点赞）
+    $('#cmSortLatest').click();
+    await wait(150);
+    chk('ch2最新首屏50条', $$('.cm-list > .paragraph-comment').length, 50);
+    $('#cmSortDefault').click();
+    await wait(150);
+    // 切回第1章：恢复聚合视图与全部计数
+    $('.lp-item[data-cid="ch1"]').click();
+    await wait(600);
+    chk('切回后标题恢复', $('#chapTitle').textContent, '第1章 面试');
+    chk('切回后总条数恢复', $('#cmCount').textContent, '6830条');
+    chk('切回后聚合块172', $$('.cm-full-module').length, 172);
+    chk('切回后AI卡恢复ch1', ($('.cm-ai-body')||{textContent:''}).textContent.indexOf('第一章的核心反馈') >= 0, true);
+    chk('切回后目录高亮恢复', $('.lp-item.active').getAttribute('data-cid'), 'ch1');
+    chk('切回后段评总数恢复', $('#chapSecTotal').textContent, '6098');
+  }
+
   return out.join('\n');
 })()
 JSEOF
