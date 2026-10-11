@@ -51,7 +51,7 @@ innerWidth - r.right   // 必须 === 0，不论抽屉开还是关
 - **纯原生**：HTML + CSS + 原生 JS（无构建步骤、无依赖、无打包）
 - **字体**：正文/标题使用 `LXGW WenKai GB` 500 字重，**本地子集** `fonts/lxgw-wenkai-gb-500.woff2`（231KB，仅含正文用到的 1049 字符 + ASCII + 常用标点），`font-display:block` + preload 零闪烁。⚠️ 两条教训：(1) 不要手写 `@font-face` 指向 `lxgw-wenkai-webfont` 包根目录的 `.woff2`——404；(2) 不要用 CDN 的 unicode-range 分片 CSS——每段文字命中多个分片、陆续到达，正文会"系统字体⇄文楷"反复闪烁。正文文字有新增时需重新子集化（pyftsubset --text-file）
 - **数据**：正文在 `var CHAPTER = {...}`；轻量评论元数据在 `// GENERATED_COMMENT_DATA_START/END` 之间；完整评论在 `comment-data.json`（脚本生成，勿手改）
-- **头像**：评论头像为 `avatars/a01~a64.webp`（64 张 DiceBear micah 扁平插画，64×64，合计 256KB），`avatarHtml()` 按 guid 哈希稳定分配——同一读者永远同一张。图片下方保留 `avatarColor` 色块 + 名字末字，加载失败自动回退。增删头像直接覆盖/增删同名文件 + 改 `AVATAR_COUNT`，无需改渲染逻辑
+- **头像**：评论头像为 `avatars/a01~a64.webp`（64 张 DiceBear **personas** 风格，64×64，合计 256KB），**中国化面孔**：`skinColor` 锁定黄肤色系（eec39a/e8b98d/dfae82…）、`hairColor` 锁定纯黑 `1b1410`、发型只用中式（bobBangs/shortCombover/straightBun/bobCut/curlyBun/双马尾/丸子头等 14 种），1/4 胡须 + 1/4 眼镜 + 其余干净脸。`avatarHtml()` 按 guid 哈希稳定分配——同一读者永远同一张。图片下方保留 `avatarColor` 色块 + 名字末字，加载失败自动回退。⚠️ 换风格时注意：micah 的 `baseColor` 最浅只到粉红 `f9c9b6` 且指定 `hair` 极易变秃头，**调不出中国面孔**；personas 的 `skinColor`/`hairColor` 支持任意十六进制，才是正解
 - **存储**：`localStorage.wb_comment_mode` 记忆评论开关（默认开启，可忽略）
 
 ## 文件边界

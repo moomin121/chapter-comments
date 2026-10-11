@@ -1273,7 +1273,7 @@ CHAPTER_TREE.forEach(renderFolder);
     var seed = String(guid || name || 'U');
     return '<span class="av" data-guid="'+escapeHtml(seed)+'" style="background:'+avatarColor(seed)+'">'
       + escapeHtml(avatarInitial(name))
-      + '<img class="av-img" src="'+avatarImg(seed)+'" alt="" loading="lazy" decoding="async" />'
+      + '<img class="av-img" src="'+avatarImg(seed)+'" alt="" decoding="async" />'
       + '</span>';
   }
   function fmtTime(t){
