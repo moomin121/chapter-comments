@@ -1900,8 +1900,10 @@ window.addEventListener('app:switch-chapter', function(ev){
   function commentMetaRow(c){
     var likes = commentLikes(c);
     var key = commentKey(c);
+    // IP 展示：ch1 数据无属地字段，维持"IP地址"占位；ch2 起有真实属地（起点后台导出）
+    var ipText = c.ipLocation ? 'IP属地·'+c.ipLocation : 'IP地址';
     return '<div class="meta">'
-      + '<span class="cm-meta-left">'+fmtCommentMetaTime(commentTime(c))+' IP地址</span>'
+      + '<span class="cm-meta-left">'+fmtCommentMetaTime(commentTime(c))+' '+ipText+'</span>'
       + '<span class="cm-meta-actions">'
       +   '<span class="cm-meta-note" data-cid="'+escapeHtml(String(key))+'" data-guid="'+escapeHtml(String(c.userGuid || ''))+'" title="存为灵感便签">'+SVG_NOTE+'</span>'
       +   '<span class="cm-meta-comment" title="回复">'+SVG_COMMENT+'</span>'

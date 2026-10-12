@@ -724,16 +724,24 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
     await wait(600);   // 等章节正文渲染 + comment-data-ch2.json 异步加载
     chk('切换后标题更新', $('#chapTitle').textContent, '第一千五百八十七章 相累');
     chk('切换后发布时间更新', $('#chapPublishedAt').textContent, '2026-09-05 20:20');
-    chk('切换后总条数', $('#cmCount').textContent, '1288条');
-    chk('切换后段评总数0', $('#chapSecTotal').textContent, '0');
-    chk('切换后章评气泡999+', $('#chapBubble').textContent, '999+');
+    chk('切换后总条数', $('#cmCount').textContent, '2690条');
+    chk('切换后段评总数', $('#chapSecTotal').textContent, '2068');
+    chk('切换后章评气泡622', $('#chapBubble').textContent, '622');
     chk('切换后段落重渲染', $$('.para').length, 69);
-    chk('切换后无正文气泡', $$('.para-bubble').length, 0);
+    chk('切换后有段评气泡', $$('.para-bubble').length, 56);
     chk('切换后AI卡是ch2小结', ($('.cm-ai-body')||{textContent:''}).textContent.indexOf('争议章') >= 0, true);
     chk('切换后目录高亮迁移', $('.lp-item.active').getAttribute('data-cid'), 'ch2');
-    chk('ch2聚合块仅章评', $$('.cm-full-module').length, 1);
-    chk('ch2章评模块计数999+', ($('.cm-full-module .cm-ref-bubble')||{textContent:''}).textContent, '999+');
-    // 最热/最新/长评在 ch2 下同样可用（无楼中楼、无点赞）
+    chk('ch2聚合块57', $$('.cm-full-module').length, 57);
+    chk('ch2章评模块计数622', ($('.cm-full-module[data-target-id="-1"] .cm-ref-bubble')||{textContent:''}).textContent, '622');
+    // 完整结构：楼中楼 / 真实点赞 / IP属地（起点后台导出）
+    // 聚合视图每模块仅渲染前 3 条一级评论，可见楼中楼按钮数量有限，断言存在即可
+    chk('ch2有楼中楼入口', $$('.cm-list .sub-toggle').length > 0, true);
+    chk('ch2有真实点赞数', $$('.cm-list .cm-meta-like-count').some(function(el){ return +el.textContent > 100; }), true);
+    chk('ch2显示IP属地', $$('.cm-list .cm-meta-left').some(function(el){ return el.textContent.indexOf('IP属地·') >= 0; }), true);
+    // 最热/最新/长评在 ch2 下同样可用
+    $('#cmSortHot').click();
+    await wait(150);
+    chk('ch2最热tab高亮', $('#cmSortHot').classList.contains('on'), true);
     $('#cmSortLatest').click();
     await wait(150);
     chk('ch2最新首屏50条', $$('.cm-list > .paragraph-comment').length, 50);
