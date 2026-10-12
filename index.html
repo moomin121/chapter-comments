@@ -374,7 +374,7 @@
      absolute 后 cm-tags 的 rect 包含完整菜单 → 鼠标在菜单内时 :hover 稳定保持，不会抖动 */
   .cm-tags.collapsed:hover,
   .cm-tags.collapsed.hover-open{
-    position:absolute;left:0;right:0;top:0;height:auto;min-height:34px;max-height:240px;
+    position:absolute;left:0;right:0;top:0;height:auto;min-height:34px;max-height:300px;
     padding:8px 16px;overflow-y:auto;z-index:5;
     background:var(--panel);border-bottom:1px solid var(--line);
     box-shadow:0 6px 16px rgba(20,30,41,.08);
@@ -1320,17 +1320,20 @@ window.addEventListener('app:switch-chapter', function(ev){
     '这不就是现实/网贷还债太真实': '现实/太真实',
     '睡太少/不睡觉太狠': '不睡觉太狠',
     '面试像找工作/升学太卷': '面试像找工作/太卷',
-    '好惨/心疼/有点压抑': '好惨/心痛/压抑'
+    '好惨/心疼/有点压抑': '好惨/心痛/压抑',
+    /* 玄鉴仙族_相累（ch2）内容标签短名 */
+    '嫌水/嫌拖沓/推进太慢': '嫌水/拖沓',
+    '催更/盼加更/嫌更新少': '催更',
+    '感慨下修皆棋子/被上修摆布': '下修皆棋子',
+    '求道太难/金丹难求的窒息感': '金丹难求',
+    '嫌这章太短': '嫌太短',
+    '反感李家标榜道德/双标': '反感标榜道德',
+    '意难平/惋惜角色结局': '意难平',
+    '笑死/绷不住（被逗乐）': '笑死/绷不住'
   };
-  var COMMENT_TAG_VISIBLE = [
-    '全部', '好评', '差评', '建议', '疑问', '提及作者',
-    '明确提及其他书籍/作者/其他领域的作品如游戏影视', '精彩二创',
-    '建议加精的精彩评论', '建议屏蔽或禁言的评论',
-    '这不就是现实/网贷还债太真实', '资本修仙/赛博朋克',
-    '太癫/太抽象/太离谱', '笑死/绷不住', '好惨/心疼/有点压抑',
-    '睡太少/不睡觉太狠', '绝育/变性/器官改造太狠',
-    '面试像找工作/升学太卷'
-  ];
+  /* 标签显示白名单已废弃：改为数据驱动——tagCounts 构建时只含 count>0 的项，
+     fixed 全显、content 全显。ch1/ch2 的内容标签集合不同，写死名单会让
+     新章节的标签被静默过滤（ch2 内容标签曾被此名单裁掉）。 */
   var SECTION_DB = [];
   var COMMENT_INDEX = null;
   var COMMENT_DATA_READY = false;
@@ -1649,9 +1652,7 @@ window.addEventListener('app:switch-chapter', function(ev){
     var tags = $('#cmTags');
     if(!tags) return;
     tags.classList.remove('collapsed','hover-open');
-    tags.innerHTML = COMMENT_TAGS.filter(function(t){
-      return COMMENT_TAG_VISIBLE.indexOf(t.name) >= 0;
-    }).map(function(t){
+    tags.innerHTML = COMMENT_TAGS.map(function(t){
       var isActive = t.name === currentCommentTag;
       var displayName = COMMENT_TAG_DISPLAY[t.name] || t.name;
       var label = (t.emoji ? t.emoji + ' ' : '') + escapeHtml(displayName);

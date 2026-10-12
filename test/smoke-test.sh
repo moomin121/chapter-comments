@@ -434,8 +434,8 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
   chk('悬停不撑开容器', Math.round(tagBox.height), 34);
   // 覆盖菜单 absolute 定位：在 cm-tags 容器下方，top:100%
   chk('悬停菜单absolute定位', getComputedStyle(tagsEl).position, 'absolute');
-  // 末行标签在容器下方且在 max-height 240px 范围内可见
-  chk('悬停末行标签未裁切', lastTag.getBoundingClientRect().bottom <= tagBox.bottom + 241, true);
+  // 末行标签在容器下方且在 max-height 300px 范围内可见（29 标签约 10 行 + padding）
+  chk('悬停末行标签未裁切', lastTag.getBoundingClientRect().bottom <= tagBox.bottom + 301, true);
   // 抖动修复：鼠标移入 absolute 菜单（relatedTarget 在 cm-tags 子树内）不收起
   var menuTag = $$('#cmTags .cm-tag')[5];
   tagsEl.dispatchEvent(new MouseEvent('mouseleave', {bubbles:false, relatedTarget: menuTag}));
