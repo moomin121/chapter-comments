@@ -1499,7 +1499,7 @@ window.addEventListener('app:switch-chapter', function(ev){
   function loadCommentData(){
     if(COMMENT_DATA_READY) return Promise.resolve(COMMENT_DATA);
     if(COMMENT_DATA_LOADING) return COMMENT_DATA_LOADING;
-    COMMENT_DATA_LOADING = fetch(COMMENT_DATA_URL, {cache:'force-cache'})
+    COMMENT_DATA_LOADING = fetch(COMMENT_DATA_URL, {cache:'default'})
       .then(function(res){
         if(!res.ok) throw new Error('HTTP '+res.status);
         return res.json();
