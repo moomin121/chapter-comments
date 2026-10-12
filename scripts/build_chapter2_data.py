@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Build comment-data-ch2.json for 玄鉴仙族_相累 (chapter 98935976990136488).
 
-v2：改用起点后台完整导出（49 列，2717 行，截至 2026-10-11），
+v3：改用 58 列合体 CSV（起点后台导出 49 列 + 作者视角打标 8 列，
+全量 2717 条逐条打标，2026-10-12 v4 口径），标签直接行内取，
 具备 v1 数据源缺失的全部结构：
 - extend1.segmentId + quote_msg（被评段落原文）→ 段落映射
   （segmentId 是全书级段落编号，差值不固定，必须靠 quote 匹配建立映射表）
@@ -26,12 +27,7 @@ from copy import deepcopy
 from pathlib import Path
 
 DEFAULT_CSV = Path(
-    "/Users/moomin/Library/Containers/com.tencent.WeWorkMac/Data/Documents/"
-    "Profiles/2AD202C503333BE658CD002A9A1DB54D/Caches/Files/2026-10/"
-    "eab82663c6d46af648f3b75fde69cb3c/24488947201576304 (1).csv"
-)
-DEFAULT_TAGS = Path(
-    "/Users/moomin/WorkBuddy/评论skill/outputs/98935976990136488/tagging-result.json"
+    "/Users/moomin/Desktop/评论/outputs/24488947201576304/tagged_comments.csv"
 )
 DEFAULT_OUT = Path("comment-data-ch2.json")
 
@@ -95,28 +91,11 @@ def split_tags(value) -> list[str]:
     return tags
 
 
-def load_tag_index(tags_path: Path) -> dict[tuple[str, str], dict]:
-    """records 的 (guid, 归一化正文) → 标签。"""
-    data = json.loads(tags_path.read_text(encoding="utf-8"))
-    index: dict[tuple[str, str], dict] = {}
-    for rec in data.get("records", []):
-        ctx = rec.get("context") or {}
-        guid = str(ctx.get("commenter") or "").strip()
-        key = (guid, norm_text(rec.get("text") or ""))
-        if key not in index:
-            index[key] = {
-                "fixed": split_tags(rec.get("fixed_labels")),
-                "content": split_tags(rec.get("content_labels")),
-            }
-    return index
-
-
-def build_payload(csv_path: Path, tags_path: Path) -> dict:
+def build_payload(csv_path: Path) -> dict:
     rows = list(csv.DictReader(open(csv_path, encoding="utf-8-sig")))
     paras = load_paragraphs()
     norm_paras = [norm_text(p) for p in paras]
     para_by_text = {p: i for i, p in enumerate(norm_paras)}
-    tag_index = load_tag_index(tags_path)
 
     def get_sid(row) -> int | None:
         try:
@@ -178,13 +157,11 @@ def build_payload(csv_path: Path, tags_path: Path) -> dict:
             continue
         guid = str(row["guid"] or "").strip()
         ip = get_ip(row)
-        tag_key = (guid, norm_text(body))
-        tags = tag_index.get(tag_key)
-        if tags:
+        # 58 列合体 CSV：标签直接从行内打标列取（分号分隔）
+        fixed = split_tags(row.get("作者视角_固定标签"))
+        content = split_tags(row.get("作者视角_内容标签"))
+        if fixed or content:
             tag_hit += 1
-            fixed, content = tags["fixed"], tags["content"]
-        else:
-            fixed, content = [], []
         comment = {
             # 注意：parent_reply_id/top_reply_id 引用的是 ugc_id（雪花长ID），
             # 不是内部自增 id 列 —— 楼中楼挂靠必须用 ugc_id 作键
@@ -293,12 +270,11 @@ def compact_payload(payload: dict) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--csv", type=Path, default=DEFAULT_CSV)
-    parser.add_argument("--tags", type=Path, default=DEFAULT_TAGS)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     parser.add_argument("--print-json", action="store_true")
     args = parser.parse_args()
 
-    payload = build_payload(args.csv, args.tags)
+    payload = build_payload(args.csv)
     text = json.dumps(compact_payload(payload), ensure_ascii=False, separators=(",", ":"))
     text = text.replace("</", "<\\/")
     if args.print_json:

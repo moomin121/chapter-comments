@@ -729,7 +729,7 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
     chk('切换后章评气泡622', $('#chapBubble').textContent, '622');
     chk('切换后段落重渲染', $$('.para').length, 69);
     chk('切换后有段评气泡', $$('.para-bubble').length, 56);
-    chk('切换后AI卡是ch2小结', ($('.cm-ai-body')||{textContent:''}).textContent.indexOf('争议章') >= 0, true);
+    chk('切换后AI卡是ch2小结', ($('.cm-ai-body')||{textContent:''}).textContent.indexOf('设定解释章') >= 0, true);
     chk('切换后目录高亮迁移', $('.lp-item.active').getAttribute('data-cid'), 'ch2');
     chk('ch2聚合块57', $$('.cm-full-module').length, 57);
     chk('ch2章评模块计数622', ($('.cm-full-module[data-target-id="-1"] .cm-ref-bubble')||{textContent:''}).textContent, '622');
@@ -738,6 +738,11 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
     chk('ch2有楼中楼入口', $$('.cm-list .sub-toggle').length > 0, true);
     chk('ch2有真实点赞数', $$('.cm-list .cm-meta-like-count').some(function(el){ return +el.textContent > 100; }), true);
     chk('ch2显示IP属地', $$('.cm-list .cm-meta-left').some(function(el){ return el.textContent.indexOf('IP属地·') >= 0; }), true);
+    // v4 全量打标：内容标签大幅扩容（玩梗吐槽 473/梳理考据 332 一级评论口径）
+    var ch2Tags = $$('#cmTags .cm-tag').map(function(t){ return t.textContent.trim(); });
+    chk('ch2标签总数27', ch2Tags.length, 27);
+    chk('ch2含玩梗吐槽标签', ch2Tags.some(function(t){ return t.indexOf('玩梗吐槽') >= 0; }), true);
+    chk('ch2含梳理考据标签', ch2Tags.some(function(t){ return t.indexOf('梳理/考据设定') >= 0; }), true);
     // 最热/最新/长评在 ch2 下同样可用
     $('#cmSortHot').click();
     await wait(150);
