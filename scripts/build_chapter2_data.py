@@ -42,9 +42,9 @@ FIXED_ORDER = [
 
 
 def norm_text(value: str) -> str:
-    """归一化：去空白 + 中英引号统一为空（quote_msg 用中文引号，正文用英文引号）。"""
-    s = re.sub(r"\s+", "", value or "")
-    return s.translate(str.maketrans("", "", "“”\"‘’'「」『』【】"))
+    """归一化：只保留汉字/字母/数字。起点 quote_msg 会把正文中的破折号等
+    标点显示为省略号（——→…），引号中英形态也不一——删除全部标点才能稳定匹配。"""
+    return re.sub(r"[^\w\u4e00-\u9fff]+", "", re.sub(r"\s+", "", value or ""))
 
 
 def load_paragraphs() -> list[str]:
@@ -134,14 +134,22 @@ def build_payload(csv_path: Path) -> dict:
             sid_to_idx.setdefault(sid, idx)
 
     def target_of(row) -> int:
+        """章评唯一标记是 segmentId == -1（73 主评 + 2 回复 = 75，与后台一致）。
+        其他负 sid（如 -110）是混入的其他章段评；sid>=0 但映射/匹配失败的
+        段评进 unmatched（targetId = -(10000+sid)，避开正文 0~68 与 -1）。"""
         sid = get_sid(row)
-        if sid is None or sid < 0:
+        if sid == -1:
             return -1
-        idx = sid_to_idx.get(sid)
-        if idx is not None:
-            return idx
-        idx = match_paragraph(row["quote_msg"])
-        return idx if idx is not None else -1
+        if sid is not None and sid >= 0:
+            idx = sid_to_idx.get(sid)
+            if idx is not None:
+                return idx
+            idx = match_paragraph(row["quote_msg"])
+            if idx is not None:
+                return idx
+        if sid is None:
+            return -9999
+        return -(10000 + sid)
 
     # 第二遍：构建评论
     by_id: dict[str, dict] = {}
@@ -162,13 +170,16 @@ def build_payload(csv_path: Path) -> dict:
         content = split_tags(row.get("作者视角_内容标签"))
         if fixed or content:
             tag_hit += 1
+        _tid = target_of(row)
+        _quote = (row["quote_msg"] or "").strip()
         comment = {
             # 注意：parent_reply_id/top_reply_id 引用的是 ugc_id（雪花长ID），
             # 不是内部自增 id 列 —— 楼中楼挂靠必须用 ugc_id 作键
             "id": str(row["ugc_id"]).strip(),
-            "targetId": target_of(row),
+            "targetId": _tid,
             "targetType": "chapter",
-            "targetText": "",
+            # unmatched 评论带 quote 摘要，UI 未匹配模块可显示原文
+            "targetText": (re.sub(r"\s+", " ", _quote)[:40] if _tid < -1 else ""),
             "parentId": "0",
             "topCommentId": "",
             "level": "main",
@@ -243,7 +254,7 @@ def compact_payload(payload: dict) -> dict:
 
     def compact_comment(comment: dict) -> None:
         for key in (
-            "id", "targetText", "targetType", "parentId", "topCommentId",
+            "id", "targetType", "parentId", "topCommentId",
             "level", "nickname", "avatarUrl", "userBadge",
         ):
             comment.pop(key, None)

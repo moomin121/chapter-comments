@@ -725,14 +725,15 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
     chk('切换后标题更新', $('#chapTitle').textContent, '第一千五百八十七章 相累');
     chk('切换后发布时间更新', $('#chapPublishedAt').textContent, '2026-09-05 20:20');
     chk('切换后总条数', $('#cmCount').textContent, '2690条');
-    chk('切换后段评总数', $('#chapSecTotal').textContent, '2068');
-    chk('切换后章评气泡622', $('#chapBubble').textContent, '622');
+    chk('切换后段评总数', $('#chapSecTotal').textContent, '2615');
+    chk('切换后章评气泡75', $('#chapBubble').textContent, '75');
     chk('切换后段落重渲染', $$('.para').length, 69);
-    chk('切换后有段评气泡', $$('.para-bubble').length, 56);
+    chk('切换后有段评气泡', $$('.para-bubble').length, 62);
     chk('切换后AI卡是ch2小结', ($('.cm-ai-body')||{textContent:''}).textContent.indexOf('设定解释章') >= 0, true);
     chk('切换后目录高亮迁移', $('.lp-item.active').getAttribute('data-cid'), 'ch2');
-    chk('ch2聚合块57', $$('.cm-full-module').length, 57);
-    chk('ch2章评模块计数622', ($('.cm-full-module[data-target-id="-1"] .cm-ref-bubble')||{textContent:''}).textContent, '622');
+    chk('ch2聚合块78', $$('.cm-full-module').length, 78);
+    chk('ch2含未匹配模块', $$('.cm-unmatched-module').length, 15);
+    chk('ch2章评模块计数75', ($('.cm-full-module[data-target-id="-1"] .cm-ref-bubble')||{textContent:''}).textContent, '75');
     // 完整结构：楼中楼 / 真实点赞 / IP属地（起点后台导出）
     // 聚合视图每模块仅渲染前 3 条一级评论，可见楼中楼按钮数量有限，断言存在即可
     chk('ch2有楼中楼入口', $$('.cm-list .sub-toggle').length > 0, true);
