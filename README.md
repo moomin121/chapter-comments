@@ -21,8 +21,8 @@ chapter-comments/
 ├── publish.sh        # 一键发布：冒烟测试 → commit → push → 验证 Pages
 ├── README.md         # 本文件
 ├── CLAUDE.md         # 给 Codex / Claude 看的项目约定
-├── scripts/          # build_comment_data.py：CSV → 元数据块 + comment-data.json
-├── test/             # smoke-test.sh：271 项浏览器断言冒烟测试
+├── scripts/          # build_comment_data.py 等：各章 CSV → comment-data-chN.json
+├── test/             # smoke-test.sh：359 项浏览器断言冒烟测试
 └── screenshots/      # 渲染效果截图（可选）
 ```
 

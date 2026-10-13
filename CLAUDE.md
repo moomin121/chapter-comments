@@ -61,11 +61,13 @@ chapter-comments/index.html                  # 静态入口（HTML + CSS + JS + 
 chapter-comments/comment-data.json           # ch1 完整评论数据（脚本生成）
 chapter-comments/comment-data-ch2.json       # ch2 玄鉴仙族_相累 评论数据（脚本生成）
 chapter-comments/comment-data-ch3.json       # ch3 夜无疆_杀穿诸敌 评论数据（脚本生成）
+chapter-comments/comment-data-ch4.json       # ch4 廓晋_涨水（中） 评论数据（脚本生成）
 chapter-comments/scripts/build_comment_data.py     # ch1 CSV → 元数据块 + comment-data.json
 chapter-comments/scripts/build_chapter2_data.py    # ch2 CSV → comment-data-ch2.json
 chapter-comments/scripts/build_chapter3_data.py    # ch3 CSV → comment-data-ch3.json（含 OCR 修正/分段重建）
+chapter-comments/scripts/build_chapter4_data.py    # ch4 CSV → comment-data-ch4.json（quote 匹配驱动分段）
 chapter-comments/scripts/build_font_subset.py      # 字体子集重建（接入新章节后必跑）
-chapter-comments/test/smoke-test.sh          # 冒烟测试 v2（335 项，pre-commit 强制跑）
+chapter-comments/test/smoke-test.sh          # 冒烟测试 v2（359 项，pre-commit 强制跑）
 chapter-comments/prd.md                      # 产品需求（数据契约/验收标准）
 chapter-comments/doc/技术方案.md              # 技术方案（路线/排序策略/测试方案）
 chapter-comments/CLAUDE.md                   # 本文件
@@ -104,11 +106,14 @@ var CHAPTER = {
 // 完整评论数据在 comment-data.json（由脚本生成，勿手改）
 ```
 
-## 多章节架构（2026-10-12 ch2 / 2026-10-13 ch3 接入）
+## 多章节架构（2026-10-12 ch2 / 2026-10-13 ch3、ch4 接入）
 
-- **CHAPTERS 注册表**（index.html）：`ch1/ch2/ch3` 三章，每章含 `treeName/treeWc/commentDataUrl/aiSummary/title/meta/paragraphs`。目录点击 → `switchChapter(id)` 整章替换正文/评论数据源/AI 卡并复位全部视图状态；左侧目录条目用 `data-cid` + `app:switch-chapter` 事件。
-- **评论数据按章外置**：`comment-data.json`（ch1）/ `comment-data-ch2.json` / `comment-data-ch3.json`，均由对应 build 脚本从 58 列合体 CSV 生成（起点后台导出 49 列 + 作者视角打标 8 列，2026-10-12 v4 口径）。
-- **segmentId 语义（重要，ch2/ch3 实测）**：`extend1.segmentId` 是**全书级段落编号**，不能直接当段落索引用，必须靠 `quote_msg`（被评段落原文）匹配建立映射。特殊值：`sid=-1` = 章评标题节点（quote=章节标题）；**`sid=0` = 章末"本章说"（无 quote、内容为催更/进度讨论），与 ch1 CSV"段落ID=0 视为章评"同一口径，归入章评 -1**（ch2 曾误归未匹配，2026-10-13 修正，章评 75→119）；`sid=-110` 等 = 混入的其他章评论 → 未匹配模块。
+- **CHAPTERS 注册表**（index.html）：`ch1/ch2/ch3/ch4` 四章，每章含 `treeName/treeWc/commentDataUrl/aiSummary/title/meta/paragraphs`。目录点击 → `switchChapter(id)` 整章替换正文/评论数据源/AI 卡并复位全部视图状态；左侧目录条目用 `data-cid` + `app:switch-chapter` 事件。
+- **评论数据按章外置**：`comment-data.json`（ch1）/ `comment-data-ch2.json` / `comment-data-ch3.json` / `comment-data-ch4.json`，均由对应 build 脚本从 58 列合体 CSV 生成（起点后台导出 49 列 + 作者视角打标 8 列，2026-10-12 v4 口径）。
+- **segmentId 语义（重要，分章实测）**：`extend1.segmentId` 在 ch2/ch3 是**全书级段落编号**，但在 **ch4 是本章级编号（1~63，与 ugc_level3_id 完全一致）**——都不能直接当段落索引用，必须靠 `quote_msg`（被评段落原文）匹配建立映射。特殊值：`sid=-1` = 章评标题节点（quote=章节标题）；**`sid=0` = 章末"本章说"（无 quote、内容为催更/进度讨论），与 ch1 CSV"段落ID=0 视为章评"同一口径，归入章评 -1**（ch2 曾误归未匹配，2026-10-13 修正，章评 75→119）；`sid=-110` 等 = 混入的其他章评论 → 未匹配模块。
+- **ch4（廓晋_涨水（中））数据的两个坑**（build_chapter4_data.py 已处理）：
+  1. v4 打标口径会把部分**固定标签名（建议/捉虫/好评/疑问）也写进内容标签列**——同名标签在 build 时提升合并进 fixedTags，避免 tagCounts 重名胶囊与单条评论标签重复（建议 34=固定8∪内容26 并集；筛选按 commentTags() 合并匹配，口径不变）；
+  2. sid=13（"确实很得用。"）/20（"刘乘点点头。"）的 quote 是站点段落里的短对话行，txt 里完全缺失 → 未匹配模块（与 ch3 缺失行同型）；quote 引导修正 1 处（段48"确系→确实"，以站点 quote 为权威）。
 - **ch3（夜无疆_杀穿诸敌）正文的三个坑**（build_chapter3_data.py 已处理）：
   1. 源 txt 是 OCR 转写，含系统性错字（苌→长、二→两、此→比、哀鸣→长鸣、全身→金身等 15 处）——用 quote 做权威文本反查修正；
   2. txt 分行比站点分段更细/更粗（166 行 vs 站点段落）——quote 是段落前缀，按"各 sid 段落起点=行内切分点 + 窗口匹配合并跨行段"重建出 167 段；
@@ -194,7 +199,7 @@ cd chapter-comments
 
 **A. 数据预处理段**（无浏览器）：跑 build 脚本校验统计（4465 一级 / 2365 挂载回复 / 663 孤儿 / 172 有评段）+ 校验 `index.html` 轻量元数据块和 `comment-data.json` 与 CSV 最新构建一致（防止改了 CSV 忘记 `--update-all`）。
 
-**B. 页面渲染段**（agent-browser）：271 项断言覆盖 PRD §16 十二条验收：
+**B. 页面渲染段**（agent-browser）：359 项断言覆盖 PRD §16 十二条验收 + 多章节切换：
 
 | 类别 | 断言 |
 |---|---|
@@ -263,6 +268,7 @@ agent-browser eval "document.querySelectorAll('.para').length"
 - [x] **首屏性能优化**（2026-09-07）：`index.html` 从 3.88MB 降到约 163KB；完整评论拆到 `comment-data.json` 异步加载；保留原 LXGW WenKai 字体观感；冒烟测试扩展到 271 项
 - [x] **多章节切换 + ch2 玄鉴仙族_相累**（2026-10-12）：CHAPTERS 注册表 / switchChapter 整章替换 / comment-data-ch2.json；冒烟测试加 ch2 断言块
 - [x] **ch3 夜无疆_杀穿诸敌接入**（2026-10-13）：comment-data-ch3.json（1968 主评 + 588 回复，章评 483，167 段）；quote 驱动的 OCR 错字修正与分段重建；ch2 sid=0 归章评口径修正（75→119）；字体子集重建（898KB，含 ch2 漏跑的补课）；冒烟测试扩到 335 项
+- [x] **ch4 廓晋_涨水（中）接入**（2026-10-13）：comment-data-ch4.json（1151 主评 + 949 回复，章评 66，60 段全有评）；sid 为本章级编号（=ugc_level3_id）；固定/内容同名标签合并（建议 34、好评 5）；sid 13/20 短对话行缺失归未匹配（2 块）；字体子集重建（898KB）；冒烟测试扩到 359 项
 
 未做 / 待定：
 

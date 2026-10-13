@@ -810,6 +810,53 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
     chk('ch3切回后目录高亮恢复', $('.lp-item.active').getAttribute('data-cid'), 'ch1');
   }
 
+  // --- 多章节切换：廓晋_涨水（中）（ch4，2026-10-13 接入）---
+  // 数据口径：58 列合体 CSV（outputs/34842126904292008），1151 主评 + 949 回复；
+  // 章评 66 = 标题节点(sid=-1,36) + 章末"本章说"(sid=0,30)；未匹配 2 块
+  // = txt 缺失的短对话行 sid=13("确实很得用。")/20("刘乘点点头。")；
+  // 内容标签与固定标签同名（建议/好评/捉虫/疑问）已在 build 时合并进固定标签
+  var ch4Item = $('.lp-item[data-cid="ch4"]');
+  chk('目录有廓晋章节', !!ch4Item, true);
+  if(ch4Item){
+    ch4Item.click();
+    await wait(600);   // 等章节正文渲染 + comment-data-ch4.json 异步加载
+    chk('ch4切换后标题更新', $('#chapTitle').textContent, '第4章 涨水（中）');
+    chk('ch4切换后发布时间更新', $('#chapPublishedAt').textContent, '2026-09-06 00:02');
+    chk('ch4切换后总条数', $('#cmCount').textContent, '2100条');
+    chk('ch4切换后段评总数', $('#chapSecTotal').textContent, '2034');
+    chk('ch4切换后章评气泡66', $('#chapBubble').textContent, '66');
+    chk('ch4切换后段落重渲染', $$('.para').length, 60);
+    chk('ch4切换后有段评气泡', $$('.para-bubble').length, 60);
+    chk('ch4切换后AI卡是ch4小结', ($('.cm-ai-body')||{textContent:''}).textContent.indexOf('考据章') >= 0, true);
+    chk('ch4切换后目录高亮迁移', $('.lp-item.active').getAttribute('data-cid'), 'ch4');
+    chk('ch4聚合块63', $$('.cm-full-module').length, 63);
+    chk('ch4含未匹配模块', $$('.cm-unmatched-module').length, 2);
+    chk('ch4章评模块计数66', ($('.cm-full-module[data-target-id="-1"] .cm-ref-bubble')||{textContent:''}).textContent, '66');
+    chk('ch4有楼中楼入口', $$('.cm-list .sub-toggle').length > 0, true);
+    chk('ch4有真实点赞数', $$('.cm-list .cm-meta-like-count').some(function(el){ return +el.textContent > 100; }), true);
+    chk('ch4显示IP属地', $$('.cm-list .cm-meta-left').some(function(el){ return el.textContent.indexOf('IP属地·') >= 0; }), true);
+    var ch4Tags = $$('#cmTags .cm-tag').map(function(t){ return t.textContent.trim(); });
+    chk('ch4标签总数20', ch4Tags.length, 20);
+    chk('ch4含考据史实短名标签', ch4Tags.some(function(t){ return t.indexOf('梳理/考据史实') >= 0; }), true);
+    chk('ch4含玩梗吐槽标签', ch4Tags.some(function(t){ return t.indexOf('玩梗吐槽') >= 0; }), true);
+    // ch4 标签筛选：选"关心作者身体"后聚合视图收窄
+    var ch4TagEl = $$('#cmTags .cm-tag').filter(function(t){ return t.textContent.indexOf('关心作者身体') >= 0; })[0];
+    if(ch4TagEl){
+      ch4TagEl.click();
+      await wait(200);
+      chk('ch4标签筛选生效', $$('.cm-full-module').length < 63, true);
+      $('#cmTags .cm-tag').click();   // "全部"还原
+      await wait(200);
+      chk('ch4标签筛选还原', $$('.cm-full-module').length, 63);
+    }
+    // 切回第1章：恢复
+    $('.lp-item[data-cid="ch1"]').click();
+    await wait(600);
+    chk('ch4切回后标题恢复', $('#chapTitle').textContent, '第1章 面试');
+    chk('ch4切回后总条数恢复', $('#cmCount').textContent, '6830条');
+    chk('ch4切回后目录高亮恢复', $('.lp-item.active').getAttribute('data-cid'), 'ch1');
+  }
+
   return out.join('\n');
 })()
 JSEOF
