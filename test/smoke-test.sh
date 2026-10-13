@@ -78,6 +78,9 @@ JS=$(cat <<'JSEOF'
   chk('抽屉默认展开', $('#cmDrawer').classList.contains('open'), true);
   chk('默认全部评论视图', !$('#cmDrawer').classList.contains('parasec'), true);
   chk('有效评论总数(732+6098)', $('#cmCount').textContent, '6830条');
+  // 目录瘦身（2026-10-13）：《没钱修什么仙》只保留已接入数据的第1章，其余 15 章移除
+  chk('目录仅4个可切换章节', $$('.lp-item[data-cid]').length, 4);
+  chk('目录无未接入的占位章节', $$('#chapterList .lp-item').some(function(el){ return el.textContent.indexOf('第2章') >= 0; }), false);
 
   // --- 字体：LXGW WenKai GB 本地子集（fonts/lxgw-wenkai-gb-500.woff2，font-display:block 零闪烁）---
   chk('WenKai字体已预载', !!document.querySelector('link[href*="lxgw-wenkai-gb"]'), true);

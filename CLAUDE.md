@@ -272,7 +272,7 @@ agent-browser eval "document.querySelectorAll('.para').length"
 
 未做 / 待定：
 
-- [ ] 章节列表是硬编码 16 章，未接真实接口
+- [ ] 章节目录为硬编码（2026-10-13 瘦身：《没钱修什么仙》只保留第1章，未接入数据的 15 个占位章节已移除），未接真实接口
 - [ ] 评论输入框 `<input class="ipt" id="cmInput">` 只有 UI，回车无行为（发布评论不在本期 PRD 范围）
 - [ ] 点赞 / 回复按钮无实际逻辑（不在本期 PRD 范围）
 - [ ] `#cmFilterBtn` 筛选按钮只有 toggle 视觉，未接真实筛选器 dropdown
