@@ -725,15 +725,15 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
     chk('切换后标题更新', $('#chapTitle').textContent, '第一千五百八十七章 相累');
     chk('切换后发布时间更新', $('#chapPublishedAt').textContent, '2026-09-05 20:20');
     chk('切换后总条数', $('#cmCount').textContent, '2690条');
-    chk('切换后段评总数', $('#chapSecTotal').textContent, '2615');
-    chk('切换后章评气泡75', $('#chapBubble').textContent, '75');
+    chk('切换后段评总数', $('#chapSecTotal').textContent, '2571');
+    chk('切换后章评气泡119', $('#chapBubble').textContent, '119');
     chk('切换后段落重渲染', $$('.para').length, 69);
     chk('切换后有段评气泡', $$('.para-bubble').length, 62);
     chk('切换后AI卡是ch2小结', ($('.cm-ai-body')||{textContent:''}).textContent.indexOf('设定解释章') >= 0, true);
     chk('切换后目录高亮迁移', $('.lp-item.active').getAttribute('data-cid'), 'ch2');
-    chk('ch2聚合块78', $$('.cm-full-module').length, 78);
-    chk('ch2含未匹配模块', $$('.cm-unmatched-module').length, 15);
-    chk('ch2章评模块计数75', ($('.cm-full-module[data-target-id="-1"] .cm-ref-bubble')||{textContent:''}).textContent, '75');
+    chk('ch2聚合块77', $$('.cm-full-module').length, 77);
+    chk('ch2含未匹配模块', $$('.cm-unmatched-module').length, 14);
+    chk('ch2章评模块计数119', ($('.cm-full-module[data-target-id="-1"] .cm-ref-bubble')||{textContent:''}).textContent, '119');
     // 完整结构：楼中楼 / 真实点赞 / IP属地（起点后台导出）
     // 聚合视图每模块仅渲染前 3 条一级评论，可见楼中楼按钮数量有限，断言存在即可
     chk('ch2有楼中楼入口', $$('.cm-list .sub-toggle').length > 0, true);
@@ -762,6 +762,52 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
     chk('切回后AI卡恢复ch1', ($('.cm-ai-body')||{textContent:''}).textContent.indexOf('第一章的核心反馈') >= 0, true);
     chk('切回后目录高亮恢复', $('.lp-item.active').getAttribute('data-cid'), 'ch1');
     chk('切回后段评总数恢复', $('#chapSecTotal').textContent, '6098');
+  }
+
+  // --- 多章节切换：夜无疆_杀穿诸敌（ch3，2026-10-13 接入）---
+  // 数据口径：58 列合体 CSV（outputs/29874241704035808），1968 主评 + 588 回复；
+  // 章评 483 = 标题节点(sid=-1,195) + 章末"本章说"(sid=0,288)；未匹配 10 块
+  // = 9 个 txt 缺失的短对话行 sid + 混入他章的 sid=-110
+  var ch3Item = $('.lp-item[data-cid="ch3"]');
+  chk('目录有夜无疆章节', !!ch3Item, true);
+  if(ch3Item){
+    ch3Item.click();
+    await wait(600);   // 等章节正文渲染 + comment-data-ch3.json 异步加载
+    chk('ch3切换后标题更新', $('#chapTitle').textContent, '第809章 杀穿诸敌');
+    chk('ch3切换后发布时间更新', $('#chapPublishedAt').textContent, '2026-09-06 01:54');
+    chk('ch3切换后总条数', $('#cmCount').textContent, '2556条');
+    chk('ch3切换后段评总数', $('#chapSecTotal').textContent, '2073');
+    chk('ch3切换后章评气泡483', $('#chapBubble').textContent, '483');
+    chk('ch3切换后段落重渲染', $$('.para').length, 167);
+    chk('ch3切换后有段评气泡', $$('.para-bubble').length, 139);
+    chk('ch3切换后AI卡是ch3小结', ($('.cm-ai-body')||{textContent:''}).textContent.indexOf('全化身') >= 0, true);
+    chk('ch3切换后目录高亮迁移', $('.lp-item.active').getAttribute('data-cid'), 'ch3');
+    chk('ch3聚合块150', $$('.cm-full-module').length, 150);
+    chk('ch3含未匹配模块', $$('.cm-unmatched-module').length, 10);
+    chk('ch3章评模块计数483', ($('.cm-full-module[data-target-id="-1"] .cm-ref-bubble')||{textContent:''}).textContent, '483');
+    chk('ch3有楼中楼入口', $$('.cm-list .sub-toggle').length > 0, true);
+    chk('ch3有真实点赞数', $$('.cm-list .cm-meta-like-count').some(function(el){ return +el.textContent > 100; }), true);
+    chk('ch3显示IP属地', $$('.cm-list .cm-meta-left').some(function(el){ return el.textContent.indexOf('IP属地·') >= 0; }), true);
+    var ch3Tags = $$('#cmTags .cm-tag').map(function(t){ return t.textContent.trim(); });
+    chk('ch3标签总数30', ch3Tags.length, 30);
+    chk('ch3含催更短名标签', ch3Tags.some(function(t){ return t.indexOf('催更/嫌更新慢') >= 0; }), true);
+    chk('ch3含玩梗吐槽标签', ch3Tags.some(function(t){ return t.indexOf('玩梗吐槽') >= 0; }), true);
+    // ch3 标签筛选：选"看得爽/战斗爽"后聚合视图收窄
+    var ch3TagEl = $$('#cmTags .cm-tag').filter(function(t){ return t.textContent.indexOf('看得爽/战斗爽') >= 0; })[0];
+    if(ch3TagEl){
+      ch3TagEl.click();
+      await wait(200);
+      chk('ch3标签筛选生效', $$('.cm-full-module').length < 150, true);
+      $('#cmTags .cm-tag').click();   // "全部"还原
+      await wait(200);
+      chk('ch3标签筛选还原', $$('.cm-full-module').length, 150);
+    }
+    // 切回第1章：恢复
+    $('.lp-item[data-cid="ch1"]').click();
+    await wait(600);
+    chk('ch3切回后标题恢复', $('#chapTitle').textContent, '第1章 面试');
+    chk('ch3切回后总条数恢复', $('#cmCount').textContent, '6830条');
+    chk('ch3切回后目录高亮恢复', $('.lp-item.active').getAttribute('data-cid'), 'ch1');
   }
 
   return out.join('\n');

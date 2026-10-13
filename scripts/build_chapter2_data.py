@@ -134,11 +134,14 @@ def build_payload(csv_path: Path) -> dict:
             sid_to_idx.setdefault(sid, idx)
 
     def target_of(row) -> int:
-        """章评唯一标记是 segmentId == -1（73 主评 + 2 回复 = 75，与后台一致）。
+        """章评两个入口都归 -1：segmentId==-1（标题节点，quote=章节标题，73 主评
+        + 2 回复 = 75，与后台一致）与 segmentId==0（章末"本章说"，无 quote，
+        内容为催更/进度讨论——与 ch1 CSV"段落ID=0 视为章评"同一口径；
+        2026-10-13 修正：曾误归未匹配 -10000）。
         其他负 sid（如 -110）是混入的其他章段评；sid>=0 但映射/匹配失败的
         段评进 unmatched（targetId = -(10000+sid)，避开正文 0~68 与 -1）。"""
         sid = get_sid(row)
-        if sid == -1:
+        if sid in (-1, 0):
             return -1
         if sid is not None and sid >= 0:
             idx = sid_to_idx.get(sid)

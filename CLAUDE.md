@@ -58,9 +58,14 @@ innerWidth - r.right   // 必须 === 0，不论抽屉开还是关
 
 ```
 chapter-comments/index.html                  # 静态入口（HTML + CSS + JS + 轻量元数据）
-chapter-comments/comment-data.json           # 异步加载的完整评论数据（脚本生成）
-chapter-comments/scripts/build_comment_data.py  # CSV → 元数据块 + comment-data.json 预处理脚本
-chapter-comments/test/smoke-test.sh          # 冒烟测试 v2（271 项，pre-commit 强制跑）
+chapter-comments/comment-data.json           # ch1 完整评论数据（脚本生成）
+chapter-comments/comment-data-ch2.json       # ch2 玄鉴仙族_相累 评论数据（脚本生成）
+chapter-comments/comment-data-ch3.json       # ch3 夜无疆_杀穿诸敌 评论数据（脚本生成）
+chapter-comments/scripts/build_comment_data.py     # ch1 CSV → 元数据块 + comment-data.json
+chapter-comments/scripts/build_chapter2_data.py    # ch2 CSV → comment-data-ch2.json
+chapter-comments/scripts/build_chapter3_data.py    # ch3 CSV → comment-data-ch3.json（含 OCR 修正/分段重建）
+chapter-comments/scripts/build_font_subset.py      # 字体子集重建（接入新章节后必跑）
+chapter-comments/test/smoke-test.sh          # 冒烟测试 v2（335 项，pre-commit 强制跑）
 chapter-comments/prd.md                      # 产品需求（数据契约/验收标准）
 chapter-comments/doc/技术方案.md              # 技术方案（路线/排序策略/测试方案）
 chapter-comments/CLAUDE.md                   # 本文件
@@ -98,6 +103,18 @@ var CHAPTER = {
 // GENERATED_COMMENT_DATA_START ... END 之间的 COMMENT_DATA 轻量元数据（由脚本生成，勿手改）
 // 完整评论数据在 comment-data.json（由脚本生成，勿手改）
 ```
+
+## 多章节架构（2026-10-12 ch2 / 2026-10-13 ch3 接入）
+
+- **CHAPTERS 注册表**（index.html）：`ch1/ch2/ch3` 三章，每章含 `treeName/treeWc/commentDataUrl/aiSummary/title/meta/paragraphs`。目录点击 → `switchChapter(id)` 整章替换正文/评论数据源/AI 卡并复位全部视图状态；左侧目录条目用 `data-cid` + `app:switch-chapter` 事件。
+- **评论数据按章外置**：`comment-data.json`（ch1）/ `comment-data-ch2.json` / `comment-data-ch3.json`，均由对应 build 脚本从 58 列合体 CSV 生成（起点后台导出 49 列 + 作者视角打标 8 列，2026-10-12 v4 口径）。
+- **segmentId 语义（重要，ch2/ch3 实测）**：`extend1.segmentId` 是**全书级段落编号**，不能直接当段落索引用，必须靠 `quote_msg`（被评段落原文）匹配建立映射。特殊值：`sid=-1` = 章评标题节点（quote=章节标题）；**`sid=0` = 章末"本章说"（无 quote、内容为催更/进度讨论），与 ch1 CSV"段落ID=0 视为章评"同一口径，归入章评 -1**（ch2 曾误归未匹配，2026-10-13 修正，章评 75→119）；`sid=-110` 等 = 混入的其他章评论 → 未匹配模块。
+- **ch3（夜无疆_杀穿诸敌）正文的三个坑**（build_chapter3_data.py 已处理）：
+  1. 源 txt 是 OCR 转写，含系统性错字（苌→长、二→两、此→比、哀鸣→长鸣、全身→金身等 15 处）——用 quote 做权威文本反查修正；
+  2. txt 分行比站点分段更细/更粗（166 行 vs 站点段落）——quote 是段落前缀，按"各 sid 段落起点=行内切分点 + 窗口匹配合并跨行段"重建出 167 段；
+  3. quote 有繁体（读者端繁体显示）——opencc t2s 归一后匹配。
+  9 个 sid 引用的短对话行在 txt 里完全缺失（如"玉京魔。""长公主！"），评论归入未匹配模块。
+- **接入新章节清单**：写 `scripts/build_chapterN_data.py` → 生成 `comment-data-chN.json` → index.html 的 CHAPTER_TREE 加目录项 + CHAPTERS 注册（含 aiSummary）→ 重跑 `build_font_subset.py` → smoke-test.sh 加 N 章断言块 → 全量跑通 → commit。
 
 **评论数据已接入真实 CSV**（2026-09-04）：
 - 来源：`/Users/moomin/Documents/ChatGPT/New project/outputs/who_made_him_cultivate_ch1_comments/谁让他修仙的第1章评论_作者视角打标.csv`
@@ -244,6 +261,8 @@ agent-browser eval "document.querySelectorAll('.para').length"
 - [x] **评论底部操作按 Figma 设计稿实现**（2026-09-05）：日期 + IP 地址 + 评论图标 + 点赞"赞"字 + 点赞数 + ···（commentMetaRow helper 复用）
 - [x] 冒烟测试 v3（60 项，新增 11 项覆盖以上 6 个修正点）
 - [x] **首屏性能优化**（2026-09-07）：`index.html` 从 3.88MB 降到约 163KB；完整评论拆到 `comment-data.json` 异步加载；保留原 LXGW WenKai 字体观感；冒烟测试扩展到 271 项
+- [x] **多章节切换 + ch2 玄鉴仙族_相累**（2026-10-12）：CHAPTERS 注册表 / switchChapter 整章替换 / comment-data-ch2.json；冒烟测试加 ch2 断言块
+- [x] **ch3 夜无疆_杀穿诸敌接入**（2026-10-13）：comment-data-ch3.json（1968 主评 + 588 回复，章评 483，167 段）；quote 驱动的 OCR 错字修正与分段重建；ch2 sid=0 归章评口径修正（75→119）；字体子集重建（898KB，含 ch2 漏跑的补课）；冒烟测试扩到 335 项
 
 未做 / 待定：
 
