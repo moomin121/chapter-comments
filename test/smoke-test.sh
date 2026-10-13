@@ -79,7 +79,7 @@ JS=$(cat <<'JSEOF'
   chk('默认全部评论视图', !$('#cmDrawer').classList.contains('parasec'), true);
   chk('有效评论总数(732+6098)', $('#cmCount').textContent, '6830条');
   // 目录瘦身（2026-10-13）：《没钱修什么仙》只保留已接入数据的第1章，其余 15 章移除
-  chk('目录仅4个可切换章节', $$('.lp-item[data-cid]').length, 4);
+  chk('目录仅5个可切换章节', $$('.lp-item[data-cid]').length, 5);
   chk('目录无未接入的占位章节', $$('#chapterList .lp-item').some(function(el){ return el.textContent.indexOf('第2章') >= 0; }), false);
 
   // --- 字体：LXGW WenKai GB 本地子集（fonts/lxgw-wenkai-gb-500.woff2，font-display:block 零闪烁）---
@@ -858,6 +858,60 @@ chk('楼中楼展开', tg.parentElement.querySelector('.cm-sub').style.display !
     chk('ch4切回后标题恢复', $('#chapTitle').textContent, '第1章 面试');
     chk('ch4切回后总条数恢复', $('#cmCount').textContent, '6830条');
     chk('ch4切回后目录高亮恢复', $('.lp-item.active').getAttribute('data-cid'), 'ch1');
+  }
+
+  // --- 多章节切换：剑烛大荒_小章居士（ch5，2026-10-13 接入）---
+  // 数据口径：58 列合体 CSV（outputs/35626462603382207），1539 主评 + 415 回复（2 孤儿）；
+  // 章评 106 = 标题节点(sid=-1,67) + 章末"本章说"(sid=0,39)；
+  // 103 段 = 96 正文行(剔除 6 行广告) + 1 行内切分(sid33) + 6 个 quote 注入缺失段
+  // （sid18"朏朏"/25"小章居士沉默了。"/51"你这人有点意思。"/67"章羌叹了口气道："
+  // /96"小章居士在家吗？"/105"PS：周末已是单更。"）；未匹配 0 块
+  var ch5Item = $('.lp-item[data-cid="ch5"]');
+  chk('目录有剑烛大荒章节', !!ch5Item, true);
+  if(ch5Item){
+    ch5Item.click();
+    await wait(600);   // 等章节正文渲染 + comment-data-ch5.json 异步加载
+    chk('ch5切换后标题更新', $('#chapTitle').textContent, '第十一章 小章居士');
+    chk('ch5切换后发布时间更新', $('#chapPublishedAt').textContent, '2026-09-05 12:30');
+    chk('ch5切换后总条数', $('#cmCount').textContent, '1954条');
+    chk('ch5切换后段评总数', $('#chapSecTotal').textContent, '1848');
+    chk('ch5切换后章评气泡106', $('#chapBubble').textContent, '106');
+    chk('ch5切换后段落重渲染', $$('.para').length, 103);
+    chk('ch5切换后有段评气泡', $$('.para-bubble').length, 80);
+    chk('ch5切换后AI卡是ch5小结', ($('.cm-ai-body')||{textContent:''}).textContent.indexOf('太监作者 vs 较真书友') >= 0, true);
+    chk('ch5切换后目录高亮迁移', $('.lp-item.active').getAttribute('data-cid'), 'ch5');
+    chk('ch5聚合块81', $$('.cm-full-module').length, 81);
+    chk('ch5无未匹配模块', $$('.cm-unmatched-module').length, 0);
+    chk('ch5章评模块计数106', ($('.cm-full-module[data-target-id="-1"] .cm-ref-bubble')||{textContent:''}).textContent, '106');
+    chk('ch5有楼中楼入口', $$('.cm-list .sub-toggle').length > 0, true);
+    chk('ch5有真实点赞数', $$('.cm-list .cm-meta-like-count').some(function(el){ return +el.textContent > 100; }), true);
+    chk('ch5显示IP属地', $$('.cm-list .cm-meta-left').some(function(el){ return el.textContent.indexOf('IP属地·') >= 0; }), true);
+    // 注入段落：章末 PS（sid105，157 条评论挂在上面）与缺失对话行（sid96）
+    chk('ch5含PS段落', $$('.para').some(function(el){ return el.textContent.indexOf('PS：周末已是单更。') >= 0; }), true);
+    chk('ch5含注入对话行', $$('.para').some(function(el){ return el.textContent.indexOf('小章居士在家吗？') >= 0; }), true);
+    chk('ch5无广告残留', $$('.para').some(function(el){ return el.textContent.indexOf('冷艳女帝') >= 0; }), false);
+    chk('ch5行内切分段', $$('.para').some(function(el){ return el.textContent.indexOf('一遍，然后道：') === 0; }), true);
+    var ch5Tags = $$('#cmTags .cm-tag').map(function(t){ return t.textContent.trim(); });
+    chk('ch5标签总数14', ch5Tags.length, 14);
+    chk('ch5含玩梗调侃标签', ch5Tags.some(function(t){ return t.indexOf('玩梗调侃') >= 0; }), true);
+    chk('ch5含催更太监话题短名标签', ch5Tags.some(function(t){ return t.indexOf('催更/太监话题') >= 0; }), true);
+    chk('ch5含梳理考据短名标签', ch5Tags.some(function(t){ return t.indexOf('梳理/考据设定') >= 0; }), true);
+    // ch5 标签筛选：选"提及其他作者"后聚合视图收窄
+    var ch5TagEl = $$('#cmTags .cm-tag').filter(function(t){ return t.textContent.indexOf('提及其他作者') >= 0; })[0];
+    if(ch5TagEl){
+      ch5TagEl.click();
+      await wait(200);
+      chk('ch5标签筛选生效', $$('.cm-full-module').length < 81, true);
+      $('#cmTags .cm-tag').click();   // "全部"还原
+      await wait(200);
+      chk('ch5标签筛选还原', $$('.cm-full-module').length, 81);
+    }
+    // 切回第1章：恢复
+    $('.lp-item[data-cid="ch1"]').click();
+    await wait(600);
+    chk('ch5切回后标题恢复', $('#chapTitle').textContent, '第1章 面试');
+    chk('ch5切回后总条数恢复', $('#cmCount').textContent, '6830条');
+    chk('ch5切回后目录高亮恢复', $('.lp-item.active').getAttribute('data-cid'), 'ch1');
   }
 
   return out.join('\n');

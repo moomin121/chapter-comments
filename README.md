@@ -22,7 +22,7 @@ chapter-comments/
 ├── README.md         # 本文件
 ├── CLAUDE.md         # 给 Codex / Claude 看的项目约定
 ├── scripts/          # build_comment_data.py 等：各章 CSV → comment-data-chN.json
-├── test/             # smoke-test.sh：359 项浏览器断言冒烟测试
+├── test/             # smoke-test.sh：390 项浏览器断言冒烟测试
 └── screenshots/      # 渲染效果截图（可选）
 ```
 
